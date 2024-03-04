@@ -17,7 +17,19 @@ root : FrontendModel -> Browser.Document FrontendMsg
 root model =
     { title = ""
     , body =
-        [ Element.layout [] <| viewBody model ]
+        [ Element.layoutWith
+            { options =
+                [ Element.focusStyle
+                    { borderColor = Nothing
+                    , backgroundColor = Nothing
+                    , shadow = Nothing
+                    }
+                ]
+            }
+            []
+          <|
+            viewBody model
+        ]
     }
 
 
@@ -35,34 +47,8 @@ viewBody model =
         , Element.Font.size 16
         ]
         [ viewRequestState model.requestState
-        , viewTextInputMode model.textInput
+        , textInputAndSubmitButtonElement model.textInput
         ]
-
-
-viewTextInputMode : String -> Element FrontendMsg
-viewTextInputMode inputText =
-    Element.row
-        [ Element.width Element.fill
-        , Element.alignBottom
-        ]
-        [ Element.Input.text
-            [ Element.width Element.fill ]
-            { onChange = TextInputChanged
-            , text = inputText
-            , placeholder = Nothing
-            , label = Element.Input.labelHidden "Enter text"
-            }
-        , submitButton inputText
-        ]
-
-
-submitButton : String -> Element FrontendMsg
-submitButton inputText =
-    Element.Input.button
-        []
-        { onPress = Just <| SubmitText inputText
-        , label = Element.text "Go"
-        }
 
 
 viewRequestState : RequestState -> Element FrontendMsg
@@ -77,19 +63,19 @@ viewRequestState requestState =
                 []
 
             Loading inputText ->
-                [ justInputElement inputText
+                [ translationInputTextElement inputText
                 , loadingTranslationElement
                 ]
 
             RequestComplete completedRequest ->
                 case completedRequest.translationResult of
                     Err gptAssistError ->
-                        [ justInputElement completedRequest.inputText
+                        [ translationInputTextElement completedRequest.inputText
                         , viewGptAssistError gptAssistError
                         ]
 
                     Ok translation ->
-                        [ inputAsButtonsElement translation.breakdown completedRequest.maybeSelectedBreakdownPart
+                        [ translationInputButtonsElement translation.breakdown completedRequest.maybeSelectedBreakdownPart
                         , translatedTextElement translation.translation
                         , Element.el [ Element.height <| Element.px 8 ] <| Element.none
                         , Maybe.map selectedExplanationElement completedRequest.maybeSelectedBreakdownPart
@@ -115,15 +101,15 @@ translatedTextStyles =
     ]
 
 
-justInputElement : String -> Element FrontendMsg
-justInputElement inputText =
+translationInputTextElement : String -> Element FrontendMsg
+translationInputTextElement inputText =
     Element.paragraph
         inputTextStyles
         [ Element.text inputText ]
 
 
-inputAsButtonsElement : Breakdown -> Maybe BreakdownPart -> Element FrontendMsg
-inputAsButtonsElement breakdown maybeSelectedBreakdownPart =
+translationInputButtonsElement : Breakdown -> Maybe BreakdownPart -> Element FrontendMsg
+translationInputButtonsElement breakdown maybeSelectedBreakdownPart =
     let
         partIsSelected estonian =
             case maybeSelectedBreakdownPart of
@@ -247,4 +233,55 @@ selectPartButton partIsSelected breakdownPart =
         )
         { onPress = Just <| ShowExplanation breakdownPart
         , label = Element.text breakdownPart.estonian
+        }
+
+
+textInputAndSubmitButtonElement : String -> Element FrontendMsg
+textInputAndSubmitButtonElement inputText =
+    Element.row
+        [ Element.width Element.fill
+        , Element.alignBottom
+        , Element.Border.rounded 8
+        , Element.Border.width 1
+        , Element.Border.color <| Element.rgb 0.3 0.3 0.6
+        , Element.padding 3
+        ]
+        [ Element.Input.text
+            [ Element.width Element.fill
+            , Element.Border.width 0
+            , Element.padding 3
+            ]
+            { onChange = TextInputChanged
+            , text = inputText
+            , placeholder = Nothing
+            , label = Element.Input.labelHidden "Enter text"
+            }
+        , submitButton (inputText /= "") inputText
+        ]
+
+
+submitButton : Bool -> String -> Element FrontendMsg
+submitButton enabled inputText =
+    Element.Input.button
+        []
+        { onPress =
+            if enabled then
+                Just <| SubmitText inputText
+
+            else
+                Nothing
+        , label =
+            Element.image
+                [ Element.height <| Element.px 32
+                , Element.Border.rounded 4
+                , Element.Background.color <|
+                    if enabled then
+                        Element.rgb 0 0 0
+
+                    else
+                        Element.rgb 0.7 0.7 0.7
+                ]
+                { src = "/up-arrow-white.png"
+                , description = "submit"
+                }
         }
