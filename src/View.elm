@@ -245,6 +245,13 @@ textInputAndSubmitButtonElement inputText =
         , Element.Border.width 1
         , Element.Border.color <| Element.rgb 0.3 0.3 0.6
         , Element.padding 3
+        , Utils.onEnter
+            (if inputText /= "" then
+                SubmitText inputText
+
+             else
+                NoOpFrontendMsg
+            )
         ]
         [ Element.Input.text
             [ Element.width Element.fill
