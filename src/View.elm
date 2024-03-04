@@ -130,6 +130,27 @@ translationInputButtonsElement breakdown maybeSelectedBreakdownPart =
         )
 
 
+selectPartButton : Bool -> BreakdownPart -> Element FrontendMsg
+selectPartButton partIsSelected breakdownPart =
+    Element.Input.button
+        ([ Element.Border.width 1
+         , Element.padding 2
+         , Element.Border.color <| Element.rgb 0.5 0.5 1
+         ]
+            ++ (if partIsSelected then
+                    [ Element.Border.width 1
+                    , Element.Border.color <| Element.rgb 0 0 1
+                    ]
+
+                else
+                    [ Element.Border.dashed ]
+               )
+        )
+        { onPress = Just <| ShowExplanation breakdownPart
+        , label = Element.text breakdownPart.estonian
+        }
+
+
 translatedTextElement : String -> Element FrontendMsg
 translatedTextElement translatedText =
     Element.paragraph
@@ -218,22 +239,6 @@ gptAssistErrorToString gptAssistError =
 
         GptExpressedError gptsDamnProblemString ->
             "ChatGPT refuses to process the request: \"" ++ gptsDamnProblemString ++ "\""
-
-
-selectPartButton : Bool -> BreakdownPart -> Element FrontendMsg
-selectPartButton partIsSelected breakdownPart =
-    Element.Input.button
-        (if partIsSelected then
-            [ Element.Border.width 1
-            , Element.Border.color <| Element.rgb 0 0 1
-            ]
-
-         else
-            []
-        )
-        { onPress = Just <| ShowExplanation breakdownPart
-        , label = Element.text breakdownPart.estonian
-        }
 
 
 textInputAndSubmitButtonElement : String -> Element FrontendMsg
