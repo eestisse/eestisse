@@ -12,7 +12,20 @@ import Url exposing (Url)
 type alias FrontendModel =
     { key : Key
     , textInput : String
-    , maybeTranslationResult : Maybe (Result GptAssistError Translation)
+    , requestState : RequestState
+    }
+
+
+type RequestState
+    = NotSubmitted
+    | Loading String
+    | RequestComplete CompletedRequest
+
+
+type alias CompletedRequest =
+    { inputText : String
+    , translationResult : Result GptAssistError Translation
+    , maybeSelectedBreakdownPart : Maybe BreakdownPart
     }
 
 
@@ -23,9 +36,19 @@ type GptAssistError
 
 
 type alias Translation =
-    { inputAndExplanations : List ( String, String )
+    { breakdown : Breakdown
     , translation : String
-    , selectedExplanation : Maybe ( String, String )
+    }
+
+
+type alias Breakdown =
+    List BreakdownPart
+
+
+type alias BreakdownPart =
+    { estonian : String
+    , englishTranslation : String
+    , maybeExplanation : Maybe String
     }
 
 
@@ -39,7 +62,7 @@ type FrontendMsg
     | NoOpFrontendMsg
     | TextInputChanged String
     | SubmitText String
-    | ShowExplanation String String
+    | ShowExplanation BreakdownPart
 
 
 type ToBackend
@@ -49,9 +72,9 @@ type ToBackend
 
 type BackendMsg
     = NoOpBackendMsg
-    | GptResponseReceived ClientId (Result Http.Error String)
+    | GptResponseReceived ClientId String (Result Http.Error String)
 
 
 type ToFrontend
     = NoOpToFrontend
-    | TranslationResult (Result GptAssistError Translation)
+    | TranslationResult String (Result GptAssistError Translation)

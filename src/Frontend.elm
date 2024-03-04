@@ -29,10 +29,35 @@ init : Url.Url -> Nav.Key -> ( Model, Cmd FrontendMsg )
 init url key =
     ( { key = key
       , textInput = ""
-      , maybeTranslationResult = Nothing
+      , requestState =
+            NotSubmitted
+
+      -- RequestComplete
+      --     testCompletedRequest
       }
     , Cmd.none
     )
+
+
+
+-- testCompletedRequest =
+--     { inputText = ""
+--     , translationResult =
+--         Ok <|
+--             { breakdown =
+--                 [ { estonian = "minu"
+--                   , englishTranslation = "my"
+--                   , maybeExplanation = Nothing
+--                   }
+--                 , { estonian = "nimi"
+--                   , englishTranslation = "is"
+--                   , maybeExplanation = Just "some explanation here some explanation here some explanation here some explanation here some explanation here some explanation here "
+--                   }
+--                 ]
+--             , translation = "my name is Logan"
+--             }
+--     , maybeSelectedBreakdownPart = Nothing
+--     }
 
 
 update : FrontendMsg -> Model -> ( Model, Cmd FrontendMsg )
@@ -62,20 +87,23 @@ update msg model =
             )
 
         SubmitText inputText ->
-            ( model
+            ( { model
+                | requestState =
+                    Loading inputText
+              }
             , Lamdera.sendToBackend <| SubmitTextForTranslation inputText
             )
 
-        ShowExplanation phrase explanation ->
-            case model.maybeTranslationResult of
-                Just (Ok translation) ->
+        ShowExplanation breakdownPart ->
+            case model.requestState of
+                RequestComplete completedRequest ->
                     ( { model
-                        | maybeTranslationResult =
-                            Just <|
-                                Ok <|
-                                    { translation
-                                        | selectedExplanation = Just ( phrase, explanation )
-                                    }
+                        | requestState =
+                            RequestComplete
+                                { completedRequest
+                                    | maybeSelectedBreakdownPart =
+                                        Just breakdownPart
+                                }
                       }
                     , Cmd.none
                     )
@@ -90,8 +118,15 @@ updateFromBackend msg model =
         NoOpToFrontend ->
             ( model, Cmd.none )
 
-        TranslationResult translationResult ->
-            ( { model | maybeTranslationResult = Just translationResult }
+        TranslationResult inputText translationResult ->
+            ( { model
+                | requestState =
+                    RequestComplete
+                        { inputText = inputText
+                        , translationResult = translationResult
+                        , maybeSelectedBreakdownPart = Nothing
+                        }
+              }
             , Cmd.none
             )
 

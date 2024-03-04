@@ -28,11 +28,13 @@ translateFromEstonian estonianString =
     "error": false
     "translation": TRANSLATION_HERE,
     "breakdown": [
-        [ESTONIAN_CHUNK_1, EXPLANATION_1],
-        [ESTONIAN_CHUNK_2, EXPLANATION_2],
+        [ESTONIAN_CHUNK_1, DIRECT_APPROXIMATE_TRANSLATION_1, EXPLANATION_1],
+        [ESTONIAN_CHUNK_2, DIRECT_APPROXIMATE_TRANSLATION_2, EXPLANATION_2],
         ...
     ]
 }
+
+The third item in the breakdown values (the "explanation") should be null if no extra explaining is necessary.
 
 The breakdown should consist of at most 10 items, each of which examines a section of the text (either a word or phrase). The explanation should be a direct approximate translation of the chunk, and if needed, explanation in parentheses.
 
@@ -47,23 +49,28 @@ If you are unable to complete the request, instead create a json object with "er
     "breakdown": [
         [
             "Mind",
-            "Me (first person singular pronoun in the partitive case, often used as the object of a verb)"
+            "Me",
+            "first person singular pronoun in the partitive case, often used as the object of a verb"
         ],
         [
             "on",
-            "has/have been (third person singular present indicative of "olema," used here to form a passive voice)"
+            "has/have been",
+            "third person singular present indicative of \\"olema,\\" used here to form a passive voice"
         ],
         [
             "treenitud",
-            "trained (past participle of "treenima")"
+            "trained",
+            "past participle of \\"treenima\\")"
         ],
         [
             "kosmoseõpilasi",
-            "space students (partitive plural of "kosmoseõpilane," a compound noun made from "kosmos" meaning "space" and "õpilane" meaning "student")"
+            "space students",
+            "partitive plural of \\"kosmoseõpilane,\\" a compound noun made from \\"kosmos\\" meaning \\"space\\" and \\"õpilane\\" meaning \\"student\\""
         ],
         [
             "abistama",
-            "to assist (infinitive form of "abistama")"
+            "to assist",
+            "infinitive form of \\"abistama\\""
         ]
     ]
 }""" )
@@ -74,39 +81,48 @@ If you are unable to complete the request, instead create a json object with "er
     "breakdown": [
         [
             "Mentaalselt",
-            "Mentally (adverb)"
+            "Mentally",
+            null
         ],
         [
             "rohenäpp",
-            "Green thumb (noun, a metaphorical expression used to describe someone who is good at gardening and taking care of plants)"
+            "Green thumb",
+            "noun, a metaphorical expression used to describe someone who is good at gardening and taking care of plants"
         ],
         [
             "ent",
-            "but"
+            "but",
+            null
         ],
         [
             "kõik",
-            "all"
+            "all",
+            null
         ],
         [
             "taimed",
-            "plants (plural of \"taim\")"
+            "plants",
+            "plural of \\"taim\\""
         ],
         [
             "kodus",
-            "at home (inessive case of \"kodu\", indicating location within a home)."
+            "at home",
+            "inessive case of \\"kodu\\", indicating location within a home"
         ],
         [
             "on",
-            "are (third person plural present indicative of \"olema\", the verb \"to be\")."
+            "are",
+            "third person plural present indicative of \\"olema\\", the verb \\"to be\\""
         ],
         [
             "pooleldi",
-            "half"
+            "half",
+            null
         ],
         [
             "surnud",
-            "dead (nominative plural past participle of \"surema\", meaning \"to die\")"
+            "dead",
+            "nominative plural past participle of \\"surema\\", meaning \\"to die\\""
         ]
     ]
 }""" )
@@ -173,18 +189,19 @@ gptResponseDecoder =
 translationDecoder : Json.Decode.Decoder Translation
 translationDecoder =
     Json.Decode.map2
-        freshTranslation
+        Translation
         (Json.Decode.field "breakdown"
             (Json.Decode.list
-                (Utils.decodeTuple Json.Decode.string Json.Decode.string)
+                (Utils.decode3Tuple
+                    Json.Decode.string
+                    Json.Decode.string
+                    (Json.Decode.nullable Json.Decode.string)
+                    |> Json.Decode.map
+                        (Utils.map3TupleTo BreakdownPart)
+                )
             )
         )
         (Json.Decode.field "translation" Json.Decode.string)
-
-
-freshTranslation : List ( String, String ) -> String -> Translation
-freshTranslation a b =
-    Translation a b Nothing
 
 
 processGptResponse : Result Http.Error String -> Result GptAssistError Translation

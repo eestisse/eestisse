@@ -1,11 +1,13 @@
 module View exposing (..)
 
 import Browser
-import Element exposing (Element)
+import Element exposing (Attribute, Element)
+import Element.Background
 import Element.Border
 import Element.Font
 import Element.Input
 import Html exposing (Html)
+import Json.Decode
 import List
 import Types exposing (..)
 import Utils
@@ -32,8 +34,7 @@ viewBody model =
         , Element.padding 10
         , Element.Font.size 16
         ]
-        [ Maybe.map viewTranslationResult model.maybeTranslationResult
-            |> Maybe.withDefault Element.none
+        [ viewRequestState model.requestState
         , viewTextInputMode model.textInput
         ]
 
@@ -64,39 +65,151 @@ submitButton inputText =
         }
 
 
-viewTranslationResult : Result GptAssistError Translation -> Element FrontendMsg
-viewTranslationResult translationResult =
-    case translationResult of
-        Err gptAssistError ->
-            viewGptAssistError gptAssistError
+viewRequestState : RequestState -> Element FrontendMsg
+viewRequestState requestState =
+    Element.column
+        [ Element.spacing 5
+        , Element.width Element.fill
+        ]
+    <|
+        case requestState of
+            NotSubmitted ->
+                []
 
-        Ok translation ->
-            let
-                partIsSelected part =
-                    case translation.selectedExplanation of
-                        Just ( selectedPart, _ ) ->
-                            part == selectedPart
-
-                        Nothing ->
-                            False
-            in
-            Element.column
-                [ Element.spacing 20 ]
-                [ Element.paragraph
-                    [ Element.width Element.fill ]
-                    (translation.inputAndExplanations
-                        |> List.map
-                            (\( part, explanation ) ->
-                                selectPartButton (partIsSelected part) ( part, explanation )
-                            )
-                        |> List.intersperse (Element.text " ")
-                    )
-                , Element.paragraph [ Element.width Element.fill ] [ Element.text translation.translation ]
-                , translation.selectedExplanation
-                    |> Maybe.map Tuple.second
-                    |> Maybe.map viewExplanation
-                    |> Maybe.withDefault Element.none
+            Loading inputText ->
+                [ justInputElement inputText
+                , loadingTranslationElement
                 ]
+
+            RequestComplete completedRequest ->
+                case completedRequest.translationResult of
+                    Err gptAssistError ->
+                        [ justInputElement completedRequest.inputText
+                        , viewGptAssistError gptAssistError
+                        ]
+
+                    Ok translation ->
+                        [ inputAsButtonsElement translation.breakdown completedRequest.maybeSelectedBreakdownPart
+                        , translatedTextElement translation.translation
+                        , Element.el [ Element.height <| Element.px 8 ] <| Element.none
+                        , Maybe.map selectedExplanationElement completedRequest.maybeSelectedBreakdownPart
+                            |> Maybe.withDefault Element.none
+                        ]
+
+
+inputTextStyles : List (Attribute FrontendMsg)
+inputTextStyles =
+    [ Element.width Element.fill ]
+
+
+translatedTextColor : Element.Color
+translatedTextColor =
+    Element.rgb 0 0 1
+
+
+translatedTextStyles : List (Attribute FrontendMsg)
+translatedTextStyles =
+    [ Element.width Element.fill
+    , Element.Font.color translatedTextColor
+    , Element.Font.italic
+    ]
+
+
+justInputElement : String -> Element FrontendMsg
+justInputElement inputText =
+    Element.paragraph
+        inputTextStyles
+        [ Element.text inputText ]
+
+
+inputAsButtonsElement : Breakdown -> Maybe BreakdownPart -> Element FrontendMsg
+inputAsButtonsElement breakdown maybeSelectedBreakdownPart =
+    let
+        partIsSelected estonian =
+            case maybeSelectedBreakdownPart of
+                Just selectedBreakdownPart ->
+                    estonian == selectedBreakdownPart.estonian
+
+                Nothing ->
+                    False
+    in
+    Element.paragraph
+        inputTextStyles
+        (breakdown
+            |> List.map
+                (\breakdownPart ->
+                    selectPartButton (partIsSelected breakdownPart.estonian) breakdownPart
+                )
+            |> List.intersperse (Element.text " ")
+        )
+
+
+translatedTextElement : String -> Element FrontendMsg
+translatedTextElement translatedText =
+    Element.paragraph
+        translatedTextStyles
+        [ Element.text translatedText ]
+
+
+loadingTranslationElement : Element FrontendMsg
+loadingTranslationElement =
+    Element.el
+        [ Element.Font.italic
+        , Element.Font.size 14
+        , Element.Font.color <| Element.rgb 0.5 0.5 0.5
+        ]
+        (Element.text "The robot is translating...")
+
+
+selectedExplanationElement : BreakdownPart -> Element FrontendMsg
+selectedExplanationElement breakdownPart =
+    Element.column
+        [ Element.spacing 5
+        , Element.padding 5
+        , Element.Border.width 1
+        , Element.Border.rounded 4
+        , Element.Border.color <| Element.rgb 0.8 0.8 0
+        , Element.Background.color <| Element.rgb 1 1 0.7
+        ]
+        [ Element.row
+            []
+            [ Element.el
+                [ Element.Font.bold
+                ]
+              <|
+                Element.text <|
+                    breakdownPart.estonian
+                        ++ ":   "
+            , Element.el
+                [ Element.Font.color translatedTextColor
+                , Element.Font.italic
+                ]
+              <|
+                Element.text breakdownPart.englishTranslation
+            ]
+        , breakdownPart.maybeExplanation
+            |> Maybe.map
+                (\explanationText ->
+                    Element.paragraph
+                        [ Element.Font.size 14
+                        , Element.Font.italic
+                        , Element.Font.color <| Element.rgb 0.2 0.2 0.2
+                        , Element.paddingEach
+                            { left = 15
+                            , right = 0
+                            , top = 0
+                            , bottom = 0
+                            }
+                        ]
+                        [ Element.text explanationText ]
+                )
+            |> Maybe.withDefault Element.none
+        ]
+
+
+hbreakElement : Element FrontendMsg
+hbreakElement =
+    Element.text "---"
 
 
 viewGptAssistError : GptAssistError -> Element FrontendMsg
@@ -121,8 +234,8 @@ gptAssistErrorToString gptAssistError =
             "ChatGPT refuses to process the request: " ++ gptsDamnProblemString
 
 
-selectPartButton : Bool -> ( String, String ) -> Element FrontendMsg
-selectPartButton partIsSelected ( phrase, explanation ) =
+selectPartButton : Bool -> BreakdownPart -> Element FrontendMsg
+selectPartButton partIsSelected breakdownPart =
     Element.Input.button
         (if partIsSelected then
             [ Element.Border.width 1
@@ -132,11 +245,6 @@ selectPartButton partIsSelected ( phrase, explanation ) =
          else
             []
         )
-        { onPress = Just <| ShowExplanation phrase explanation
-        , label = Element.text phrase
+        { onPress = Just <| ShowExplanation breakdownPart
+        , label = Element.text breakdownPart.estonian
         }
-
-
-viewExplanation : String -> Element FrontendMsg
-viewExplanation explanation =
-    Element.paragraph [] [ Element.text explanation ]

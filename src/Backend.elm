@@ -34,10 +34,10 @@ update msg model =
         NoOpBackendMsg ->
             ( model, Cmd.none )
 
-        GptResponseReceived clientId fetchResult ->
+        GptResponseReceived clientId input fetchResult ->
             ( model
             , Lamdera.sendToFrontend clientId
-                (TranslationResult <| GPTRequests.processGptResponse fetchResult)
+                (TranslationResult input <| GPTRequests.processGptResponse fetchResult)
             )
 
 
@@ -58,7 +58,7 @@ requestTranslationCmd clientId inputText =
         , headers = [ Http.header "Authorization" ("Bearer " ++ Env.openaiApiKey) ]
         , url = "https://api.openai.com/v1/chat/completions"
         , body = Http.jsonBody <| GPTRequests.encode <| GPTRequests.translateFromEstonian inputText
-        , expect = Http.expectJson (GptResponseReceived clientId) GPTRequests.apiResponseDecoder
+        , expect = Http.expectJson (GptResponseReceived clientId inputText) GPTRequests.apiResponseDecoder
         , timeout = Nothing
         , tracker = Nothing
         }

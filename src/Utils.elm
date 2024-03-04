@@ -1,7 +1,7 @@
 module Utils exposing (..)
 
-import Json.Decode
 import Http
+import Json.Decode
 
 
 httpErrorToString : Http.Error -> String
@@ -29,8 +29,21 @@ httpErrorToString error =
             errorMessage
 
 
-decodeTuple : Json.Decode.Decoder a -> Json.Decode.Decoder b -> Json.Decode.Decoder (a, b)
+decodeTuple : Json.Decode.Decoder a -> Json.Decode.Decoder b -> Json.Decode.Decoder ( a, b )
 decodeTuple decoder1 decoder2 =
-    Json.Decode.map2 Tuple.pair 
+    Json.Decode.map2 Tuple.pair
         (Json.Decode.index 0 decoder1)
         (Json.Decode.index 1 decoder2)
+
+
+decode3Tuple : Json.Decode.Decoder a -> Json.Decode.Decoder b -> Json.Decode.Decoder c -> Json.Decode.Decoder ( a, b, c )
+decode3Tuple decoder1 decoder2 decoder3 =
+    Json.Decode.map3 (\a b c -> ( a, b, c ))
+        (Json.Decode.index 0 decoder1)
+        (Json.Decode.index 1 decoder2)
+        (Json.Decode.index 2 decoder3)
+
+
+map3TupleTo : (a -> b -> c -> d) -> (a, b, c) -> d
+map3TupleTo f (a, b, c) =
+    f a b c
