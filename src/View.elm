@@ -24,12 +24,13 @@ viewBody model =
     Element.column
         [ Element.centerX
         , Element.centerY
-        , Element.width <| Element.px 400
-        , Element.height <| Element.px 800
+        , Element.width <| Element.maximum 800 Element.fill
+        , Element.height Element.fill
         , Element.Border.width 1
         , Element.Border.color <| Element.rgb 0 0 0
         , Element.Border.rounded 10
         , Element.padding 10
+        , Element.Font.size 16
         ]
         [ Maybe.map viewTranslationResult model.maybeTranslationResult
             |> Maybe.withDefault Element.none
