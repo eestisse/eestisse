@@ -90,6 +90,7 @@ update msg model =
             ( { model
                 | requestState =
                     Loading inputText
+                , textInput = ""
               }
             , Lamdera.sendToBackend <| SubmitTextForTranslation inputText
             )

@@ -217,7 +217,7 @@ gptAssistErrorToString gptAssistError =
             "ChatGPT did not respond with the expected structure: " ++ decodeError
 
         GptExpressedError gptsDamnProblemString ->
-            "ChatGPT refuses to process the request: " ++ gptsDamnProblemString
+            "ChatGPT refuses to process the request: \"" ++ gptsDamnProblemString ++ "\""
 
 
 selectPartButton : Bool -> BreakdownPart -> Element FrontendMsg
