@@ -263,7 +263,16 @@ textInputAndSubmitButtonElement inputText =
 submitButton : Bool -> String -> Element FrontendMsg
 submitButton enabled inputText =
     Element.Input.button
-        []
+        [ Element.height <| Element.px 32
+        , Element.width <| Element.px 32
+        , Element.Border.rounded 4
+        , Element.Background.color <|
+            if enabled then
+                Element.rgb 0 0 0
+
+            else
+                Element.rgb 0.7 0.7 0.7
+        ]
         { onPress =
             if enabled then
                 Just <| SubmitText inputText
@@ -272,14 +281,9 @@ submitButton enabled inputText =
                 Nothing
         , label =
             Element.image
-                [ Element.height <| Element.px 32
-                , Element.Border.rounded 4
-                , Element.Background.color <|
-                    if enabled then
-                        Element.rgb 0 0 0
-
-                    else
-                        Element.rgb 0.7 0.7 0.7
+                [ Element.centerX
+                , Element.centerY
+                , Element.height <| Element.px 20
                 ]
                 { src = "/up-arrow-white.png"
                 , description = "submit"
