@@ -6,4 +6,4 @@ module Env exposing (..)
 
 openaiApiKey : String
 openaiApiKey =
-    "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"
+    ""
