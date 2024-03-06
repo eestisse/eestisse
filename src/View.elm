@@ -15,7 +15,7 @@ import Utils
 
 root : FrontendModel -> Browser.Document FrontendMsg
 root model =
-    { title = ""
+    { title = "Eestisse"
     , body =
         [ Element.layoutWith
             { options =
