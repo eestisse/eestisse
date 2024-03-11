@@ -313,6 +313,9 @@ viewGptAssistError gptAssistError =
 gptAssistErrorToString : GptAssistError -> String
 gptAssistErrorToString gptAssistError =
     case gptAssistError of
+        OutOfCredits ->
+            "Out of credits! D:"
+
         ApiProtocolError httpError ->
             "There was an issue with OpenAI's protocol: " ++ Utils.httpErrorToString httpError
 

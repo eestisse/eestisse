@@ -37,7 +37,8 @@ type alias CompletedRequest =
 
 
 type GptAssistError
-    = ApiProtocolError Http.Error
+    = OutOfCredits
+    | ApiProtocolError Http.Error
     | GptDecodeError String
     | GptExpressedError String
 
@@ -60,7 +61,7 @@ type alias BreakdownPart =
 
 
 type alias BackendModel =
-    { thing : Int }
+    { publicCredits : Int }
 
 
 type FrontendMsg
@@ -80,6 +81,7 @@ type ToBackend
 type BackendMsg
     = NoOpBackendMsg
     | GptResponseReceived ClientId String (Result Http.Error String)
+    | AddPublicCredits
 
 
 type ToFrontend
