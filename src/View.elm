@@ -64,6 +64,7 @@ viewRequestState requestState =
 
             Loading inputText ->
                 [ translationInputTextElement inputText
+                , hbreakElement
                 , loadingTranslationElement
                 ]
 
@@ -71,11 +72,13 @@ viewRequestState requestState =
                 case completedRequest.translationResult of
                     Err gptAssistError ->
                         [ translationInputTextElement completedRequest.inputText
+                        , hbreakElement
                         , viewGptAssistError gptAssistError
                         ]
 
                     Ok translation ->
                         [ translationInputButtonsElement translation.breakdown completedRequest.maybeSelectedBreakdownPart
+                        , hbreakElement
                         , translatedTextElement translation.translation
                         , Element.el [ Element.height <| Element.px 8 ] <| Element.none
                         , Maybe.map selectedExplanationElement completedRequest.maybeSelectedBreakdownPart
@@ -85,7 +88,9 @@ viewRequestState requestState =
 
 inputTextStyles : List (Attribute FrontendMsg)
 inputTextStyles =
-    [ Element.width Element.fill ]
+    [ Element.Font.size 24
+    , Element.width Element.fill
+    ]
 
 
 translatedTextColor : Element.Color
@@ -95,7 +100,8 @@ translatedTextColor =
 
 translatedTextStyles : List (Attribute FrontendMsg)
 translatedTextStyles =
-    [ Element.width Element.fill
+    [ Element.Font.size 24
+    , Element.width Element.fill
     , Element.Font.color translatedTextColor
     , Element.Font.italic
     ]
@@ -103,9 +109,10 @@ translatedTextStyles =
 
 translationInputTextElement : String -> Element FrontendMsg
 translationInputTextElement inputText =
-    Element.paragraph
-        inputTextStyles
-        [ Element.text inputText ]
+    Element.el [ Element.centerX ] <|
+        Element.paragraph
+            inputTextStyles
+            [ Element.text inputText ]
 
 
 translationInputButtonsElement : Breakdown -> Maybe BreakdownPart -> Element FrontendMsg
@@ -119,15 +126,16 @@ translationInputButtonsElement breakdown maybeSelectedBreakdownPart =
                 Nothing ->
                     False
     in
-    Element.paragraph
-        inputTextStyles
-        (breakdown
-            |> List.map
-                (\breakdownPart ->
-                    selectPartButton (partIsSelected breakdownPart.estonian) breakdownPart
-                )
-            |> List.intersperse (Element.text " ")
-        )
+    Element.el [ Element.centerX ] <|
+        Element.paragraph
+            inputTextStyles
+            (breakdown
+                |> List.map
+                    (\breakdownPart ->
+                        selectPartButton (partIsSelected breakdownPart.estonian) breakdownPart
+                    )
+                |> List.intersperse (Element.text " ")
+            )
 
 
 selectPartButton : Bool -> BreakdownPart -> Element FrontendMsg
@@ -153,17 +161,19 @@ selectPartButton partIsSelected breakdownPart =
 
 translatedTextElement : String -> Element FrontendMsg
 translatedTextElement translatedText =
-    Element.paragraph
-        translatedTextStyles
-        [ Element.text translatedText ]
+    Element.el [ Element.centerX ] <|
+        Element.paragraph
+            translatedTextStyles
+            [ Element.text translatedText ]
 
 
 loadingTranslationElement : Element FrontendMsg
 loadingTranslationElement =
     Element.el
         [ Element.Font.italic
-        , Element.Font.size 14
+        , Element.Font.size 18
         , Element.Font.color <| Element.rgb 0.5 0.5 0.5
+        , Element.centerX
         ]
         (Element.text "The robot is translating...")
 
@@ -177,22 +187,36 @@ selectedExplanationElement breakdownPart =
         , Element.Border.rounded 4
         , Element.Border.color <| Element.rgb 0.8 0.8 0
         , Element.Background.color <| Element.rgb 1 1 0.7
+        , Element.centerX
         ]
         [ Element.row
-            []
+            [ Element.width Element.fill
+            , Element.spacing 5
+            ]
             [ Element.el
-                [ Element.Font.bold
+                [ Element.width Element.fill
                 ]
               <|
-                Element.text <|
-                    breakdownPart.estonian
-                        ++ ":   "
+                Element.el
+                    [ Element.alignRight
+                    , Element.Font.bold
+                    , Element.Font.size 18
+                    ]
+                <|
+                    Element.text breakdownPart.estonian
+            , vbreakElement
             , Element.el
-                [ Element.Font.color translatedTextColor
-                , Element.Font.italic
+                [ Element.width Element.fill
                 ]
               <|
-                Element.text breakdownPart.englishTranslation
+                Element.el
+                    [ Element.alignLeft
+                    , Element.Font.italic
+                    , Element.Font.color translatedTextColor
+                    , Element.Font.size 18
+                    ]
+                <|
+                    Element.text breakdownPart.englishTranslation
             ]
         , breakdownPart.maybeExplanation
             |> Maybe.map
@@ -214,9 +238,58 @@ selectedExplanationElement breakdownPart =
         ]
 
 
-hbreakElement : Element FrontendMsg
 hbreakElement =
-    Element.text "---"
+    breakElement False
+
+
+vbreakElement =
+    breakElement True
+
+
+breakElement : Bool -> Element FrontendMsg
+breakElement isVertical =
+    let
+        outerEl =
+            if isVertical then
+                Element.el [ Element.height <| Element.fillPortion 1 ] Element.none
+
+            else
+                Element.el [ Element.width <| Element.fillPortion 1 ] Element.none
+
+        innerEl =
+            if isVertical then
+                Element.el
+                    [ Element.height <| Element.fillPortion 6
+                    , Element.width <| Element.px 2
+                    , Element.Background.color <| Element.rgb 0.7 0.7 1
+                    ]
+                    Element.none
+
+            else
+                Element.el
+                    [ Element.width <| Element.fillPortion 6
+                    , Element.height <| Element.px 3
+                    , Element.Background.color <| Element.rgb 0.7 0.7 1
+                    ]
+                <|
+                    Element.none
+    in
+    (if isVertical then
+        Element.column
+            [ Element.height Element.fill
+            , Element.paddingXY 5 0
+            ]
+
+     else
+        Element.row
+            [ Element.width Element.fill
+            , Element.paddingXY 0 7
+            ]
+    )
+        [ outerEl
+        , innerEl
+        , outerEl
+        ]
 
 
 viewGptAssistError : GptAssistError -> Element FrontendMsg

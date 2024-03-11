@@ -4,6 +4,7 @@ import Browser exposing (UrlRequest(..))
 import Browser.Navigation as Nav
 import Dict exposing (Dict)
 import Lamdera
+import Testing
 import Types exposing (..)
 import Url
 import View
@@ -31,33 +32,11 @@ init url key =
       , textInput = ""
       , requestState =
             NotSubmitted
-
-      -- RequestComplete
-      --     testCompletedRequest
+            -- RequestComplete
+            --     Testing.completedRequestExample
       }
     , Cmd.none
     )
-
-
-
--- testCompletedRequest =
---     { inputText = ""
---     , translationResult =
---         Ok <|
---             { breakdown =
---                 [ { estonian = "minu"
---                   , englishTranslation = "my"
---                   , maybeExplanation = Nothing
---                   }
---                 , { estonian = "nimi"
---                   , englishTranslation = "is"
---                   , maybeExplanation = Just "some explanation here some explanation here some explanation here some explanation here some explanation here some explanation here "
---                   }
---                 ]
---             , translation = "my name is Logan"
---             }
---     , maybeSelectedBreakdownPart = Nothing
---     }
 
 
 update : FrontendMsg -> Model -> ( Model, Cmd FrontendMsg )
