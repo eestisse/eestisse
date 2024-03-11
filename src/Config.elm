@@ -12,5 +12,5 @@ publicUsageConfig : PublicUsageConfig
 publicUsageConfig =
     { addCreditIntervalMillis = 1000 * 60 * 5 -- 5 min
     , addCreditAmount = 5
-    , maxCapacity = 30000
+    , maxCapacity = 100
     }
