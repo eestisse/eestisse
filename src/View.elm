@@ -9,6 +9,7 @@ import Element.Input
 import Html exposing (Html)
 import Json.Decode
 import List
+import Route exposing (Route)
 import Types exposing (..)
 import Utils
 
@@ -28,13 +29,21 @@ root model =
             }
             []
           <|
-            viewBody model
+            case model.route of
+                Route.Translate ->
+                    viewTranslationPage model.translationPageModel
+
+                Route.History ->
+                    viewHistoryPage
+
+                Route.Badroute ->
+                    viewBadRoute
         ]
     }
 
 
-viewBody : FrontendModel -> Element FrontendMsg
-viewBody model =
+viewTranslationPage : TranslationPageModel -> Element FrontendMsg
+viewTranslationPage translationPageModel =
     Element.column
         [ Element.centerX
         , Element.centerY
@@ -46,8 +55,8 @@ viewBody model =
         , Element.padding 10
         , Element.Font.size 16
         ]
-        [ viewRequestState model.requestState
-        , textInputAndSubmitButtonElement model.textInput
+        [ viewRequestState translationPageModel.requestState
+        , textInputAndSubmitButtonElement translationPageModel.textInput
         ]
 
 
@@ -374,3 +383,13 @@ submitButton enabled inputText =
                 , description = "submit"
                 }
         }
+
+
+viewHistoryPage : Element FrontendMsg
+viewHistoryPage =
+    Element.text "history page"
+
+
+viewBadRoute : Element FrontendMsg
+viewBadRoute =
+    Element.text "bad route page"

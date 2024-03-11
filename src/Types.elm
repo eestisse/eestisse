@@ -6,12 +6,19 @@ import Dict exposing (Dict)
 import Http
 import Json.Decode
 import Lamdera exposing (ClientId)
+import Route exposing (Route)
 import Url exposing (Url)
 
 
 type alias FrontendModel =
     { key : Key
-    , textInput : String
+    , route : Route
+    , translationPageModel : TranslationPageModel
+    }
+
+
+type alias TranslationPageModel =
+    { textInput : String
     , requestState : RequestState
     }
 

@@ -4,6 +4,7 @@ import Browser exposing (UrlRequest(..))
 import Browser.Navigation as Nav
 import Dict exposing (Dict)
 import Lamdera
+import Route exposing (Route)
 import Testing
 import Types exposing (..)
 import Url
@@ -29,11 +30,15 @@ app =
 init : Url.Url -> Nav.Key -> ( Model, Cmd FrontendMsg )
 init url key =
     ( { key = key
-      , textInput = ""
-      , requestState =
-            NotSubmitted
+      , route = Route.parseUrl url
+      , translationPageModel =
+            { textInput = ""
+            , requestState =
+                NotSubmitted
+
             -- RequestComplete
             --     Testing.completedRequestExample
+            }
       }
     , Cmd.none
     )
@@ -61,29 +66,50 @@ update msg model =
             ( model, Cmd.none )
 
         TextInputChanged text ->
-            ( { model | textInput = text }
+            ( { model
+                | translationPageModel =
+                    let
+                        t =
+                            model.translationPageModel
+                    in
+                    { t | textInput = text }
+              }
             , Cmd.none
             )
 
         SubmitText inputText ->
             ( { model
-                | requestState =
-                    Loading inputText
-                , textInput = ""
+                | translationPageModel =
+                    let
+                        t =
+                            model.translationPageModel
+                    in
+                    { t
+                        | requestState =
+                            Loading inputText
+                        , textInput = ""
+                    }
               }
             , Lamdera.sendToBackend <| SubmitTextForTranslation inputText
             )
 
         ShowExplanation breakdownPart ->
-            case model.requestState of
+            case model.translationPageModel.requestState of
                 RequestComplete completedRequest ->
                     ( { model
-                        | requestState =
-                            RequestComplete
-                                { completedRequest
-                                    | maybeSelectedBreakdownPart =
-                                        Just breakdownPart
-                                }
+                        | translationPageModel =
+                            let
+                                t =
+                                    model.translationPageModel
+                            in
+                            { t
+                                | requestState =
+                                    RequestComplete
+                                        { completedRequest
+                                            | maybeSelectedBreakdownPart =
+                                                Just breakdownPart
+                                        }
+                            }
                       }
                     , Cmd.none
                     )
@@ -100,12 +126,19 @@ updateFromBackend msg model =
 
         TranslationResult inputText translationResult ->
             ( { model
-                | requestState =
-                    RequestComplete
-                        { inputText = inputText
-                        , translationResult = translationResult
-                        , maybeSelectedBreakdownPart = Nothing
-                        }
+                | translationPageModel =
+                    let
+                        t =
+                            model.translationPageModel
+                    in
+                    { t
+                        | requestState =
+                            RequestComplete
+                                { inputText = inputText
+                                , translationResult = translationResult
+                                , maybeSelectedBreakdownPart = Nothing
+                                }
+                    }
               }
             , Cmd.none
             )
