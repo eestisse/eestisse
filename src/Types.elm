@@ -17,15 +17,14 @@ type alias FrontendModel =
     }
 
 
-type alias TranslationPageModel =
-    { textInput : String
-    , requestState : RequestState
-    }
+type TranslationPageModel
+    = InputtingText String
+    | RequestSent RequestState
 
 
 type RequestState
     = NotSubmitted
-    | Loading String
+    | Loading String Int
     | RequestComplete CompletedRequest
 
 
@@ -71,6 +70,7 @@ type FrontendMsg
     | TextInputChanged String
     | SubmitText String
     | ShowExplanation BreakdownPart
+    | CycleLoadingAnimation
 
 
 type ToBackend

@@ -6,6 +6,7 @@ import Dict exposing (Dict)
 import Lamdera
 import Route exposing (Route)
 import Testing
+import Time
 import Types exposing (..)
 import Url
 import View
@@ -22,7 +23,7 @@ app =
         , onUrlChange = UrlChanged
         , update = update
         , updateFromBackend = updateFromBackend
-        , subscriptions = \m -> Sub.none
+        , subscriptions = subscriptions
         , view = view
         }
 
@@ -32,13 +33,12 @@ init url key =
     ( { key = key
       , route = Route.parseUrl url
       , translationPageModel =
-            { textInput = ""
-            , requestState =
-                NotSubmitted
+            InputtingText ""
 
-            -- RequestComplete
-            --     Testing.completedRequestExample
-            }
+      -- RequestSent <| Loading "test stuff" 1
+      -- RequestSent <|
+      --     RequestComplete
+      --         Testing.completedRequestExample
       }
     , Cmd.none
     )
@@ -67,12 +67,7 @@ update msg model =
 
         TextInputChanged text ->
             ( { model
-                | translationPageModel =
-                    let
-                        t =
-                            model.translationPageModel
-                    in
-                    { t | textInput = text }
+                | translationPageModel = InputtingText text
               }
             , Cmd.none
             )
@@ -80,36 +75,43 @@ update msg model =
         SubmitText inputText ->
             ( { model
                 | translationPageModel =
-                    let
-                        t =
-                            model.translationPageModel
-                    in
-                    { t
-                        | requestState =
-                            Loading inputText
-                        , textInput = ""
-                    }
+                    RequestSent <| Loading inputText 1
               }
             , Lamdera.sendToBackend <| SubmitTextForTranslation inputText
             )
 
         ShowExplanation breakdownPart ->
-            case model.translationPageModel.requestState of
-                RequestComplete completedRequest ->
+            case model.translationPageModel of
+                RequestSent (RequestComplete completedRequest) ->
                     ( { model
                         | translationPageModel =
-                            let
-                                t =
-                                    model.translationPageModel
-                            in
-                            { t
-                                | requestState =
-                                    RequestComplete
-                                        { completedRequest
-                                            | maybeSelectedBreakdownPart =
-                                                Just breakdownPart
-                                        }
-                            }
+                            RequestSent <|
+                                RequestComplete
+                                    { completedRequest
+                                        | maybeSelectedBreakdownPart =
+                                            Just breakdownPart
+                                    }
+                      }
+                    , Cmd.none
+                    )
+
+                _ ->
+                    ( model, Cmd.none )
+
+        CycleLoadingAnimation ->
+            case model.translationPageModel of
+                RequestSent (Loading text animationCounter) ->
+                    let
+                        newAnimationCounter =
+                            if animationCounter == 4 then
+                                1
+
+                            else
+                                animationCounter + 1
+                    in
+                    ( { model
+                        | translationPageModel =
+                            RequestSent <| Loading text newAnimationCounter
                       }
                     , Cmd.none
                     )
@@ -125,25 +127,40 @@ updateFromBackend msg model =
             ( model, Cmd.none )
 
         TranslationResult inputText translationResult ->
-            ( { model
-                | translationPageModel =
-                    let
-                        t =
-                            model.translationPageModel
-                    in
-                    { t
-                        | requestState =
-                            RequestComplete
-                                { inputText = inputText
-                                , translationResult = translationResult
-                                , maybeSelectedBreakdownPart = Nothing
-                                }
-                    }
-              }
-            , Cmd.none
-            )
+            case model.translationPageModel of
+                RequestSent (Loading lastRequestedText _) ->
+                    if inputText == lastRequestedText then
+                        ( { model
+                            | translationPageModel =
+                                RequestSent <|
+                                    RequestComplete
+                                        { inputText = inputText
+                                        , translationResult = translationResult
+                                        , maybeSelectedBreakdownPart = Nothing
+                                        }
+                          }
+                        , Cmd.none
+                        )
+
+                    else
+                        -- ignore; we're getting a result from an older request
+                        ( model, Cmd.none )
+
+                _ ->
+                    -- ignore, we're getting a result but the user has navigated away
+                    ( model, Cmd.none )
 
 
 view : Model -> Browser.Document FrontendMsg
 view model =
     View.root model
+
+
+subscriptions : Model -> Sub FrontendMsg
+subscriptions model =
+    case model.translationPageModel of
+        RequestSent (Loading _ _) ->
+            Time.every 1500 (always CycleLoadingAnimation)
+
+        _ ->
+            Sub.none

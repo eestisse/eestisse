@@ -9,6 +9,7 @@ import Element.Input
 import Html exposing (Html)
 import Json.Decode
 import List
+import List.Extra
 import Route exposing (Route)
 import Types exposing (..)
 import Utils
@@ -31,30 +32,37 @@ root model =
             , Element.height Element.fill
             ]
           <|
-            Element.column
-                [ Element.width Element.fill
-                , Element.height Element.fill
-                ]
-                [ titleElement
-                , case model.route of
-                    Route.Translate ->
-                        viewTranslationPage model.translationPageModel
-
-                    Route.History ->
-                        viewHistoryPage
-
-                    Route.Badroute ->
-                        viewBadRoute
-                ]
+            view model
         ]
     }
+
+
+view : FrontendModel -> Element FrontendMsg
+view model =
+    Element.column
+        [ Element.width Element.fill
+        , Element.height Element.fill
+        , Element.Font.size 16
+        , Element.spacing 25
+        , Element.padding 10
+        ]
+        [ titleElement
+        , case model.route of
+            Route.Translate ->
+                viewTranslationPage model.translationPageModel
+
+            Route.History ->
+                viewHistoryPage
+
+            Route.Badroute ->
+                viewBadRoute
+        ]
 
 
 titleElement : Element FrontendMsg
 titleElement =
     Element.row
         [ Element.centerX
-        , Element.paddingXY 0 10
         , Element.Font.size 28
         , Element.Font.italic
         , Element.Font.family
@@ -67,18 +75,16 @@ titleElement =
 
 viewTranslationPage : TranslationPageModel -> Element FrontendMsg
 viewTranslationPage translationPageModel =
-    Element.column
-        [ Element.width Element.fill
-        , Element.height Element.fill
-        , Element.Font.size 16
-        ]
-        [ viewRequestState translationPageModel.requestState
-        , textInputAndSubmitButtonElement translationPageModel.textInput
-        ]
+    case translationPageModel of
+        InputtingText inputText ->
+            viewTranslationPageInput inputText
+
+        RequestSent requestState ->
+            viewTranslationPageRequestState requestState
 
 
-viewRequestState : RequestState -> Element FrontendMsg
-viewRequestState requestState =
+viewTranslationPageRequestState : RequestState -> Element FrontendMsg
+viewTranslationPageRequestState requestState =
     Element.column
         [ Element.spacing 5
         , Element.width Element.fill
@@ -88,10 +94,10 @@ viewRequestState requestState =
             NotSubmitted ->
                 []
 
-            Loading inputText ->
+            Loading inputText animationCounter ->
                 [ translationInputTextElement inputText
                 , hbreakElement
-                , loadingTranslationElement
+                , loadingTranslationElement animationCounter
                 ]
 
             RequestComplete completedRequest ->
@@ -135,7 +141,7 @@ translatedTextStyles =
 
 translationInputTextElement : String -> Element FrontendMsg
 translationInputTextElement inputText =
-    Element.el [ Element.centerX ] <|
+    Element.el [] <|
         Element.paragraph
             inputTextStyles
             [ Element.text inputText ]
@@ -152,7 +158,7 @@ translationInputButtonsElement breakdown maybeSelectedBreakdownPart =
                 Nothing ->
                     False
     in
-    Element.el [ Element.centerX ] <|
+    Element.el [] <|
         Element.paragraph
             inputTextStyles
             (breakdown
@@ -187,21 +193,32 @@ selectPartButton partIsSelected breakdownPart =
 
 translatedTextElement : String -> Element FrontendMsg
 translatedTextElement translatedText =
-    Element.el [ Element.centerX ] <|
+    Element.el [] <|
         Element.paragraph
             translatedTextStyles
             [ Element.text translatedText ]
 
 
-loadingTranslationElement : Element FrontendMsg
-loadingTranslationElement =
-    Element.el
-        [ Element.Font.italic
-        , Element.Font.size 18
+loadingTranslationElement : Int -> Element FrontendMsg
+loadingTranslationElement animationCounter =
+    let
+        emojiRow =
+            "🤔🤔🤔🧐"
+                |> String.toList
+                |> List.map String.fromChar
+                |> List.Extra.cycle animationCounter
+                |> List.map Element.text
+                |> Element.row [ Element.spacing 10 ]
+    in
+    Element.column
+        [ Element.Font.size 18
         , Element.Font.color <| Element.rgb 0.5 0.5 0.5
         , Element.centerX
+        , Element.spacing 10
         ]
-        (Element.text "The robot is translating...")
+        [ Element.el [ Element.Font.size 24, Element.centerX ] emojiRow
+        , Element.el [ Element.Font.italic ] <| Element.text "The robot is thinking carefully..."
+        ]
 
 
 selectedExplanationElement : BreakdownPart -> Element FrontendMsg
@@ -345,8 +362,8 @@ gptAssistErrorToString gptAssistError =
             "ChatGPT refuses to process the request: \"" ++ gptsDamnProblemString ++ "\""
 
 
-textInputAndSubmitButtonElement : String -> Element FrontendMsg
-textInputAndSubmitButtonElement inputText =
+viewTranslationPageInput : String -> Element FrontendMsg
+viewTranslationPageInput inputText =
     Element.row
         [ Element.width Element.fill
         , Element.alignBottom
