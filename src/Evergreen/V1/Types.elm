@@ -2,33 +2,64 @@ module Evergreen.V1.Types exposing (..)
 
 import Browser
 import Browser.Navigation
+import Evergreen.V1.Route
 import Http
 import Lamdera
 import Url
 
 
 type GptAssistError
-    = ApiProtocolError Http.Error
+    = OutOfCredits
+    | ApiProtocolError Http.Error
     | GptDecodeError String
     | GptExpressedError String
 
 
+type alias BreakdownPart =
+    { estonian : String
+    , englishTranslation : String
+    , maybeExplanation : Maybe String
+    }
+
+
+type alias Breakdown =
+    List BreakdownPart
+
+
 type alias Translation =
-    { inputAndExplanations : List ( String, String )
+    { breakdown : Breakdown
     , translation : String
-    , selectedExplanation : Maybe ( String, String )
+    }
+
+
+type alias CompletedRequest =
+    { inputText : String
+    , translationResult : Result GptAssistError Translation
+    , maybeSelectedBreakdownPart : Maybe BreakdownPart
+    }
+
+
+type RequestState
+    = NotSubmitted
+    | Loading String
+    | RequestComplete CompletedRequest
+
+
+type alias TranslationPageModel =
+    { textInput : String
+    , requestState : RequestState
     }
 
 
 type alias FrontendModel =
     { key : Browser.Navigation.Key
-    , textInput : String
-    , maybeTranslationResult : Maybe (Result GptAssistError Translation)
+    , route : Evergreen.V1.Route.Route
+    , translationPageModel : TranslationPageModel
     }
 
 
 type alias BackendModel =
-    { thing : Int
+    { publicCredits : Int
     }
 
 
@@ -38,7 +69,7 @@ type FrontendMsg
     | NoOpFrontendMsg
     | TextInputChanged String
     | SubmitText String
-    | ShowExplanation String String
+    | ShowExplanation BreakdownPart
 
 
 type ToBackend
@@ -48,9 +79,10 @@ type ToBackend
 
 type BackendMsg
     = NoOpBackendMsg
-    | GptResponseReceived Lamdera.ClientId (Result Http.Error String)
+    | GptResponseReceived Lamdera.ClientId String (Result Http.Error String)
+    | AddPublicCredits
 
 
 type ToFrontend
     = NoOpToFrontend
-    | TranslationResult (Result GptAssistError Translation)
+    | TranslationResult String (Result GptAssistError Translation)
