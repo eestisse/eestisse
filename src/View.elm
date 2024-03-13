@@ -247,10 +247,12 @@ selectedExplanationElement breakdownPart =
         ]
 
 
+hbreakElement : Element FrontendMsg
 hbreakElement =
     breakElement False
 
 
+vbreakElement : Element FrontendMsg
 vbreakElement =
     breakElement True
 
