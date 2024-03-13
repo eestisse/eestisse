@@ -36,9 +36,7 @@ init url key =
             InputtingText ""
 
       -- RequestSent <| Loading "test stuff" 1
-      -- RequestSent <|
-      --     RequestComplete
-      --         Testing.completedRequestExample
+      -- RequestSent <| RequestComplete Testing.completedRequestExample
       }
     , Cmd.none
     )
@@ -75,7 +73,7 @@ update msg model =
         SubmitText inputText ->
             ( { model
                 | translationPageModel =
-                    RequestSent <| Loading inputText 1
+                    RequestSent <| Waiting inputText 1
               }
             , Lamdera.sendToBackend <| SubmitTextForTranslation inputText
             )
@@ -100,7 +98,7 @@ update msg model =
 
         CycleLoadingAnimation ->
             case model.translationPageModel of
-                RequestSent (Loading text animationCounter) ->
+                RequestSent (Waiting text animationCounter) ->
                     let
                         newAnimationCounter =
                             if animationCounter == 4 then
@@ -111,13 +109,21 @@ update msg model =
                     in
                     ( { model
                         | translationPageModel =
-                            RequestSent <| Loading text newAnimationCounter
+                            RequestSent <| Waiting text newAnimationCounter
                       }
                     , Cmd.none
                     )
 
                 _ ->
                     ( model, Cmd.none )
+
+        EditTranslation inputText ->
+            ( { model
+                | translationPageModel =
+                    InputtingText inputText
+              }
+            , Cmd.none
+            )
 
 
 updateFromBackend : ToFrontend -> Model -> ( Model, Cmd FrontendMsg )
@@ -128,7 +134,7 @@ updateFromBackend msg model =
 
         TranslationResult inputText translationResult ->
             case model.translationPageModel of
-                RequestSent (Loading lastRequestedText _) ->
+                RequestSent (Waiting lastRequestedText _) ->
                     if inputText == lastRequestedText then
                         ( { model
                             | translationPageModel =
@@ -159,7 +165,7 @@ view model =
 subscriptions : Model -> Sub FrontendMsg
 subscriptions model =
     case model.translationPageModel of
-        RequestSent (Loading _ _) ->
+        RequestSent (Waiting _ _) ->
             Time.every 1500 (always CycleLoadingAnimation)
 
         _ ->

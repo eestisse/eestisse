@@ -23,8 +23,7 @@ type TranslationPageModel
 
 
 type RequestState
-    = NotSubmitted
-    | Loading String Int
+    = Waiting String Int
     | RequestComplete CompletedRequest
 
 
@@ -71,6 +70,7 @@ type FrontendMsg
     | SubmitText String
     | ShowExplanation BreakdownPart
     | CycleLoadingAnimation
+    | EditTranslation String
 
 
 type ToBackend

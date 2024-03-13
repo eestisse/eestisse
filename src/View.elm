@@ -87,24 +87,40 @@ viewTranslationPageRequestState requestState =
     Element.column
         [ Element.spacing 5
         , Element.width Element.fill
+        , Element.height Element.fill
         ]
     <|
         case requestState of
-            NotSubmitted ->
-                []
-
-            Loading inputText animationCounter ->
+            Waiting inputText animationCounter ->
                 [ translationInputTextElement inputText
                 , hbreakElement
                 , loadingTranslationElement animationCounter
                 ]
 
             RequestComplete completedRequest ->
+                let
+                    editOrNewButtonsRow =
+                        Element.row
+                            [ Element.alignBottom
+                            , Element.width Element.fill
+                            , Element.spacing 20
+                            , Element.paddingEach
+                                { top = 0
+                                , right = 15
+                                , left = 15
+                                , bottom = 15
+                                }
+                            ]
+                            [ Element.el [ Element.alignLeft ] <| modifyTextButton completedRequest.inputText
+                            , Element.el [ Element.alignRight ] <| newTranslationButton
+                            ]
+                in
                 case completedRequest.translationResult of
                     Err gptAssistError ->
                         [ translationInputTextElement completedRequest.inputText
                         , hbreakElement
                         , viewGptAssistError gptAssistError
+                        , editOrNewButtonsRow
                         ]
 
                     Ok translation ->
@@ -114,6 +130,7 @@ viewTranslationPageRequestState requestState =
                         , Element.el [ Element.height <| Element.px 8 ] <| Element.none
                         , Maybe.map selectedExplanationElement completedRequest.maybeSelectedBreakdownPart
                             |> Maybe.withDefault Element.none
+                        , editOrNewButtonsRow
                         ]
 
 
@@ -376,7 +393,7 @@ viewTranslationPageInput inputText =
                 NoOpFrontendMsg
             )
         ]
-        [ Element.Input.text
+        [ Element.Input.multiline
             [ Element.width Element.fill
             , Element.height Element.fill
             , Element.padding 10
@@ -385,24 +402,56 @@ viewTranslationPageInput inputText =
             ]
             { onChange = TextInputChanged
             , text = inputText
-            , placeholder = Just <| Element.Input.placeholder [ Element.Font.italic ] <| Element.text "Enter text to translate"
+            , placeholder = Just <| Element.Input.placeholder [ Element.Font.italic ] <| Element.text "Enter Estonian text to translate"
             , label = Element.Input.labelHidden "Enter text"
+            , spellcheck = False
             }
-        , submitButton (inputText /= "") inputText
+        , Element.el
+            [ Element.centerX
+            , Element.alignBottom
+            ]
+          <|
+            interpretButton (inputText /= "") inputText
         ]
 
 
-submitButton : Bool -> String -> Element FrontendMsg
-submitButton enabled inputText =
-    Element.Input.button
-        [ Element.centerX
-        , Element.paddingXY 30 8
-        , Element.Background.color <|
-            if enabled then
-                Element.rgb 0 0 1
+interpretButton : Bool -> String -> Element FrontendMsg
+interpretButton enabled inputText =
+    mainActionButton
+        "Interpret"
+        (if enabled then
+            Just <| SubmitText inputText
 
-            else
-                Element.rgb 0.5 0.5 0.5
+         else
+            Nothing
+        )
+
+
+modifyTextButton : String -> Element FrontendMsg
+modifyTextButton inputText =
+    minorActionButton
+        "Edit"
+        (Just <| EditTranslation inputText)
+
+
+newTranslationButton : Element FrontendMsg
+newTranslationButton =
+    minorActionButton
+        "New"
+        (Just <| EditTranslation "")
+
+
+mainActionButton : String -> Maybe FrontendMsg -> Element FrontendMsg
+mainActionButton labelText maybeMsg =
+    Element.Input.button
+        [ Element.paddingXY 30 8
+        , Element.Background.color <|
+            case maybeMsg of
+                Just _ ->
+                    Element.rgb 0 0 1
+
+                _ ->
+                    Element.rgb 0.5 0.5 0.5
         , Element.Font.color <| Element.rgb 1 1 1
         , Element.Font.size 26
         , Element.Border.roundEach
@@ -413,13 +462,24 @@ submitButton enabled inputText =
             }
         , madimiFont
         ]
-        { onPress =
-            if enabled then
-                Just <| SubmitText inputText
+        { onPress = maybeMsg
+        , label = Element.text labelText
+        }
 
-            else
-                Nothing
-        , label = Element.text "Interpret"
+
+minorActionButton : String -> Maybe FrontendMsg -> Element FrontendMsg
+minorActionButton labelText maybeMsg =
+    Element.Input.button
+        [ Element.paddingXY 15 8
+        , Element.Border.width 1
+        , Element.Border.color <| Element.rgb 0.5 0.5 1
+        , Element.Background.color <| Element.rgb 0.9 0.9 1
+        , Element.Font.size 24
+        , Element.Font.color <| Element.rgb 0 0 0.5
+        , Element.Border.rounded 10
+        ]
+        { onPress = maybeMsg
+        , label = Element.el [ Element.centerX, Element.centerY ] <| Element.text labelText
         }
 
 
