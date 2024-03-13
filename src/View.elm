@@ -52,13 +52,17 @@ root model =
 
 titleElement : Element FrontendMsg
 titleElement =
-    Element.el
+    Element.row
         [ Element.centerX
         , Element.paddingXY 0 10
-        , Element.Font.size 24
+        , Element.Font.size 28
         , Element.Font.italic
+        , Element.Font.family
+            [ Element.Font.typeface "madimi" ]
         ]
-        (Element.text "Eestisse")
+        [ Element.el [ Element.Font.color <| Element.rgb 0.2 0.2 1 ] <| Element.text "eesti"
+        , Element.el [ Element.Font.color <| Element.rgb 0 0.5 0.8 ] <| Element.text "sse"
+        ]
 
 
 viewTranslationPage : TranslationPageModel -> Element FrontendMsg
