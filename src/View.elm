@@ -27,32 +27,45 @@ root model =
                     }
                 ]
             }
-            []
+            [ Element.width (Element.fill |> Element.maximum 700)
+            , Element.height Element.fill
+            ]
           <|
-            case model.route of
-                Route.Translate ->
-                    viewTranslationPage model.translationPageModel
+            Element.column
+                [ Element.width Element.fill
+                , Element.height Element.fill
+                ]
+                [ titleElement
+                , case model.route of
+                    Route.Translate ->
+                        viewTranslationPage model.translationPageModel
 
-                Route.History ->
-                    viewHistoryPage
+                    Route.History ->
+                        viewHistoryPage
 
-                Route.Badroute ->
-                    viewBadRoute
+                    Route.Badroute ->
+                        viewBadRoute
+                ]
         ]
     }
+
+
+titleElement : Element FrontendMsg
+titleElement =
+    Element.el
+        [ Element.centerX
+        , Element.paddingXY 0 10
+        , Element.Font.size 24
+        , Element.Font.italic
+        ]
+        (Element.text "Eestisse")
 
 
 viewTranslationPage : TranslationPageModel -> Element FrontendMsg
 viewTranslationPage translationPageModel =
     Element.column
-        [ Element.centerX
-        , Element.centerY
-        , Element.width <| Element.maximum 800 Element.fill
+        [ Element.width Element.fill
         , Element.height Element.fill
-        , Element.Border.width 1
-        , Element.Border.color <| Element.rgb 0 0 0
-        , Element.Border.rounded 10
-        , Element.padding 10
         , Element.Font.size 16
         ]
         [ viewRequestState translationPageModel.requestState
