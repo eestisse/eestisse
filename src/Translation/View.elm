@@ -22,6 +22,48 @@ page translationPageModel =
             viewTranslationPageRequestState requestState
 
 
+viewTranslationPageInput : String -> Element FrontendMsg
+viewTranslationPageInput inputText =
+    Element.column
+        [ Element.width Element.fill
+        , Element.height Element.fill
+        , Utils.onEnter
+            (if inputText /= "" then
+                SubmitText inputText
+
+             else
+                NoOpFrontendMsg
+            )
+        ]
+        [ Element.Input.multiline
+            [ Element.width Element.fill
+            , Element.height Element.fill
+            , Element.padding 10
+            , Element.Border.width 0
+            , Element.Font.size translateTextSize
+            , Element.Events.onFocus HideExplainer
+            ]
+            { onChange = TextInputChanged
+            , text = inputText
+            , placeholder =
+                Just <|
+                    Element.Input.placeholder
+                        [ Element.Font.italic
+                        ]
+                    <|
+                        Element.text "Enter Estonian text"
+            , label = Element.Input.labelHidden "Enter text"
+            , spellcheck = False
+            }
+        , Element.el
+            [ Element.centerX
+            , Element.alignBottom
+            ]
+          <|
+            interpretButton (inputText /= "") inputText
+        ]
+
+
 viewTranslationPageRequestState : RequestState -> Element FrontendMsg
 viewTranslationPageRequestState requestState =
     Element.column
@@ -114,34 +156,34 @@ translationInputButtonsElement breakdown maybeSelectedBreakdownPart =
                 Nothing ->
                     False
     in
-    Element.el [] <|
-        Element.paragraph
-            [ Element.Font.size translateTextSize
-            , Element.width Element.fill
-            ]
-            (breakdown
-                |> List.map
-                    (\breakdownPart ->
-                        selectPartButton (partIsSelected breakdownPart.estonian) breakdownPart
-                    )
-                |> List.intersperse (Element.text " ")
-            )
+    Element.paragraph
+        [ Element.Font.size translateTextSize
+        , Element.width Element.fill
+        ]
+        (breakdown
+            |> List.map
+                (\breakdownPart ->
+                    selectPartButton (partIsSelected breakdownPart.estonian) breakdownPart
+                )
+            |> List.intersperse (Element.text " ")
+        )
 
 
 selectPartButton : Bool -> BreakdownPart -> Element FrontendMsg
 selectPartButton partIsSelected breakdownPart =
     Element.Input.button
-        ([ Element.Border.width 1
-         , Element.padding 2
+        ([ Element.padding 2
+         , Element.Border.width 1
+         , Element.Border.rounded 5
          , Element.Border.color <| Element.rgb 0.5 0.5 1
          ]
             ++ (if partIsSelected then
-                    [ Element.Border.width 1
-                    , Element.Border.color <| Element.rgb 0 0 1
+                    [ Element.Background.color <| Element.rgb 0.3 0.3 1
+                    , Element.Font.color <| Element.rgb 1 1 1
                     ]
 
                 else
-                    [ Element.Border.dashed ]
+                    [ Element.Background.color <| Element.rgb 0.95 0.95 1 ]
                )
         )
         { onPress = Just <| ShowExplanation breakdownPart
@@ -198,26 +240,25 @@ selectedExplanationElement breakdownPart =
                 [ Element.width Element.fill
                 ]
               <|
-                Element.el
+                Element.paragraph
                     [ Element.alignRight
+                    , Element.width Element.shrink
                     , Element.Font.bold
                     , Element.Font.size 18
                     ]
-                <|
-                    Element.text breakdownPart.estonian
+                    [ Element.text breakdownPart.estonian ]
             , vbreakElement
             , Element.el
                 [ Element.width Element.fill
                 ]
               <|
-                Element.el
+                Element.paragraph
                     [ Element.alignLeft
                     , Element.Font.italic
                     , Element.Font.color translatedTextColor
                     , Element.Font.size 18
                     ]
-                <|
-                    Element.text breakdownPart.englishTranslation
+                    [ Element.text breakdownPart.englishTranslation ]
             ]
         , breakdownPart.maybeExplanation
             |> Maybe.map
@@ -262,48 +303,6 @@ gptAssistErrorToString gptAssistError =
 
         GptExpressedError gptsDamnProblemString ->
             "ChatGPT refuses to process the request: \"" ++ gptsDamnProblemString ++ "\""
-
-
-viewTranslationPageInput : String -> Element FrontendMsg
-viewTranslationPageInput inputText =
-    Element.column
-        [ Element.width Element.fill
-        , Element.height Element.fill
-        , Utils.onEnter
-            (if inputText /= "" then
-                SubmitText inputText
-
-             else
-                NoOpFrontendMsg
-            )
-        ]
-        [ Element.Input.multiline
-            [ Element.width Element.fill
-            , Element.height Element.fill
-            , Element.padding 10
-            , Element.Border.width 0
-            , Element.Font.size translateTextSize
-            , Element.Events.onFocus HideExplainer
-            ]
-            { onChange = TextInputChanged
-            , text = inputText
-            , placeholder =
-                Just <|
-                    Element.Input.placeholder
-                        [ Element.Font.italic
-                        ]
-                    <|
-                        Element.text "Enter Estonian text"
-            , label = Element.Input.labelHidden "Enter text"
-            , spellcheck = False
-            }
-        , Element.el
-            [ Element.centerX
-            , Element.alignBottom
-            ]
-          <|
-            interpretButton (inputText /= "") inputText
-        ]
 
 
 interpretButton : Bool -> String -> Element FrontendMsg
