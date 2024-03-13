@@ -65,8 +65,7 @@ titleElement =
         [ Element.centerX
         , Element.Font.size 28
         , Element.Font.italic
-        , Element.Font.family
-            [ Element.Font.typeface "madimi" ]
+        , madimiFont
         ]
         [ Element.el [ Element.Font.color <| Element.rgb 0.2 0.2 1 ] <| Element.text "eesti"
         , Element.el [ Element.Font.color <| Element.rgb 0 0.5 0.8 ] <| Element.text "sse"
@@ -118,11 +117,9 @@ viewTranslationPageRequestState requestState =
                         ]
 
 
-inputTextStyles : List (Attribute FrontendMsg)
-inputTextStyles =
-    [ Element.Font.size 24
-    , Element.width Element.fill
-    ]
+translateTextSize : Int
+translateTextSize =
+    24
 
 
 translatedTextColor : Element.Color
@@ -132,7 +129,7 @@ translatedTextColor =
 
 translatedTextStyles : List (Attribute FrontendMsg)
 translatedTextStyles =
-    [ Element.Font.size 24
+    [ Element.Font.size translateTextSize
     , Element.width Element.fill
     , Element.Font.color translatedTextColor
     , Element.Font.italic
@@ -143,7 +140,9 @@ translationInputTextElement : String -> Element FrontendMsg
 translationInputTextElement inputText =
     Element.el [] <|
         Element.paragraph
-            inputTextStyles
+            [ Element.Font.size translateTextSize
+            , Element.width Element.fill
+            ]
             [ Element.text inputText ]
 
 
@@ -160,7 +159,9 @@ translationInputButtonsElement breakdown maybeSelectedBreakdownPart =
     in
     Element.el [] <|
         Element.paragraph
-            inputTextStyles
+            [ Element.Font.size translateTextSize
+            , Element.width Element.fill
+            ]
             (breakdown
                 |> List.map
                     (\breakdownPart ->
@@ -364,13 +365,9 @@ gptAssistErrorToString gptAssistError =
 
 viewTranslationPageInput : String -> Element FrontendMsg
 viewTranslationPageInput inputText =
-    Element.row
+    Element.column
         [ Element.width Element.fill
-        , Element.alignBottom
-        , Element.Border.rounded 8
-        , Element.Border.width 1
-        , Element.Border.color <| Element.rgb 0.3 0.3 0.6
-        , Element.padding 3
+        , Element.height Element.fill
         , Utils.onEnter
             (if inputText /= "" then
                 SubmitText inputText
@@ -381,12 +378,14 @@ viewTranslationPageInput inputText =
         ]
         [ Element.Input.text
             [ Element.width Element.fill
+            , Element.height Element.fill
+            , Element.padding 10
             , Element.Border.width 0
-            , Element.padding 3
+            , Element.Font.size translateTextSize
             ]
             { onChange = TextInputChanged
             , text = inputText
-            , placeholder = Nothing
+            , placeholder = Just <| Element.Input.placeholder [ Element.Font.italic ] <| Element.text "Enter text to translate"
             , label = Element.Input.labelHidden "Enter text"
             }
         , submitButton (inputText /= "") inputText
@@ -396,15 +395,23 @@ viewTranslationPageInput inputText =
 submitButton : Bool -> String -> Element FrontendMsg
 submitButton enabled inputText =
     Element.Input.button
-        [ Element.height <| Element.px 32
-        , Element.width <| Element.px 32
-        , Element.Border.rounded 4
+        [ Element.centerX
+        , Element.paddingXY 30 8
         , Element.Background.color <|
             if enabled then
-                Element.rgb 0 0 0
+                Element.rgb 0 0 1
 
             else
-                Element.rgb 0.7 0.7 0.7
+                Element.rgb 0.5 0.5 0.5
+        , Element.Font.color <| Element.rgb 1 1 1
+        , Element.Font.size 26
+        , Element.Border.roundEach
+            { topLeft = 20
+            , bottomRight = 20
+            , topRight = 3
+            , bottomLeft = 3
+            }
+        , madimiFont
         ]
         { onPress =
             if enabled then
@@ -412,15 +419,7 @@ submitButton enabled inputText =
 
             else
                 Nothing
-        , label =
-            Element.image
-                [ Element.centerX
-                , Element.centerY
-                , Element.height <| Element.px 20
-                ]
-                { src = "/up-arrow-white.png"
-                , description = "submit"
-                }
+        , label = Element.text "Interpret"
         }
 
 
@@ -432,3 +431,9 @@ viewHistoryPage =
 viewBadRoute : Element FrontendMsg
 viewBadRoute =
     Element.text "bad route page"
+
+
+madimiFont : Attribute FrontendMsg
+madimiFont =
+    Element.Font.family
+        [ Element.Font.typeface "madimi" ]
