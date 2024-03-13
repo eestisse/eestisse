@@ -30,9 +30,19 @@ app =
 
 init : Url.Url -> Nav.Key -> ( Model, Cmd FrontendMsg )
 init url key =
+    let
+        route =
+            Route.parseUrl url
+    in
     ( { key = key
-      , route = Route.parseUrl url
-      , showExplainerSubtitle = True
+      , route = route
+      , showExplainerSubtitle =
+            case route of
+                Route.Translate ->
+                    True
+
+                _ ->
+                    False
       , translationPageModel =
             InputtingText ""
 

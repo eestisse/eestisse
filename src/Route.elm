@@ -6,7 +6,7 @@ import Url.Parser as Parser exposing (Parser)
 
 type Route
     = Translate
-    | History
+    | About
     | Badroute
 
 
@@ -25,5 +25,5 @@ matchRoute =
     Parser.oneOf
         [ Parser.map Translate Parser.top
         , Parser.map Translate (Parser.s "translate")
-        , Parser.map History (Parser.s "history")
+        , Parser.map About (Parser.s "about")
         ]
