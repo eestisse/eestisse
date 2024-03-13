@@ -13,6 +13,7 @@ import Url exposing (Url)
 type alias FrontendModel =
     { key : Key
     , route : Route
+    , showExplainerSubtitle : Bool
     , translationPageModel : TranslationPageModel
     }
 
@@ -71,6 +72,7 @@ type FrontendMsg
     | ShowExplanation BreakdownPart
     | CycleLoadingAnimation
     | EditTranslation String
+    | HideExplainer
 
 
 type ToBackend

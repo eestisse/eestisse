@@ -25,7 +25,7 @@ app =
 
 init : ( Model, Cmd BackendMsg )
 init =
-    ( { publicCredits = 2 }
+    ( { publicCredits = 20 }
     , Cmd.none
     )
 

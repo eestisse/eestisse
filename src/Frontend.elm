@@ -32,6 +32,7 @@ init : Url.Url -> Nav.Key -> ( Model, Cmd FrontendMsg )
 init url key =
     ( { key = key
       , route = Route.parseUrl url
+      , showExplainerSubtitle = True
       , translationPageModel =
             InputtingText ""
 
@@ -122,6 +123,11 @@ update msg model =
                 | translationPageModel =
                     InputtingText inputText
               }
+            , Cmd.none
+            )
+
+        HideExplainer ->
+            ( { model | showExplainerSubtitle = False }
             , Cmd.none
             )
 

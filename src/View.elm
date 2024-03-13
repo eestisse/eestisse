@@ -4,6 +4,7 @@ import Browser
 import Element exposing (Attribute, Element)
 import Element.Background
 import Element.Border
+import Element.Events
 import Element.Font
 import Element.Input
 import Html exposing (Html)
@@ -46,7 +47,17 @@ view model =
         , Element.spacing 25
         , Element.padding 10
         ]
-        [ titleElement
+        [ Element.column
+            [ Element.centerX
+            , Element.spacing 10
+            ]
+            [ titleElement
+            , if model.showExplainerSubtitle then
+                explainerSubtitleElement
+
+              else
+                Element.none
+            ]
         , case model.route of
             Route.Translate ->
                 viewTranslationPage model.translationPageModel
@@ -70,6 +81,29 @@ titleElement =
         [ Element.el [ Element.Font.color <| Element.rgb 0.2 0.2 1 ] <| Element.text "eesti"
         , Element.el [ Element.Font.color <| Element.rgb 0 0.5 0.8 ] <| Element.text "sse"
         ]
+
+
+explainerSubtitleElement : Element FrontendMsg
+explainerSubtitleElement =
+    [ [ Element.text "Eestisse (\"Into Estonia\") helps you learn as you translate." ]
+    , [ Element.text "It really shines with longer sentences!" ]
+    ]
+        |> List.map
+            (Element.paragraph
+                [ Element.Font.center
+                , Element.Font.italic
+                , Element.spacing 2
+                ]
+            )
+        |> Element.column
+            [ Element.centerX
+            , Element.padding 5
+            , Element.Border.width 1
+            , Element.Border.color <| Element.rgb 0.8 0.8 1
+            , Element.Background.color <| Element.rgb 0.9 0.9 1
+            , Element.Border.rounded 6
+            , Element.spacing 10
+            ]
 
 
 viewTranslationPage : TranslationPageModel -> Element FrontendMsg
@@ -399,10 +433,17 @@ viewTranslationPageInput inputText =
             , Element.padding 10
             , Element.Border.width 0
             , Element.Font.size translateTextSize
+            , Element.Events.onFocus HideExplainer
             ]
             { onChange = TextInputChanged
             , text = inputText
-            , placeholder = Just <| Element.Input.placeholder [ Element.Font.italic ] <| Element.text "Enter Estonian text to translate"
+            , placeholder =
+                Just <|
+                    Element.Input.placeholder
+                        [ Element.Font.italic
+                        ]
+                    <|
+                        Element.text "Enter Estonian text"
             , label = Element.Input.labelHidden "Enter text"
             , spellcheck = False
             }
