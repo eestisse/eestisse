@@ -73,6 +73,7 @@ type FrontendMsg
     | CycleLoadingAnimation
     | EditTranslation String
     | HideExplainer
+    | GotoRoute Route
 
 
 type ToBackend

@@ -20,6 +20,7 @@ aboutTextElement =
     [ [ Element.text "Eestisse (\"Into Estonia\") is designed to help you learn Estonian as you navigate the real world in Estonia." ]
     , [ Element.text "We recommend using it as you encounter any real Estonian text in your life. This could be simple advertisements, snippets of articles, or parts of a text conversation with a new Estonian friend :) If you don't have an easy source of Estonian handy, children's books are wonderful for practice!" ]
     , [ Element.text "Using the power of AI, Eestisse gives a full interpretation, not just a translation. This includes a breakdown that explains the sentence in parts, and includes information about context, grammar, and nuance that normal translations services ignore." ]
+    , [ Element.text "Eestisse is particularly helpful with understanding how the case system works!" ]
     , [ Element.text "Once an interpretation is finished, you can you can tap on parts of the original Estonian text to learn more about that part." ]
     , [ Element.text "In the near future, we will be adding English -> Estonian interpretation, interpretation history, and some sort of flashcard memorization mechanic. Stay tuned!" ]
     ]

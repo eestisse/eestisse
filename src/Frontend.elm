@@ -59,7 +59,7 @@ update msg model =
         UrlClicked urlRequest ->
             case urlRequest of
                 Internal url ->
-                    ( model
+                    ( { model | route = Route.parseUrl url }
                     , Nav.pushUrl model.key (Url.toString url)
                     )
 
@@ -69,7 +69,9 @@ update msg model =
                     )
 
         UrlChanged url ->
-            ( model, Cmd.none )
+            ( { model | route = Route.parseUrl url }
+            , Cmd.none
+            )
 
         NoOpFrontendMsg ->
             ( model, Cmd.none )
@@ -139,6 +141,16 @@ update msg model =
         HideExplainer ->
             ( { model | showExplainerSubtitle = False }
             , Cmd.none
+            )
+
+        GotoRoute route ->
+            ( { model
+                | route = route
+                , showExplainerSubtitle = False
+              }
+            , Nav.pushUrl
+                model.key
+                (Route.routeToString route)
             )
 
 

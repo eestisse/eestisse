@@ -1,13 +1,14 @@
 module Route exposing (..)
 
 import Url exposing (Url)
+import Url.Builder
 import Url.Parser as Parser exposing (Parser)
 
 
 type Route
     = Translate
     | About
-    | Badroute
+    | BadRoute
 
 
 parseUrl : Url -> Route
@@ -17,7 +18,7 @@ parseUrl url =
             route
 
         Nothing ->
-            Badroute
+            BadRoute
 
 
 matchRoute : Parser (Route -> a) a
@@ -27,3 +28,19 @@ matchRoute =
         , Parser.map Translate (Parser.s "translate")
         , Parser.map About (Parser.s "about")
         ]
+
+
+routeToString : Route -> String
+routeToString route =
+    Url.Builder.absolute
+        (case route of
+            Translate ->
+                [ "translate" ]
+
+            About ->
+                [ "about" ]
+
+            BadRoute ->
+                [ "badroute" ]
+        )
+        []

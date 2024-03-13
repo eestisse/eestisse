@@ -7,6 +7,7 @@ import Element exposing (Attribute, Element)
 import Element.Background
 import Element.Border
 import Element.Font
+import Element.Input
 import Html exposing (Html)
 import List
 import Route exposing (Route)
@@ -27,7 +28,7 @@ root model =
                     }
                 ]
             }
-            [ Element.width (Element.fill |> Element.maximum 700)
+            [ Element.width Element.fill
             , Element.height Element.fill
             ]
           <|
@@ -39,17 +40,37 @@ root model =
 view : FrontendModel -> Element FrontendMsg
 view model =
     Element.column
-        [ Element.width Element.fill
+        [ Element.width (Element.fill |> Element.maximum 700)
+        , Element.centerX
         , Element.height Element.fill
         , Element.Font.size 16
         , Element.spacing 25
         , Element.padding 10
         ]
         [ Element.column
-            [ Element.centerX
+            [ Element.width Element.fill
             , Element.spacing 10
             ]
-            [ titleElement
+            [ Element.row
+                [ Element.width Element.fill
+                ]
+                [ Element.el [ Element.width Element.fill ] <|
+                    if model.route == Route.Translate then
+                        Element.none
+
+                    else
+                        Element.el [ Element.alignLeft ] <|
+                            routeLinkElement "translate" (Element.rgb 0 0 1) Route.Translate
+                , Element.el [ Element.centerX ]
+                    titleElement
+                , Element.el [ Element.width Element.fill ] <|
+                    if model.route == Route.About then
+                        Element.none
+
+                    else
+                        Element.el [ Element.alignRight ] <|
+                            routeLinkElement "?" (Element.rgb 0 0 1) Route.About
+                ]
             , if model.showExplainerSubtitle then
                 explainerSubtitleElement
 
@@ -63,7 +84,7 @@ view model =
             Route.About ->
                 About.View.page
 
-            Route.Badroute ->
+            Route.BadRoute ->
                 viewBadRoute
         ]
 
@@ -79,6 +100,20 @@ titleElement =
         [ Element.el [ Element.Font.color <| Element.rgb 0.2 0.2 1 ] <| Element.text "eesti"
         , Element.el [ Element.Font.color <| Element.rgb 0 0.5 0.8 ] <| Element.text "sse"
         ]
+
+
+routeLinkElement : String -> Element.Color -> Route -> Element FrontendMsg
+routeLinkElement text color route =
+    Element.Input.button
+        [ Element.padding 8
+        , Element.Border.rounded 5
+        , Element.Background.color color
+        , Element.Font.color <| Element.rgb 1 1 1
+        , Element.Font.size 20
+        ]
+        { onPress = Just <| GotoRoute route
+        , label = Element.text text
+        }
 
 
 explainerSubtitleElement : Element FrontendMsg
