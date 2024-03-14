@@ -55,12 +55,7 @@ view model =
                 [ Element.width Element.fill
                 ]
                 [ Element.el [ Element.width Element.fill ] <|
-                    if model.route == Route.Translate then
-                        Element.none
-
-                    else
-                        Element.el [ Element.alignLeft ] <|
-                            routeLinkElement "translate" (Element.rgb 0 0 1) Route.Translate
+                    Element.none
                 , Element.el [ Element.centerX ]
                     titleElement
                 , Element.el [ Element.width Element.fill ] <|
@@ -69,7 +64,21 @@ view model =
 
                     else
                         Element.el [ Element.alignRight ] <|
-                            routeLinkElement "?" (Element.rgb 0 0 1) Route.About
+                            Element.Input.button
+                                [ Element.Background.color <| Element.rgb 0.9 0.9 1
+                                , Element.Border.rounded 4
+                                , Element.padding 4
+                                ]
+                                { onPress = Just <| GotoRoute Route.About
+                                , label =
+                                    Element.el
+                                        [ Element.Font.bold
+                                        , Element.Font.size 20
+                                        , Element.Font.color <| Element.rgb 0 0 1
+                                        , madimiFont
+                                        ]
+                                        (Element.text "?")
+                                }
                 ]
             , if model.showExplainerSubtitle then
                 explainerSubtitleElement
@@ -91,15 +100,19 @@ view model =
 
 titleElement : Element FrontendMsg
 titleElement =
-    Element.row
-        [ Element.centerX
-        , Element.Font.size 28
-        , Element.Font.italic
-        , madimiFont
-        ]
-        [ Element.el [ Element.Font.color <| Element.rgb 0.2 0.2 1 ] <| Element.text "eesti"
-        , Element.el [ Element.Font.color <| Element.rgb 0 0.5 0.8 ] <| Element.text "sse"
-        ]
+    Element.Input.button
+        [ Element.centerX ]
+        { onPress = Just <| GotoRoute Route.Translate
+        , label =
+            Element.row
+                [ Element.Font.size 28
+                , Element.Font.italic
+                , madimiFont
+                ]
+                [ Element.el [ Element.Font.color <| Element.rgb 0.2 0.2 1 ] <| Element.text "eesti"
+                , Element.el [ Element.Font.color <| Element.rgb 0 0.5 0.8 ] <| Element.text "sse"
+                ]
+        }
 
 
 routeLinkElement : String -> Element.Color -> Route -> Element FrontendMsg
