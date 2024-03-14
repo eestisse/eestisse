@@ -27,12 +27,7 @@ mainActionButton labelText maybeMsg =
                     Element.rgb 0.5 0.5 0.5
         , Element.Font.color <| Element.rgb 1 1 1
         , Element.Font.size 26
-        , Element.Border.roundEach
-            { topLeft = 20
-            , bottomRight = 20
-            , topRight = 3
-            , bottomLeft = 3
-            }
+        , Element.Border.rounded 10
         , madimiFont
         ]
         { onPress = maybeMsg

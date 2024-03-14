@@ -101,7 +101,16 @@ view model =
 titleElement : Element FrontendMsg
 titleElement =
     Element.Input.button
-        [ Element.centerX ]
+        [ Element.centerX
+        , Element.paddingXY 18 8
+        , Element.Border.roundEach
+            { topLeft = 25
+            , bottomRight = 25
+            , topRight = 3
+            , bottomLeft = 3
+            }
+        , Element.Background.color <| Element.rgb 0.9 0.9 1
+        ]
         { onPress = Just <| GotoRoute Route.Translate
         , label =
             Element.row
