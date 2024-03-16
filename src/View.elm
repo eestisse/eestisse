@@ -63,7 +63,11 @@ view model =
                         Element.none
 
                     else
-                        Element.el [ Element.alignRight ] <|
+                        Element.el
+                            [ Element.alignRight
+                            , CommonView.plausibleTrackButtonClick "test"
+                            ]
+                        <|
                             Element.Input.button
                                 [ Element.Background.color <| Element.rgb 0.9 0.9 1
                                 , Element.Border.rounded 4

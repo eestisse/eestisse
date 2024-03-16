@@ -5,6 +5,7 @@ import Element.Background
 import Element.Border
 import Element.Font
 import Element.Input
+import Html.Attributes
 import Types exposing (..)
 
 
@@ -12,6 +13,16 @@ madimiFont : Attribute FrontendMsg
 madimiFont =
     Element.Font.family
         [ Element.Font.typeface "madimi" ]
+
+
+plausibleTrackButtonClick : String -> Attribute FrontendMsg
+plausibleTrackButtonClick nameForPlausible =
+    let
+        weirdClassName =
+            "plausible-event-name=" ++ nameForPlausible
+    in
+    Element.htmlAttribute <|
+        Html.Attributes.class weirdClassName
 
 
 mainActionButton : String -> Maybe FrontendMsg -> Element FrontendMsg
