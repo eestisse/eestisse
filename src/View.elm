@@ -125,13 +125,7 @@ titleElement showSubtitle =
             ]
             { onPress = Just <| GotoRoute Route.Translate
             , label =
-                Element.row
-                    [ Font.size 28
-                    , Font.italic
-                    ]
-                    [ Element.el [ Font.color <| Element.rgb 0.2 0.2 1 ] <| Element.text "eesti"
-                    , Element.el [ Font.color <| Colors.teal ] <| Element.text "sse"
-                    ]
+                CommonView.coloredEestisseText [ Font.size 28, Font.italic ]
             }
         , if showSubtitle then
             Element.column
@@ -141,9 +135,9 @@ titleElement showSubtitle =
                 [ Element.row [ Element.centerX ]
                     [ Element.text "A "
                     , emphasizedText "tutoring and assitance"
-                    , Element.text " app"
+                    , Element.text " tool"
                     ]
-                , Element.el [ Element.centerX ] <| Element.text "for expats learning Estonian"
+                , Element.el [ Element.centerX ] <| Element.text "for the Estonian language"
                 ]
 
           else

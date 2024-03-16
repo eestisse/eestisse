@@ -1,5 +1,6 @@
 module CommonView exposing (..)
 
+import Colors
 import Element exposing (Attribute, Element)
 import Element.Background as Background
 import Element.Border as Border
@@ -9,7 +10,7 @@ import Html.Attributes
 import Types exposing (..)
 
 
-madimiFont : Attribute FrontendMsg
+madimiFont : Attribute msg
 madimiFont =
     Font.family
         [ Font.typeface "madimi" ]
@@ -127,3 +128,23 @@ makeParagraphs extraAttributes =
              ]
                 ++ extraAttributes
             )
+
+
+coloredEestisseText : List (Attribute msg) -> Element msg
+coloredEestisseText extraAttributes =
+    Element.row
+        ([ madimiFont ] ++ extraAttributes)
+        [ Element.el [ Font.color <| Colors.mainBlue ] <| Element.text "eesti"
+        , Element.el [ Font.color <| Colors.teal ] <| Element.text "sse"
+        ]
+
+
+newTabLink : String -> String -> Element msg
+newTabLink url labelText =
+    Element.newTabLink
+        [ Font.color Colors.mainBlue
+        , Font.underline
+        ]
+        { url = url
+        , label = Element.text labelText
+        }
