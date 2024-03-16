@@ -99,11 +99,5 @@ futureFeaturesAndSignupElement =
               , Element.text "! Sign up to hear about new features as they pop: English -> Estonian deep translations, creating flash cards from translations, pictures as input, and more!"
               ]
             ]
-        , Element.el
-            [ Border.width 2
-            , Border.color <| Element.rgb 1 0 0
-            , Element.centerX
-            ]
-          <|
-            Element.text "emailSignupElement"
+        , Element.el [ Element.centerX, Font.italic, Font.size 14 ] <| Element.text "(still gotta put an email signup button here lol)"
         ]
