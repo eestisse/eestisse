@@ -80,7 +80,7 @@ update msg model =
             ( { model
                 | translationPageModel = InputtingText text
               }
-            , plausible_event_out "othertest"
+            , Cmd.none
             )
 
         SubmitText inputText ->

@@ -65,7 +65,6 @@ view model =
                     else
                         Element.el
                             [ Element.alignRight
-                            , CommonView.plausibleTrackButtonClick "test"
                             ]
                         <|
                             Element.Input.button
