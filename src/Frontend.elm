@@ -106,7 +106,7 @@ update msg model =
                                             Just breakdownPart
                                     }
                       }
-                    , Cmd.none
+                    , plausibleEventOutCmd "breakdown-shown"
                     )
 
                 _ ->
