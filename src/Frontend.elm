@@ -36,13 +36,6 @@ init url key =
     in
     ( { key = key
       , route = route
-      , showExplainerSubtitle =
-            case route of
-                Route.Translate ->
-                    True
-
-                _ ->
-                    False
       , translationPageModel =
             InputtingText ""
 
@@ -141,15 +134,9 @@ update msg model =
             , Cmd.none
             )
 
-        HideExplainer ->
-            ( { model | showExplainerSubtitle = False }
-            , Cmd.none
-            )
-
         GotoRoute route ->
             ( { model
                 | route = route
-                , showExplainerSubtitle = False
               }
             , Nav.pushUrl
                 model.key

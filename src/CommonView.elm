@@ -1,18 +1,18 @@
 module CommonView exposing (..)
 
 import Element exposing (Attribute, Element)
-import Element.Background
-import Element.Border
-import Element.Font
-import Element.Input
+import Element.Background as Background
+import Element.Border as Border
+import Element.Font as Font
+import Element.Input as Input
 import Html.Attributes
 import Types exposing (..)
 
 
 madimiFont : Attribute FrontendMsg
 madimiFont =
-    Element.Font.family
-        [ Element.Font.typeface "madimi" ]
+    Font.family
+        [ Font.typeface "madimi" ]
 
 
 plausibleTrackButtonClick : String -> Attribute FrontendMsg
@@ -27,18 +27,18 @@ plausibleTrackButtonClick nameForPlausible =
 
 mainActionButton : String -> Maybe FrontendMsg -> Element FrontendMsg
 mainActionButton labelText maybeMsg =
-    Element.Input.button
+    Input.button
         [ Element.paddingXY 30 8
-        , Element.Background.color <|
+        , Background.color <|
             case maybeMsg of
                 Just _ ->
                     Element.rgb 0 0 1
 
                 _ ->
                     Element.rgb 0.5 0.5 0.5
-        , Element.Font.color <| Element.rgb 1 1 1
-        , Element.Font.size 26
-        , Element.Border.rounded 10
+        , Font.color <| Element.rgb 1 1 1
+        , Font.size 26
+        , Border.rounded 10
         , madimiFont
         ]
         { onPress = maybeMsg
@@ -48,14 +48,14 @@ mainActionButton labelText maybeMsg =
 
 minorActionButton : String -> Maybe FrontendMsg -> Element FrontendMsg
 minorActionButton labelText maybeMsg =
-    Element.Input.button
+    Input.button
         [ Element.paddingXY 15 8
-        , Element.Border.width 1
-        , Element.Border.color <| Element.rgb 0.5 0.5 1
-        , Element.Background.color <| Element.rgb 0.9 0.9 1
-        , Element.Font.size 24
-        , Element.Font.color <| Element.rgb 0 0 0.5
-        , Element.Border.rounded 10
+        , Border.width 1
+        , Border.color <| Element.rgb 0.5 0.5 1
+        , Background.color <| Element.rgb 0.9 0.9 1
+        , Font.size 24
+        , Font.color <| Element.rgb 0 0 0.5
+        , Border.rounded 10
         ]
         { onPress = maybeMsg
         , label = Element.el [ Element.centerX, Element.centerY ] <| Element.text labelText
@@ -87,7 +87,7 @@ breakElement isVertical =
                 Element.el
                     [ Element.height <| Element.fillPortion 6
                     , Element.width <| Element.px 2
-                    , Element.Background.color <| Element.rgb 0.7 0.7 1
+                    , Background.color <| Element.rgb 0.7 0.7 1
                     ]
                     Element.none
 
@@ -95,7 +95,7 @@ breakElement isVertical =
                 Element.el
                     [ Element.width <| Element.fillPortion 6
                     , Element.height <| Element.px 3
-                    , Element.Background.color <| Element.rgb 0.7 0.7 1
+                    , Background.color <| Element.rgb 0.7 0.7 1
                     ]
                 <|
                     Element.none
@@ -116,3 +116,14 @@ breakElement isVertical =
         , innerEl
         , outerEl
         ]
+
+
+makeParagraphs : List (Attribute msg) -> List (List (Element msg)) -> Element msg
+makeParagraphs extraAttributes =
+    List.map
+        (Element.paragraph [ Element.spacing 2 ])
+        >> Element.column
+            ([ Element.spacing 20
+             ]
+                ++ extraAttributes
+            )

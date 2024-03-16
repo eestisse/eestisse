@@ -7,7 +7,7 @@ import Url.Parser as Parser exposing (Parser)
 
 type Route
     = Translate
-    | About
+    | Landing
     | BadRoute
 
 
@@ -24,9 +24,8 @@ parseUrl url =
 matchRoute : Parser (Route -> a) a
 matchRoute =
     Parser.oneOf
-        [ Parser.map Translate Parser.top
+        [ Parser.map Landing Parser.top
         , Parser.map Translate (Parser.s "translate")
-        , Parser.map About (Parser.s "about")
         ]
 
 
@@ -37,8 +36,8 @@ routeToString route =
             Translate ->
                 [ "translate" ]
 
-            About ->
-                [ "about" ]
+            Landing ->
+                []
 
             BadRoute ->
                 [ "badroute" ]

@@ -2,11 +2,10 @@ module Translation.View exposing (..)
 
 import CommonView exposing (..)
 import Element exposing (Attribute, Element)
-import Element.Background
-import Element.Border
-import Element.Events
-import Element.Font
-import Element.Input
+import Element.Background as Background
+import Element.Border as Border
+import Element.Font as Font
+import Element.Input as Input
 import List.Extra
 import Types exposing (..)
 import Utils
@@ -35,24 +34,23 @@ viewTranslationPageInput inputText =
                 NoOpFrontendMsg
             )
         ]
-        [ Element.Input.multiline
+        [ Input.multiline
             [ Element.width Element.fill
             , Element.height Element.fill
             , Element.padding 10
-            , Element.Border.width 0
-            , Element.Font.size translateTextSize
-            , Element.Events.onFocus HideExplainer
+            , Border.width 0
+            , Font.size translateTextSize
             ]
             { onChange = TextInputChanged
             , text = inputText
             , placeholder =
                 Just <|
-                    Element.Input.placeholder
-                        [ Element.Font.italic
+                    Input.placeholder
+                        [ Font.italic
                         ]
                     <|
                         Element.text "Enter Estonian text"
-            , label = Element.Input.labelHidden "Enter text"
+            , label = Input.labelHidden "Enter text"
             , spellcheck = False
             }
         , Element.el
@@ -128,10 +126,10 @@ translatedTextColor =
 
 translatedTextStyles : List (Attribute FrontendMsg)
 translatedTextStyles =
-    [ Element.Font.size translateTextSize
+    [ Font.size translateTextSize
     , Element.width Element.fill
-    , Element.Font.color translatedTextColor
-    , Element.Font.italic
+    , Font.color translatedTextColor
+    , Font.italic
     ]
 
 
@@ -139,7 +137,7 @@ translationInputTextElement : String -> Element FrontendMsg
 translationInputTextElement inputText =
     Element.el [] <|
         Element.paragraph
-            [ Element.Font.size translateTextSize
+            [ Font.size translateTextSize
             , Element.width Element.fill
             ]
             [ Element.text inputText ]
@@ -157,7 +155,7 @@ translationInputButtonsElement breakdown maybeSelectedBreakdownPart =
                     False
     in
     Element.paragraph
-        [ Element.Font.size translateTextSize
+        [ Font.size translateTextSize
         , Element.width Element.fill
         ]
         (breakdown
@@ -171,19 +169,19 @@ translationInputButtonsElement breakdown maybeSelectedBreakdownPart =
 
 selectPartButton : Bool -> BreakdownPart -> Element FrontendMsg
 selectPartButton partIsSelected breakdownPart =
-    Element.Input.button
+    Input.button
         ([ Element.padding 2
-         , Element.Border.width 1
-         , Element.Border.rounded 5
-         , Element.Border.color <| Element.rgb 0.5 0.5 1
+         , Border.width 1
+         , Border.rounded 5
+         , Border.color <| Element.rgb 0.5 0.5 1
          ]
             ++ (if partIsSelected then
-                    [ Element.Background.color <| Element.rgb 0.3 0.3 1
-                    , Element.Font.color <| Element.rgb 1 1 1
+                    [ Background.color <| Element.rgb 0.3 0.3 1
+                    , Font.color <| Element.rgb 1 1 1
                     ]
 
                 else
-                    [ Element.Background.color <| Element.rgb 0.95 0.95 1 ]
+                    [ Background.color <| Element.rgb 0.95 0.95 1 ]
                )
         )
         { onPress = Just <| ShowExplanation breakdownPart
@@ -211,13 +209,13 @@ loadingTranslationElement animationCounter =
                 |> Element.row [ Element.spacing 10 ]
     in
     Element.column
-        [ Element.Font.size 18
-        , Element.Font.color <| Element.rgb 0.5 0.5 0.5
+        [ Font.size 18
+        , Font.color <| Element.rgb 0.5 0.5 0.5
         , Element.centerX
         , Element.spacing 10
         ]
-        [ Element.el [ Element.Font.size 24, Element.centerX ] emojiRow
-        , Element.el [ Element.Font.italic ] <| Element.text "The robot is thinking carefully..."
+        [ Element.el [ Font.size 24, Element.centerX ] emojiRow
+        , Element.el [ Font.italic ] <| Element.text "The robot is thinking carefully..."
         ]
 
 
@@ -226,10 +224,10 @@ selectedExplanationElement breakdownPart =
     Element.column
         [ Element.spacing 5
         , Element.padding 5
-        , Element.Border.width 1
-        , Element.Border.rounded 4
-        , Element.Border.color <| Element.rgb 0.8 0.8 0
-        , Element.Background.color <| Element.rgb 1 1 0.7
+        , Border.width 1
+        , Border.rounded 4
+        , Border.color <| Element.rgb 0.8 0.8 0
+        , Background.color <| Element.rgb 1 1 0.7
         , Element.centerX
         ]
         [ Element.row
@@ -243,8 +241,8 @@ selectedExplanationElement breakdownPart =
                 Element.paragraph
                     [ Element.alignRight
                     , Element.width Element.shrink
-                    , Element.Font.bold
-                    , Element.Font.size 18
+                    , Font.bold
+                    , Font.size 18
                     ]
                     [ Element.text breakdownPart.estonian ]
             , vbreakElement
@@ -254,9 +252,9 @@ selectedExplanationElement breakdownPart =
               <|
                 Element.paragraph
                     [ Element.alignLeft
-                    , Element.Font.italic
-                    , Element.Font.color translatedTextColor
-                    , Element.Font.size 18
+                    , Font.italic
+                    , Font.color translatedTextColor
+                    , Font.size 18
                     ]
                     [ Element.text breakdownPart.englishTranslation ]
             ]
@@ -264,9 +262,9 @@ selectedExplanationElement breakdownPart =
             |> Maybe.map
                 (\explanationText ->
                     Element.paragraph
-                        [ Element.Font.size 14
-                        , Element.Font.italic
-                        , Element.Font.color <| Element.rgb 0.2 0.2 0.2
+                        [ Font.size 14
+                        , Font.italic
+                        , Font.color <| Element.rgb 0.2 0.2 0.2
                         , Element.paddingEach
                             { left = 15
                             , right = 0
@@ -284,7 +282,7 @@ viewGptAssistError : GptAssistError -> Element FrontendMsg
 viewGptAssistError gptAssistError =
     Element.paragraph
         [ Element.width Element.fill
-        , Element.Font.color <| Element.rgb 1 0 0
+        , Font.color <| Element.rgb 1 0 0
         ]
         [ Element.text <| gptAssistErrorToString gptAssistError ]
 

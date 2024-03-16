@@ -1,14 +1,15 @@
 module View exposing (..)
 
-import About.View
 import Browser
+import Colors
 import CommonView exposing (..)
 import Element exposing (Attribute, Element)
-import Element.Background
-import Element.Border
-import Element.Font
-import Element.Input
+import Element.Background as Background
+import Element.Border as Border
+import Element.Font as Font
+import Element.Input as Input
 import Html exposing (Html)
+import Landing.View
 import List
 import Route exposing (Route)
 import Translation.View
@@ -43,7 +44,7 @@ view model =
         [ Element.width (Element.fill |> Element.maximum 700)
         , Element.centerX
         , Element.height Element.fill
-        , Element.Font.size 16
+        , Font.size 16
         , Element.spacing 25
         , Element.padding 10
         ]
@@ -56,10 +57,10 @@ view model =
                 ]
                 [ Element.el [ Element.width Element.fill ] <|
                     Element.none
-                , Element.el [ Element.centerX ]
-                    titleElement
+                , Element.el [ Element.centerX ] <|
+                    titleElement (model.route == Route.Landing)
                 , Element.el [ Element.width Element.fill ] <|
-                    if model.route == Route.About then
+                    if model.route == Route.Landing then
                         Element.none
 
                     else
@@ -67,101 +68,101 @@ view model =
                             [ Element.alignRight
                             ]
                         <|
-                            Element.Input.button
-                                [ Element.Background.color <| Element.rgb 0.9 0.9 1
-                                , Element.Border.rounded 4
+                            Input.button
+                                [ Background.color <| Element.rgb 0.9 0.9 1
+                                , Border.rounded 4
                                 , Element.padding 4
                                 ]
-                                { onPress = Just <| GotoRoute Route.About
+                                { onPress = Just <| GotoRoute Route.Landing
                                 , label =
                                     Element.el
-                                        [ Element.Font.bold
-                                        , Element.Font.size 20
-                                        , Element.Font.color <| Element.rgb 0 0 1
+                                        [ Font.bold
+                                        , Font.size 20
+                                        , Font.color <| Element.rgb 0 0 1
                                         , madimiFont
                                         ]
                                         (Element.text "?")
                                 }
                 ]
-            , if model.showExplainerSubtitle then
-                explainerSubtitleElement
-
-              else
-                Element.none
             ]
         , case model.route of
             Route.Translate ->
                 Translation.View.page model.translationPageModel
 
-            Route.About ->
-                About.View.page
+            Route.Landing ->
+                Landing.View.page
 
             Route.BadRoute ->
                 viewBadRoute
         ]
 
 
-titleElement : Element FrontendMsg
-titleElement =
-    Element.Input.button
+titleElement : Bool -> Element FrontendMsg
+titleElement showSubtitle =
+    let
+        emphasizedText =
+            -- Element.el [ Font.color <| Element.rgb 0.22 0.557 0.235 ] << Element.text
+            Element.el [ Font.color <| Colors.darkGreen ] << Element.text
+
+        -- Element.el [ Font.color <| Element.rgb 0.937 0.424 0 ] << Element.text
+        -- Element.el [ Font.color <| Element.rgb 0.42 0.557 0.137 ] << Element.text
+    in
+    Element.column
         [ Element.centerX
-        , Element.paddingXY 18 8
-        , Element.Border.roundEach
-            { topLeft = 25
-            , bottomRight = 25
-            , topRight = 3
-            , bottomLeft = 3
-            }
-        , Element.Background.color <| Element.rgb 0.9 0.9 1
+        , madimiFont
+        , Element.spacing 15
         ]
-        { onPress = Just <| GotoRoute Route.Translate
-        , label =
-            Element.row
-                [ Element.Font.size 28
-                , Element.Font.italic
-                , madimiFont
+        [ Input.button
+            [ Element.centerX
+            , Element.paddingXY 18 8
+            , Border.roundEach
+                { topLeft = 25
+                , bottomRight = 25
+                , topRight = 3
+                , bottomLeft = 3
+                }
+            , Background.color <| Element.rgb 0.9 0.9 1
+            ]
+            { onPress = Just <| GotoRoute Route.Translate
+            , label =
+                Element.row
+                    [ Font.size 28
+                    , Font.italic
+                    ]
+                    [ Element.el [ Font.color <| Element.rgb 0.2 0.2 1 ] <| Element.text "eesti"
+                    , Element.el [ Font.color <| Colors.teal ] <| Element.text "sse"
+                    ]
+            }
+        , if showSubtitle then
+            Element.column
+                [ Font.color <| Element.rgb 0.2 0.2 0.2
+                , Font.size 20
                 ]
-                [ Element.el [ Element.Font.color <| Element.rgb 0.2 0.2 1 ] <| Element.text "eesti"
-                , Element.el [ Element.Font.color <| Element.rgb 0 0.5 0.8 ] <| Element.text "sse"
+                [ Element.row [ Element.centerX ]
+                    [ Element.text "A "
+                    , emphasizedText "tutoring and assitance"
+                    , Element.text " app"
+                    ]
+                , Element.el [ Element.centerX ] <| Element.text "for expats learning Estonian"
                 ]
-        }
+
+          else
+            Element.none
+        ]
 
 
 routeLinkElement : String -> Element.Color -> Route -> Element FrontendMsg
 routeLinkElement text color route =
-    Element.Input.button
+    Input.button
         [ Element.padding 8
-        , Element.Border.rounded 5
-        , Element.Background.color color
-        , Element.Font.color <| Element.rgb 1 1 1
-        , Element.Font.size 20
+        , Border.rounded 5
+        , Background.color color
+        , Font.color <| Element.rgb 1 1 1
+        , Font.size 20
         ]
         { onPress = Just <| GotoRoute route
         , label = Element.text text
         }
-
-
-explainerSubtitleElement : Element FrontendMsg
-explainerSubtitleElement =
-    [ [ Element.text "Eestisse helps you learn as you translate." ]
-    , [ Element.text "It really shines with longer sentences!" ]
-    ]
-        |> List.map
-            (Element.paragraph
-                [ Element.Font.center
-                , Element.Font.italic
-                , Element.spacing 2
-                ]
-            )
-        |> Element.column
-            [ Element.centerX
-            , Element.padding 5
-            , Element.Border.width 1
-            , Element.Border.color <| Element.rgb 0.8 0.8 1
-            , Element.Background.color <| Element.rgb 0.9 0.9 1
-            , Element.Border.rounded 6
-            , Element.spacing 10
-            ]
 
 
 viewHistoryPage : Element FrontendMsg
