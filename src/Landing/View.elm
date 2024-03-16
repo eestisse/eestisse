@@ -18,9 +18,8 @@ page =
         , Element.height Element.fill
         , Element.spacing 25
         ]
-        [ Element.el [ Element.centerX ] mainExplainer
-        , Element.el [ Element.centerX ] futureFeaturesTeaser
-        , Element.el [ Element.centerX ] emailSignupElement
+        [ mainExplainer
+        , futureFeaturesAndSignupElement
         ]
 
 
@@ -36,7 +35,8 @@ mainExplainer =
             Element.el [ Font.italic ] <| Element.text s
     in
     Element.column
-        [ Element.spacing 20
+        [ Element.width Element.fill
+        , Element.spacing 20
         , Element.padding 10
         , Border.width 1
         , Background.color <| Element.rgb 0.95 0.95 1
@@ -46,14 +46,10 @@ mainExplainer =
         [ CommonView.makeParagraphs
             []
             [ [ CommonView.coloredEestisseText []
-              , Element.text " (meaning \""
-              , Element.el [ Font.color Colors.teal, Font.bold ] <| Element.text "into "
-              , Element.el [ Font.color Colors.mainBlue, Font.bold ] <| Element.text "Estonia"
-              , Element.text "\") is a tutoring and assistance tool for anyone learning the Estonian language. "
+              , Element.text " (meaning \"into Estonia\") is a tutoring and assistance tool for anyone learning the Estonian language. "
               ]
-            , [ Element.text "The central feature is that of "
-              , emphasizedText "deep translation"
-              , Element.text ": Estonian text is not only translated better than other tools, but explained piece by piece, with the help of AI."
+            , [ emphasizedText "Deep translation"
+              , Element.text " is the central feature: Estonian is not just translated, but explained piece by piece, with the help of AI."
               ]
             ]
         , Input.button
@@ -70,67 +66,44 @@ mainExplainer =
             }
         , CommonView.makeParagraphs
             []
-            [ [ Element.text "As you go through life in Estonia, "
+            [ [ Element.text "As you navigate Estonia, "
               , CommonView.coloredEestisseText []
               , Element.text " can be your personal tutor, translating and explaining anything you see. "
               , Element.text "Ads, bills, news articles, and Tinder messages all work well."
               ]
-            , [ Element.text "Or if you really want to learn fast, pick up an Estonian children's book!"
+            , [ Element.text "Or if you really want to learn fast, pick up an Estonian children's book! Trust me. Just tell them it's for your child... your "
+              , italics "inner"
+              , Element.text " child."
               ]
-            , [ Element.text "Before long you'll find you're picking up common words and getting a feel for the grammar and the intimidating (but interesting!) case system (of which \"eestisse\" is an example, by the way!)"
+            , [ Element.text "Before long you'll find you're picking up common words and getting a feel for the grammar and the case system (of which \"eestisse\" is an example, by the way!)"
               ]
             ]
         ]
 
 
-leftoverText =
-    [ [ Element.text "Eestisse (\"Into Estonia\") is designed to help you learn Estonian as you navigate the real world in Estonia." ]
-    , [ Element.text "We recommend using it as you encounter any real Estonian text in your life. This could be simple advertisements, snippets of articles, or parts of a text conversation with a new Estonian friend :) If you don't have an easy source of Estonian handy, children's books are wonderful for practice!" ]
-    , [ Element.text "Using the power of AI, Eestisse gives a full interpretation, not just a translation. This includes a breakdown that explains the sentence in parts, and includes information about context, grammar, and nuance that normal translations services ignore." ]
-    , [ Element.text "Eestisse is particularly helpful with understanding how the case system works!" ]
-    , [ Element.text "Once an interpretation is finished, you can you can tap on parts of the original Estonian text to learn more about that part." ]
-    , [ Element.text "In the near future, we will be adding English -> Estonian interpretation, interpretation history, and some sort of flashcard memorization mechanic. Stay tuned!" ]
-    ]
-
-
-futureFeaturesTeaser : Element FrontendMsg
-futureFeaturesTeaser =
-    Element.el
-        [ Border.width 2
-        , Border.color <| Element.rgb 1 0 0
+futureFeaturesAndSignupElement : Element FrontendMsg
+futureFeaturesAndSignupElement =
+    Element.column
+        [ Element.width Element.fill
+        , Border.width 1
+        , Background.color <| Element.rgb 1 1 0.9
+        , Border.color <| Element.rgb 0.7 0.7 0
+        , Border.rounded 6
+        , Element.spacing 20
+        , Element.padding 10
         ]
-    <|
-        Element.text "futureFeaturesTeaser"
-
-
-emailSignupElement : Element FrontendMsg
-emailSignupElement =
-    Element.el
-        [ Border.width 2
-        , Border.color <| Element.rgb 1 0 0
-        ]
-    <|
-        Element.text "emailSignupElement"
-
-
-explainerSubtitleElement : Element FrontendMsg
-explainerSubtitleElement =
-    [ [ Element.text "Eestisse helps you learn as you translate." ]
-    , [ Element.text "It really shines with longer sentences!" ]
-    ]
-        |> List.map
-            (Element.paragraph
-                [ Font.center
-                , Font.italic
-                , Element.spacing 2
-                ]
-            )
-        |> Element.column
-            [ Element.centerX
-            , Element.padding 5
-            , Border.width 1
-            , Border.color <| Element.rgb 0.8 0.8 1
-            , Background.color <| Element.rgb 0.9 0.9 1
-            , Border.rounded 6
-            , Element.spacing 10
+        [ CommonView.makeParagraphs
+            []
+            [ [ Element.text "This is just the beginning of "
+              , CommonView.coloredEestisseText []
+              , Element.text "! Sign up to hear about new features as they pop: English -> Estonian deep translations, creating flash cards from translations, pictures as input, and more!"
+              ]
             ]
+        , Element.el
+            [ Border.width 2
+            , Border.color <| Element.rgb 1 0 0
+            , Element.centerX
+            ]
+          <|
+            Element.text "emailSignupElement"
+        ]
