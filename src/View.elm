@@ -60,29 +60,7 @@ view model =
                 , Element.el [ Element.centerX ] <|
                     titleElement (model.route == Route.Landing)
                 , Element.el [ Element.width Element.fill ] <|
-                    if model.route == Route.Landing then
-                        Element.none
-
-                    else
-                        Element.el
-                            [ Element.alignRight
-                            ]
-                        <|
-                            Input.button
-                                [ Background.color <| Element.rgb 0.9 0.9 1
-                                , Border.rounded 4
-                                , Element.padding 4
-                                ]
-                                { onPress = Just <| GotoRoute Route.Landing
-                                , label =
-                                    Element.el
-                                        [ Font.bold
-                                        , Font.size 20
-                                        , Font.color <| Element.rgb 0 0 1
-                                        , madimiFont
-                                        ]
-                                        (Element.text "?")
-                                }
+                    Element.none
                 ]
             ]
         , case model.route of
@@ -123,7 +101,7 @@ titleElement showSubtitle =
                 }
             , Background.color <| Element.rgb 0.9 0.9 1
             ]
-            { onPress = Just <| GotoRoute Route.Translate
+            { onPress = Just <| GotoRoute Route.Landing
             , label =
                 CommonView.coloredEestisseText [ Font.size 28, Font.italic ]
             }
