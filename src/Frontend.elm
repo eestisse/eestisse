@@ -1,4 +1,4 @@
-module Frontend exposing (..)
+port module Frontend exposing (..)
 
 import Browser exposing (UrlRequest(..))
 import Browser.Navigation as Nav
@@ -140,7 +140,7 @@ update msg model =
 
         HideExplainer ->
             ( { model | showExplainerSubtitle = False }
-            , Cmd.none
+            , plausible_event_out "othertest"
             )
 
         GotoRoute route ->
@@ -198,3 +198,6 @@ subscriptions model =
 
         _ ->
             Sub.none
+
+
+port plausible_event_out : String -> Cmd msg
