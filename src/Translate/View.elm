@@ -1,4 +1,4 @@
-module Translation.View exposing (..)
+module Translate.View exposing (..)
 
 import CommonView exposing (..)
 import Element exposing (Attribute, Element)
@@ -108,8 +108,12 @@ viewTranslationPageRequestState requestState =
                         , hbreakElement
                         , translatedTextElement translation.translation
                         , Element.el [ Element.height <| Element.px 8 ] <| Element.none
-                        , Maybe.map selectedExplanationElement completedRequest.maybeSelectedBreakdownPart
-                            |> Maybe.withDefault Element.none
+                        , case completedRequest.maybeSelectedBreakdownPart of
+                            Just selectedBreakdownPart ->
+                                selectedExplanationElement selectedBreakdownPart
+
+                            Nothing ->
+                                clickOnPartsHint
                         , editOrNewButtonsRow
                         ]
 
@@ -217,6 +221,22 @@ loadingTranslationElement animationCounter =
         [ Element.el [ Font.size 24, Element.centerX ] emojiRow
         , Element.el [ Font.italic ] <| Element.text "The robot is thinking carefully..."
         ]
+
+
+clickOnPartsHint : Element FrontendMsg
+clickOnPartsHint =
+    Element.el
+        [ Element.padding 5
+        , Border.width 1
+        , Border.rounded 4
+        , Border.color <| Element.rgb 0.8 0.8 0
+        , Background.color <| Element.rgb 1 1 0.7
+        , Element.centerX
+        , Font.color <| Element.rgb 0.3 0.3 0.3
+        , Font.italic
+        ]
+    <|
+        Element.text "Tap parts of the Estonian text to learn more"
 
 
 selectedExplanationElement : BreakdownPart -> Element FrontendMsg

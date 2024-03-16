@@ -12,7 +12,7 @@ import Html exposing (Html)
 import Landing.View
 import List
 import Route exposing (Route)
-import Translation.View
+import Translate.View
 import Types exposing (..)
 
 
@@ -65,7 +65,7 @@ view model =
             ]
         , case model.route of
             Route.Translate ->
-                Translation.View.page model.translationPageModel
+                Translate.View.page model.translationPageModel
 
             Route.Landing ->
                 Landing.View.page
