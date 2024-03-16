@@ -88,7 +88,10 @@ update msg model =
                 | translationPageModel =
                     RequestSent <| Waiting inputText 1
               }
-            , Lamdera.sendToBackend <| SubmitTextForTranslation inputText
+            , Cmd.batch
+                [ Lamdera.sendToBackend <| SubmitTextForTranslation inputText
+                , plausibleEventOutCmd "translation-requested"
+                ]
             )
 
         ShowExplanation breakdownPart ->
@@ -173,7 +176,12 @@ updateFromBackend msg model =
                                         , maybeSelectedBreakdownPart = Nothing
                                         }
                           }
-                        , Cmd.none
+                        , case translationResult of
+                            Ok _ ->
+                                plausibleEventOutCmd "translation-complete"
+
+                            Err _ ->
+                                plausibleEventOutCmd "translation-error"
                         )
 
                     else
@@ -198,6 +206,11 @@ subscriptions model =
 
         _ ->
             Sub.none
+
+
+plausibleEventOutCmd : String -> Cmd msg
+plausibleEventOutCmd name =
+    plausible_event_out name
 
 
 port plausible_event_out : String -> Cmd msg
