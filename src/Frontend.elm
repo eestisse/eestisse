@@ -80,7 +80,7 @@ update msg model =
             ( { model
                 | translationPageModel = InputtingText text
               }
-            , Cmd.none
+            , plausible_event_out "othertest"
             )
 
         SubmitText inputText ->
@@ -140,7 +140,7 @@ update msg model =
 
         HideExplainer ->
             ( { model | showExplainerSubtitle = False }
-            , plausible_event_out "othertest"
+            , Cmd.none
             )
 
         GotoRoute route ->
