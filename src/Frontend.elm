@@ -205,7 +205,7 @@ updateFromBackend msg model =
             ( { model
                 | signupState = Submitted
               }
-            , Cmd.none
+            , plausibleEventOutCmd "email-signup"
             )
 
         ImportantNumber number ->
