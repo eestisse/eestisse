@@ -1,10 +1,12 @@
 port module Frontend exposing (..)
 
 import Browser exposing (UrlRequest(..))
+import Browser.Dom as Dom
 import Browser.Navigation as Nav
 import Dict exposing (Dict)
 import Lamdera
 import Route exposing (Route)
+import Task
 import Testing
 import Time
 import Types exposing (..)
@@ -138,7 +140,7 @@ update msg model =
 
         StartSignup ->
             ( { model | signupState = Active "" }
-            , Cmd.none
+            , focusEmailInputCmd
             )
 
         SubmitSignup emailString ->
@@ -229,6 +231,11 @@ subscriptions model =
 
         _ ->
             Sub.none
+
+
+focusEmailInputCmd : Cmd FrontendMsg
+focusEmailInputCmd =
+    Task.attempt (\_ -> NoOpFrontendMsg) (Dom.focus "email-input")
 
 
 plausibleEventOutCmd : String -> Cmd msg

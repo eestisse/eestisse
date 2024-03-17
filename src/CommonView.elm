@@ -148,3 +148,8 @@ newTabLink url labelText =
         { url = url
         , label = Element.text labelText
         }
+
+
+htmlId : String -> Attribute msg
+htmlId idStr =
+    Element.htmlAttribute <| Html.Attributes.id idStr

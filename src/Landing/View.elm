@@ -149,6 +149,7 @@ signupElement signupState =
 
                             else
                                 NoOpFrontendMsg
+                        , CommonView.htmlId "email-input"
                         ]
                         { onChange = SignupTextChanged
                         , text = input
