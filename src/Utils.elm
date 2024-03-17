@@ -66,3 +66,25 @@ onEnter msg =
                     )
             )
         )
+
+
+isValidEmail : String -> Bool
+isValidEmail input =
+    let
+        s1 =
+            String.split "@" input
+
+        ( a, bc ) =
+            ( List.head s1, s1 |> List.tail |> Maybe.andThen List.head )
+                |> Tuple.mapBoth (Maybe.withDefault "") (Maybe.withDefault "")
+
+        s2 =
+            String.split "." bc
+
+        ( b, c ) =
+            ( List.head s2, s2 |> List.tail |> Maybe.andThen List.head )
+                |> Tuple.mapBoth (Maybe.withDefault "") (Maybe.withDefault "")
+    in
+    List.all (String.length >> (/=) 0)
+        [ a, b, c ]
+        && (List.length s1 == 2)

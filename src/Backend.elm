@@ -6,6 +6,7 @@ import GPTRequests
 import Http
 import Json.Decode
 import Lamdera exposing (ClientId, SessionId)
+import Set
 import Time
 import Types exposing (..)
 
@@ -25,7 +26,9 @@ app =
 
 init : ( Model, Cmd BackendMsg )
 init =
-    ( { publicCredits = 20 }
+    ( { publicCredits = 20
+      , emails = Set.empty
+      }
     , Cmd.none
     )
 
@@ -72,6 +75,20 @@ updateFromFrontend sessionId clientId msg model =
                 ( model
                 , Lamdera.sendToFrontend clientId <| TranslationResult text (Err OutOfCredits)
                 )
+
+        SubmitEmail emailString ->
+            ( { model
+                | emails =
+                    model.emails
+                        |> Set.insert emailString
+              }
+            , Lamdera.sendToFrontend clientId EmailSubmitAck
+            )
+
+        RequestImportantNumber ->
+            ( model
+            , Lamdera.sendToFrontend clientId <| ImportantNumber (model.emails |> Set.size)
+            )
 
 
 requestTranslationCmd : ClientId -> String -> Cmd BackendMsg

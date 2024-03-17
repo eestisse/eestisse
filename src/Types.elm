@@ -4,9 +4,9 @@ import Browser exposing (UrlRequest)
 import Browser.Navigation exposing (Key)
 import Dict exposing (Dict)
 import Http
-import Json.Decode
 import Lamdera exposing (ClientId)
 import Route exposing (Route)
+import Set exposing (Set)
 import Url exposing (Url)
 
 
@@ -14,7 +14,16 @@ type alias FrontendModel =
     { key : Key
     , route : Route
     , translationPageModel : TranslationPageModel
+    , signupState : SignupState
+    , maybeImportantNumber : Maybe Int
     }
+
+
+type SignupState
+    = Inactive
+    | Active String
+    | Submitting
+    | Submitted
 
 
 type TranslationPageModel
@@ -59,7 +68,9 @@ type alias BreakdownPart =
 
 
 type alias BackendModel =
-    { publicCredits : Int }
+    { publicCredits : Int
+    , emails : Set String
+    }
 
 
 type FrontendMsg
@@ -72,11 +83,17 @@ type FrontendMsg
     | CycleLoadingAnimation
     | EditTranslation String
     | GotoRoute Route
+    | StartSignup
+    | SubmitSignup String
+    | SignupTextChanged String
+    | FetchImportantNumber
 
 
 type ToBackend
     = NoOpToBackend
     | SubmitTextForTranslation String
+    | SubmitEmail String
+    | RequestImportantNumber
 
 
 type BackendMsg
@@ -88,3 +105,5 @@ type BackendMsg
 type ToFrontend
     = NoOpToFrontend
     | TranslationResult String (Result GptAssistError Translation)
+    | EmailSubmitAck
+    | ImportantNumber Int

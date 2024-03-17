@@ -8,6 +8,7 @@ import Url.Parser as Parser exposing (Parser)
 type Route
     = Translate
     | Landing
+    | Admin
     | BadRoute
 
 
@@ -26,6 +27,7 @@ matchRoute =
     Parser.oneOf
         [ Parser.map Landing Parser.top
         , Parser.map Translate (Parser.s "translate")
+        , Parser.map Admin (Parser.s "admin")
         ]
 
 
@@ -38,6 +40,9 @@ routeToString route =
 
             Landing ->
                 []
+
+            Admin ->
+                [ "admin" ]
 
             BadRoute ->
                 [ "badroute" ]

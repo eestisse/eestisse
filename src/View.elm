@@ -1,5 +1,6 @@
 module View exposing (..)
 
+import Admin.View
 import Browser
 import Colors
 import CommonView exposing (..)
@@ -10,7 +11,6 @@ import Element.Font as Font
 import Element.Input as Input
 import Html exposing (Html)
 import Landing.View
-import List
 import Route exposing (Route)
 import Translate.View
 import Types exposing (..)
@@ -68,7 +68,10 @@ view model =
                 Translate.View.page model.translationPageModel
 
             Route.Landing ->
-                Landing.View.page
+                Landing.View.page model.signupState
+
+            Route.Admin ->
+                Admin.View.page model.maybeImportantNumber
 
             Route.BadRoute ->
                 viewBadRoute

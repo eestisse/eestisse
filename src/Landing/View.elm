@@ -9,17 +9,18 @@ import Element.Font as Font
 import Element.Input as Input
 import Route
 import Types exposing (..)
+import Utils
 
 
-page : Element FrontendMsg
-page =
+page : SignupState -> Element FrontendMsg
+page signupState =
     Element.column
         [ Element.width Element.fill
         , Element.height Element.fill
         , Element.spacing 25
         ]
         [ mainExplainer
-        , futureFeaturesAndSignupElement
+        , futureFeaturesAndSignupElement signupState
         ]
 
 
@@ -81,8 +82,8 @@ mainExplainer =
         ]
 
 
-futureFeaturesAndSignupElement : Element FrontendMsg
-futureFeaturesAndSignupElement =
+futureFeaturesAndSignupElement : SignupState -> Element FrontendMsg
+futureFeaturesAndSignupElement signupState =
     Element.column
         [ Element.width Element.fill
         , Border.width 1
@@ -99,5 +100,126 @@ futureFeaturesAndSignupElement =
               , Element.text "! Sign up to hear about new features as they pop: English -> Estonian deep translations, creating flash cards from translations, pictures as input, and more!"
               ]
             ]
-        , Element.el [ Element.centerX, Font.italic, Font.size 14 ] <| Element.text "(still gotta put an email signup button here lol)"
+        , signupElement signupState
         ]
+
+
+signupElement : SignupState -> Element FrontendMsg
+signupElement signupState =
+    Element.el
+        [ Element.width <| Element.px 300
+        , Element.height <| Element.px 50
+        , Element.centerX
+        ]
+    <|
+        case signupState of
+            Inactive ->
+                Input.button
+                    [ Element.paddingXY 20 10
+                    , Element.width Element.fill
+                    , Element.height Element.fill
+                    , Font.size 24
+                    , Background.color <| Colors.blue
+                    , Border.rounded 8
+                    , Font.bold
+                    , Font.color <| Colors.white
+                    ]
+                    { onPress = Just <| StartSignup
+                    , label = Element.el [ Element.centerX, Element.centerY ] <| Element.text "Sign up for updates"
+                    }
+
+            Active input ->
+                Element.row
+                    [ Element.spacing 10
+                    , Element.padding 5
+                    , Element.width Element.fill
+                    , Element.height Element.fill
+                    , Border.rounded 5
+                    , Border.width 1
+                    , Border.color <| Element.rgb 0.7 0.7 1
+                    , Background.color <| Element.rgb 0.9 0.9 1
+                    ]
+                    [ Input.text
+                        [ Element.width Element.fill
+                        , Border.width 0
+                        , Background.color Colors.transparent
+                        , Utils.onEnter <|
+                            if Utils.isValidEmail input then
+                                SubmitSignup input
+
+                            else
+                                NoOpFrontendMsg
+                        ]
+                        { onChange = SignupTextChanged
+                        , text = input
+                        , placeholder = Just <| Input.placeholder [ Font.color <| Element.rgb 0.5 0.5 0.5 ] <| Element.text "you@somewhere.neat"
+                        , label = Input.labelHidden "email input"
+                        }
+                    , Input.button
+                        [ Background.color <|
+                            if Utils.isValidEmail input then
+                                Colors.blue
+
+                            else
+                                Colors.gray
+                        , Element.width <| Element.px 32
+                        , Element.height <| Element.px 32
+                        , Border.rounded 4
+                        ]
+                        { onPress =
+                            if Utils.isValidEmail input then
+                                Just <| SubmitSignup input
+
+                            else
+                                Nothing
+                        , label =
+                            Element.image
+                                [ Element.centerX
+                                , Element.centerY
+                                , Element.width <| Element.px 26
+                                ]
+                                { src = "/enter-arrow-white.png"
+                                , description = "submit email"
+                                }
+                        }
+                    ]
+
+            Submitting ->
+                Element.el
+                    [ Element.padding 5
+                    , Element.width Element.fill
+                    , Element.height Element.fill
+                    , Border.rounded 5
+                    , Border.width 1
+                    , Border.color <| Element.rgb 0.7 0.7 1
+                    , Background.color <| Element.rgb 0.9 0.9 1
+                    ]
+                <|
+                    Element.el
+                        [ Element.centerX
+                        , Element.centerY
+                        , Font.bold
+                        , Font.italic
+                        , Font.color <| Element.rgb 0.3 0.3 0.3
+                        ]
+                    <|
+                        Element.text "Submitting..."
+
+            Submitted ->
+                Element.el
+                    [ Element.width Element.fill
+                    , Element.height Element.fill
+                    , Border.rounded 5
+                    , Border.width 1
+                    , Border.color <| Element.rgb 0.2 0.8 0.2
+                    , Background.color <| Element.rgb 0.9 1 0.9
+                    ]
+                <|
+                    Element.el
+                        [ Element.centerX
+                        , Element.centerY
+                        , Font.bold
+                        , Font.color <| Element.rgb 0 0.3 0
+                        ]
+                    <|
+                        Element.text "Thanks! You'll hear from us soon 😊"

@@ -41,6 +41,8 @@ init url key =
 
       -- RequestSent <| Loading "test stuff" 1
       -- RequestSent <| RequestComplete Testing.completedRequestExample
+      , signupState = Inactive
+      , maybeImportantNumber = Nothing
       }
     , Cmd.none
     )
@@ -134,6 +136,21 @@ update msg model =
             , Cmd.none
             )
 
+        StartSignup ->
+            ( { model | signupState = Active "" }
+            , Cmd.none
+            )
+
+        SubmitSignup emailString ->
+            ( { model | signupState = Submitting }
+            , Lamdera.sendToBackend <| SubmitEmail emailString
+            )
+
+        SignupTextChanged text ->
+            ( { model | signupState = Active text }
+            , Cmd.none
+            )
+
         GotoRoute route ->
             ( { model
                 | route = route
@@ -141,6 +158,11 @@ update msg model =
             , Nav.pushUrl
                 model.key
                 (Route.routeToString route)
+            )
+
+        FetchImportantNumber ->
+            ( model
+            , Lamdera.sendToBackend RequestImportantNumber
             )
 
 
@@ -178,6 +200,20 @@ updateFromBackend msg model =
                 _ ->
                     -- ignore, we're getting a result but the user has navigated away
                     ( model, Cmd.none )
+
+        EmailSubmitAck ->
+            ( { model
+                | signupState = Submitted
+              }
+            , Cmd.none
+            )
+
+        ImportantNumber number ->
+            ( { model
+                | maybeImportantNumber = Just number
+              }
+            , Cmd.none
+            )
 
 
 view : Model -> Browser.Document FrontendMsg
