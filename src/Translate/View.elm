@@ -58,7 +58,7 @@ viewTranslationPageInput inputText =
             , Element.alignBottom
             ]
           <|
-            interpretButton (inputText /= "") inputText
+            translateButton (inputText /= "") inputText
         ]
 
 
@@ -323,10 +323,10 @@ gptAssistErrorToString gptAssistError =
             "ChatGPT refuses to process the request: \"" ++ gptsDamnProblemString ++ "\""
 
 
-interpretButton : Bool -> String -> Element FrontendMsg
-interpretButton enabled inputText =
+translateButton : Bool -> String -> Element FrontendMsg
+translateButton enabled inputText =
     mainActionButton
-        "Interpret"
+        "Translate"
         (if enabled then
             Just <| SubmitText inputText
 
