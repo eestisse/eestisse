@@ -139,12 +139,14 @@ coloredEestisseText extraAttributes =
         ]
 
 
-newTabLink : String -> String -> Element msg
-newTabLink url labelText =
+newTabLink : List (Attribute msg) -> String -> String -> Element msg
+newTabLink extraAttributes url labelText =
     Element.newTabLink
-        [ Font.color Colors.mainBlue
-        , Font.underline
-        ]
+        ([ Font.color Colors.mainBlue
+         , Font.underline
+         ]
+            ++ extraAttributes
+        )
         { url = url
         , label = Element.text labelText
         }

@@ -76,8 +76,9 @@ mainExplainer =
               , italics "inner"
               , Element.text " child."
               ]
-            , [ Element.text "Before long you'll find you're picking up common words and getting a feel for the grammar and the case system (of which \"eestisse\" is an example, by the way!)"
-              ]
+
+            -- , [ Element.text "Before long you'll find you're picking up common words and getting a feel for the grammar and the case system (of which \"eestisse\" is an example, by the way!)"
+            --   ]
             ]
         ]
 
@@ -97,7 +98,9 @@ futureFeaturesAndSignupElement signupState =
             []
             [ [ Element.text "This is just the beginning of "
               , CommonView.coloredEestisseText []
-              , Element.text "! Sign up to hear about new features as they pop: English -> Estonian deep translations, creating flash cards from translations, pictures as input, and more!"
+              , Element.text "! Sign up below or "
+              , CommonView.newTabLink [ CommonView.plausibleTrackButtonClick "discord-link-clicked" ] "https://discord.gg/HQJMbBUmna" "join the Discord"
+              , Element.text " to hear about new features as they pop: English -> Estonian deep translations, creating flash cards from translations, pictures as input, and more!"
               ]
             ]
         , signupElement signupState
