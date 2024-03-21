@@ -7,6 +7,7 @@ import Http
 import Lamdera exposing (ClientId)
 import Route exposing (Route)
 import Set exposing (Set)
+import Time
 import Url exposing (Url)
 
 
@@ -68,8 +69,10 @@ type alias BreakdownPart =
 
 
 type alias BackendModel =
-    { publicCredits : Int
+    { nowish : Time.Posix
+    , publicCredits : Int
     , emails : Set String
+    , requests : List ( Time.Posix, String, Result GptAssistError Translation )
     }
 
 
@@ -100,6 +103,7 @@ type BackendMsg
     = NoOpBackendMsg
     | GptResponseReceived ClientId String (Result Http.Error String)
     | AddPublicCredits
+    | UpdateNow Time.Posix
 
 
 type ToFrontend

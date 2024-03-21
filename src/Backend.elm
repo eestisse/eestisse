@@ -26,8 +26,10 @@ app =
 
 init : ( Model, Cmd BackendMsg )
 init =
-    ( { publicCredits = 20
+    ( { nowish = Time.millisToPosix 0
+      , publicCredits = 20
       , emails = Set.empty
+      , requests = []
       }
     , Cmd.none
     )
@@ -40,14 +42,23 @@ update msg model =
             ( model, Cmd.none )
 
         GptResponseReceived clientId input fetchResult ->
+            let
+                gptResult =
+                    GPTRequests.processGptResponse fetchResult
+
+                modelWithResult =
+                    { model
+                        | requests = model.requests |> List.append [ ( model.nowish, input, gptResult ) ]
+                    }
+            in
             ( case fetchResult of
                 Ok _ ->
-                    model |> deductOneCredit
+                    modelWithResult |> deductOneCredit
 
                 Err _ ->
-                    model
+                    modelWithResult
             , Lamdera.sendToFrontend clientId
-                (TranslationResult input <| GPTRequests.processGptResponse fetchResult)
+                (TranslationResult input <| gptResult)
             )
 
         AddPublicCredits ->
@@ -57,6 +68,11 @@ update msg model =
                         Config.publicUsageConfig.maxCapacity
                         (model.publicCredits + Config.publicUsageConfig.addCreditAmount)
               }
+            , Cmd.none
+            )
+
+        UpdateNow time ->
+            ( { model | nowish = time }
             , Cmd.none
             )
 
@@ -113,4 +129,7 @@ deductOneCredit model =
 
 subscriptions : BackendModel -> Sub BackendMsg
 subscriptions model =
-    Time.every Config.publicUsageConfig.addCreditIntervalMillis (always AddPublicCredits)
+    Sub.batch
+        [ Time.every Config.publicUsageConfig.addCreditIntervalMillis (always AddPublicCredits)
+        , Time.every 1000 UpdateNow
+        ]
