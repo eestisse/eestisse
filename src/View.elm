@@ -1,6 +1,7 @@
 module View exposing (..)
 
 import Admin.View
+import BackgroundAnimation
 import Browser
 import Colors
 import CommonView exposing (..)
@@ -40,42 +41,48 @@ root model =
 
 view : FrontendModel -> Element FrontendMsg
 view model =
-    Element.column
-        [ Element.width (Element.fill |> Element.maximum 700)
-        , Element.centerX
+    Element.el
+        [ Element.width Element.fill
         , Element.height Element.fill
-        , Font.size 16
-        , Element.spacing 25
-        , Element.padding 10
+        , Element.behindContent <| BackgroundAnimation.view model.animationTime
         ]
-        [ Element.column
-            [ Element.width Element.fill
-            , Element.spacing 10
+    <|
+        Element.column
+            [ Element.width (Element.fill |> Element.maximum 700)
+            , Element.centerX
+            , Element.height Element.fill
+            , Font.size 16
+            , Element.spacing 25
+            , Element.padding 10
             ]
-            [ Element.row
+            [ Element.column
                 [ Element.width Element.fill
+                , Element.spacing 10
                 ]
-                [ Element.el [ Element.width Element.fill ] <|
-                    Element.none
-                , Element.el [ Element.centerX ] <|
-                    titleElement (model.route == Route.Landing)
-                , Element.el [ Element.width Element.fill ] <|
-                    Element.none
+                [ Element.row
+                    [ Element.width Element.fill
+                    ]
+                    [ Element.el [ Element.width Element.fill ] <|
+                        Element.none
+                    , Element.el [ Element.centerX ] <|
+                        titleElement (model.route == Route.Landing)
+                    , Element.el [ Element.width Element.fill ] <|
+                        Element.none
+                    ]
                 ]
+            , case model.route of
+                Route.Translate ->
+                    Translate.View.page model.translationPageModel
+
+                Route.Landing ->
+                    Landing.View.page model.signupState
+
+                Route.Admin ->
+                    Admin.View.page model.maybeImportantNumber
+
+                Route.BadRoute ->
+                    viewBadRoute
             ]
-        , case model.route of
-            Route.Translate ->
-                Translate.View.page model.translationPageModel
-
-            Route.Landing ->
-                Landing.View.page model.animationTime model.signupState
-
-            Route.Admin ->
-                Admin.View.page model.maybeImportantNumber
-
-            Route.BadRoute ->
-                viewBadRoute
-        ]
 
 
 titleElement : Bool -> Element FrontendMsg

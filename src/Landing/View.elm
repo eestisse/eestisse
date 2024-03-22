@@ -14,13 +14,8 @@ import Types exposing (..)
 import Utils
 
 
-page : Time.Posix -> SignupState -> Element FrontendMsg
-page animationTime signupState =
-    BackgroundAnimation.view animationTime
-
-
-tempDisabledPage : SignupState -> Element FrontendMsg
-tempDisabledPage signupState =
+page : SignupState -> Element FrontendMsg
+page signupState =
     Element.column
         [ Element.width Element.fill
         , Element.height Element.fill
