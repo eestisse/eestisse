@@ -1,5 +1,6 @@
 module Types exposing (..)
 
+import Background.Core as Background
 import Browser exposing (UrlRequest)
 import Browser.Navigation exposing (Key)
 import Dict exposing (Dict)
@@ -18,6 +19,7 @@ type alias FrontendModel =
     , signupState : SignupState
     , maybeImportantNumber : Maybe Int
     , animationTime : Time.Posix
+    , backgroundModel : Maybe Background.Model
     }
 
 

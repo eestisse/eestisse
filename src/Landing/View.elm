@@ -1,10 +1,10 @@
 module Landing.View exposing (..)
 
-import BackgroundAnimation
+import Background.View
 import Colors
 import CommonView
 import Element exposing (Attribute, Element)
-import Element.Background as Background
+import Element.Background
 import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input
@@ -42,7 +42,7 @@ mainExplainer =
         , Element.spacing 20
         , Element.padding 10
         , Border.width 1
-        , Background.color <| Element.rgb 0.95 0.95 1
+        , Element.Background.color <| Element.rgb 0.95 0.95 1
         , Border.color <| Element.rgb 0.8 0.8 1
         , Border.rounded 6
         ]
@@ -58,7 +58,7 @@ mainExplainer =
         , Input.button
             [ Element.paddingXY 30 8
             , Element.centerX
-            , Background.color <| Element.rgb 0 0 1
+            , Element.Background.color <| Element.rgb 0 0 1
             , Font.color <| Element.rgb 1 1 1
             , Font.size 22
             , Border.rounded 10
@@ -90,7 +90,7 @@ futureFeaturesAndSignupElement signupState =
     Element.column
         [ Element.width Element.fill
         , Border.width 1
-        , Background.color <| Element.rgb 1 1 0.9
+        , Element.Background.color <| Element.rgb 1 1 0.9
         , Border.color <| Element.rgb 0.7 0.7 0
         , Border.rounded 6
         , Element.spacing 20
@@ -124,7 +124,7 @@ signupElement signupState =
                     , Element.width Element.fill
                     , Element.height Element.fill
                     , Font.size 24
-                    , Background.color <| Colors.blue
+                    , Element.Background.color <| Colors.blue
                     , Border.rounded 8
                     , Font.bold
                     , Font.color <| Colors.white
@@ -142,12 +142,12 @@ signupElement signupState =
                     , Border.rounded 5
                     , Border.width 1
                     , Border.color <| Element.rgb 0.7 0.7 1
-                    , Background.color <| Element.rgb 0.9 0.9 1
+                    , Element.Background.color <| Element.rgb 0.9 0.9 1
                     ]
                     [ Input.text
                         [ Element.width Element.fill
                         , Border.width 0
-                        , Background.color Colors.transparent
+                        , Element.Background.color Colors.transparent
                         , Utils.onEnter <|
                             if Utils.isValidEmail input then
                                 SubmitSignup input
@@ -162,7 +162,7 @@ signupElement signupState =
                         , label = Input.labelHidden "email input"
                         }
                     , Input.button
-                        [ Background.color <|
+                        [ Element.Background.color <|
                             if Utils.isValidEmail input then
                                 Colors.blue
 
@@ -198,7 +198,7 @@ signupElement signupState =
                     , Border.rounded 5
                     , Border.width 1
                     , Border.color <| Element.rgb 0.7 0.7 1
-                    , Background.color <| Element.rgb 0.9 0.9 1
+                    , Element.Background.color <| Element.rgb 0.9 0.9 1
                     ]
                 <|
                     Element.el
@@ -218,7 +218,7 @@ signupElement signupState =
                     , Border.rounded 5
                     , Border.width 1
                     , Border.color <| Element.rgb 0.2 0.8 0.2
-                    , Background.color <| Element.rgb 0.9 1 0.9
+                    , Element.Background.color <| Element.rgb 0.9 1 0.9
                     ]
                 <|
                     Element.el

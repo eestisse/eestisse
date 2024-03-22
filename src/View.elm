@@ -1,12 +1,12 @@
 module View exposing (..)
 
 import Admin.View
-import BackgroundAnimation
+import Background.View
 import Browser
 import Colors
 import CommonView exposing (..)
 import Element exposing (Attribute, Element)
-import Element.Background as Background
+import Element.Background
 import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input
@@ -44,7 +44,12 @@ view model =
     Element.el
         [ Element.width Element.fill
         , Element.height Element.fill
-        , Element.behindContent <| BackgroundAnimation.view model.animationTime
+        , case model.backgroundModel of
+            Just backgroundModel ->
+                Element.behindContent <| Background.View.view model.animationTime backgroundModel
+
+            Nothing ->
+                Element.Background.color <| Colors.vibrantTeal
         ]
     <|
         Element.column
@@ -109,7 +114,7 @@ titleElement showSubtitle =
                 , topRight = 3
                 , bottomLeft = 3
                 }
-            , Background.color <| Element.rgb 0.9 0.9 1
+            , Element.Background.color <| Element.rgb 0.9 0.9 1
             ]
             { onPress = Just <| GotoRoute Route.Landing
             , label =
@@ -138,7 +143,7 @@ routeLinkElement text color route =
     Input.button
         [ Element.padding 8
         , Border.rounded 5
-        , Background.color color
+        , Element.Background.color color
         , Font.color <| Element.rgb 1 1 1
         , Font.size 20
         ]

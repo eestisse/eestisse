@@ -1,5 +1,6 @@
 port module Frontend exposing (..)
 
+import Background.Core as Background
 import Browser exposing (UrlRequest(..))
 import Browser.Dom as Dom
 import Browser.Events
@@ -47,6 +48,7 @@ init url key =
       , signupState = Inactive
       , maybeImportantNumber = Nothing
       , animationTime = Time.millisToPosix 0
+      , backgroundModel = Nothing
       }
     , Cmd.none
     )
@@ -170,7 +172,16 @@ update msg model =
             )
 
         Animate time ->
-            ( { model | animationTime = time }
+            ( { model
+                | animationTime = time
+                , backgroundModel =
+                    case model.backgroundModel of
+                        Nothing ->
+                            Just <| Background.init <| Time.posixToMillis time
+
+                        Just _ ->
+                            model.backgroundModel
+              }
             , Cmd.none
             )
 

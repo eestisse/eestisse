@@ -2,7 +2,7 @@ module Translate.View exposing (..)
 
 import CommonView exposing (..)
 import Element exposing (Attribute, Element)
-import Element.Background as Background
+import Element.Background
 import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input
@@ -194,12 +194,12 @@ selectPartButton partIsSelected breakdownPart =
          , Border.color <| Element.rgb 0.5 0.5 1
          ]
             ++ (if partIsSelected then
-                    [ Background.color <| Element.rgb 0.3 0.3 1
+                    [ Element.Background.color <| Element.rgb 0.3 0.3 1
                     , Font.color <| Element.rgb 1 1 1
                     ]
 
                 else
-                    [ Background.color <| Element.rgb 0.95 0.95 1 ]
+                    [ Element.Background.color <| Element.rgb 0.95 0.95 1 ]
                )
         )
         { onPress = Just <| ShowExplanation breakdownPart
@@ -244,7 +244,7 @@ clickOnPartsHint =
         , Border.width 1
         , Border.rounded 4
         , Border.color <| Element.rgb 0.8 0.8 0
-        , Background.color <| Element.rgb 1 1 0.7
+        , Element.Background.color <| Element.rgb 1 1 0.7
         , Element.centerX
         , Font.color <| Element.rgb 0.3 0.3 0.3
         , Font.italic
@@ -261,7 +261,7 @@ selectedExplanationElement breakdownPart =
         , Border.width 1
         , Border.rounded 4
         , Border.color <| Element.rgb 0.8 0.8 0
-        , Background.color <| Element.rgb 1 1 0.7
+        , Element.Background.color <| Element.rgb 1 1 0.7
         , Element.centerX
         ]
         [ Element.row

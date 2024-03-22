@@ -3,7 +3,7 @@ module Admin.View exposing (..)
 import Colors
 import CommonView
 import Element exposing (Element)
-import Element.Background as Background
+import Element.Background
 import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input
@@ -21,7 +21,7 @@ page maybeHowMany =
         case maybeHowMany of
             Nothing ->
                 Input.button
-                    [ Background.color Colors.blue
+                    [ Element.Background.color Colors.blue
                     , Border.rounded 5
                     , Font.color Colors.white
                     , Font.bold
