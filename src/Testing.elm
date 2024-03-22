@@ -27,6 +27,7 @@ completedRequestExample =
                   }
                 ]
             , translation = "my name is Logan"
+            , translatedTo = English
             }
     , maybeSelectedBreakdownPart = Nothing
     }
@@ -56,6 +57,7 @@ completedRequestExample2 =
                   }
                 ]
             , translation = "my name is Logan"
+            , translatedTo = English
             }
     , maybeSelectedBreakdownPart = Nothing
     }

@@ -106,7 +106,13 @@ viewTranslationPageRequestState requestState =
                     Ok translation ->
                         [ translationInputButtonsElement translation.breakdown completedRequest.maybeSelectedBreakdownPart
                         , hbreakElement
-                        , translatedTextElement translation.translation
+                        , englishTextElement <|
+                            case translation.translatedTo of
+                                English ->
+                                    translation.translation
+
+                                Estonian ->
+                                    completedRequest.inputText
                         , Element.el [ Element.height <| Element.px 8 ] <| Element.none
                         , case completedRequest.maybeSelectedBreakdownPart of
                             Just selectedBreakdownPart ->
@@ -193,8 +199,8 @@ selectPartButton partIsSelected breakdownPart =
         }
 
 
-translatedTextElement : String -> Element FrontendMsg
-translatedTextElement translatedText =
+englishTextElement : String -> Element FrontendMsg
+englishTextElement translatedText =
     Element.el [] <|
         Element.paragraph
             translatedTextStyles

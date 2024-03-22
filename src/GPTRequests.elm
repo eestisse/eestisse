@@ -22,11 +22,12 @@ type Role
 translateFromEstonian : String -> Request
 translateFromEstonian estonianString =
     { modelString = "gpt-4-turbo-preview"
-    , systemMessage = """You are helping me learn Estonian, by translating small pieces of Estonian text and explaining the resulting translation. Here's the structure I want you to output, after I send you a piece of Estonian text:
+    , systemMessage = """You are helping me learn Estonian, by translating between Estonian and English, and explaining the resulting translation. Here's the structure I want you to output, after I send you a piece of English or Estonian text:
 
 {
     "error": false
     "translation": TRANSLATION_HERE,
+    "translated to": ("estonian" OR "english")
     "breakdown": [
         [ESTONIAN_CHUNK_1, DIRECT_APPROXIMATE_TRANSLATION_1, EXPLANATION_1],
         [ESTONIAN_CHUNK_2, DIRECT_APPROXIMATE_TRANSLATION_2, EXPLANATION_2],
@@ -34,18 +35,21 @@ translateFromEstonian estonianString =
     ]
 }
 
-The third item in the breakdown values (the "explanation") should be null if no extra explaining is necessary.
+The field "translated to" should be either "estonian" or "english" depending on which translation you performed.
 
-The breakdown should consist of at most 10 items, each of which examines a section of the text (either a word or phrase). The explanation should be a direct approximate translation of the chunk, and if needed, explanation in parentheses.
+The breakdown should consist of at most 10 items, each of which examines a section of the text (either a word or phrase). The explanation should be a list of 3 items: the Estonian chunk, a direct approximate translation of the chunk, and an explanation (null otherwise).
 
 Make sure that the breakdown covers the full input text without missing any words.
 
-If you are unable to complete the request, instead create a json object with "error" set to true and "error_text" set to a string explanation of what seems wrong with the request."""
+If you are unable to complete the request, instead create a json object with "error" set to true and "error_text" set to a string explanation of what seems wrong with the request. Assume a playful tone with the explanation, but make sure it's clear enough to be understood.
+
+In the case of explicit messages, if the messsage features clear communication, do not refuse to translate it. If on the other hand it uses terms that are overly explicit or dirty, deny that request (again, with a clear if playful explanation of why)"""
     , messages =
         [ ( User, """Mind on treenitud kosmoseõpilasi abistama""" )
         , ( Assistant, """{
     "error": false,
     "translation": "I have been trained to assist space students.",
+    "translated to": "english",
     "breakdown": [
         [
             "Mind",
@@ -74,10 +78,11 @@ If you are unable to complete the request, instead create a json object with "er
         ]
     ]
 }""" )
-        , ( User, "Mentaalselt rohenäpp, ent kõik taimed kodus on pooleldi surnud" )
+        , ( User, "Mentally a green thumb, but all the plants at home are half-dead" )
         , ( Assistant, """{
     "error": false,
-    "translation": "Mentally a green thumb, but all the plants at home are half-dead.",
+    "translation": "Mentaalselt rohenäpp, ent kõik taimed kodus on pooleldi surnud",
+    "translated to": "estonian",
     "breakdown": [
         [
             "Mentaalselt",
@@ -128,6 +133,48 @@ If you are unable to complete the request, instead create a json object with "er
 }""" )
         , ( User, "Watashi wa boku" )
         , ( Assistant, """{"error": true, "error_text": "That looks like Japanese, not Estonian!"}""" )
+        , ( User, "ma ei jõua ära oodata, et sa mu vittu lakuks ja ajud välja nussiks" )
+        , ( Assistant, """{"error": true, "error_text": "Woah, that input is too explicit. I'm not translating that!"}""" )
+        , ( User, "ma tahan sinuga väga seksida. kas sul on kondoome on?" )
+        , ( Assistant, """{
+    "error": false,
+    "translation": "I really want to have sex with you. Do you have condoms?",
+    "translated to": "english",
+    "breakdown": [
+        [
+            "ma tahan",
+            "I want",
+            "first person singular present indicative of \\"tahtma,\\" meaning \\"to want\\"."
+        ],
+        [
+            "sinuga",
+            "with you",
+            "comitative case of \\"sina\\", meaning \\"you\\", indicating \\"with you\\"."
+        ],
+        [
+            "väga",
+            "very",
+            null
+        ],
+        [
+            "seksida",
+            "to have sex",
+            "infinitive form of \\"seksima\\", meaning \\"to have sex\\"."
+        ],
+        [
+            "kas sul on",
+            "do you have",
+            "\\"kas\\" introduces a question, \\"sul on\\" is the form of \\"to have\\" for \\"you\\"."
+        ],
+        [
+            "kondoome on?",
+            "are there condoms?",
+            "\\"kondoome\\" is the partitive plural of \\"kondoom\\", meaning \\"condoms\\", and \\"on\\" is \\"are\\"."
+        ]
+    ]
+}""" )
+        , ( User, "jfdkslfjaiofjdsafjsafkdla" )
+        , ( Assistant, """{"error": true, "error_text": "Now what do you expect me to do with that gobbledegook?"}""" )
         , ( User, estonianString )
         ]
     }
@@ -188,7 +235,7 @@ gptResponseDecoder =
 
 translationDecoder : Json.Decode.Decoder Translation
 translationDecoder =
-    Json.Decode.map2
+    Json.Decode.map3
         Translation
         (Json.Decode.field "breakdown"
             (Json.Decode.list
@@ -202,6 +249,23 @@ translationDecoder =
             )
         )
         (Json.Decode.field "translation" Json.Decode.string)
+        (Json.Decode.field "translated to" englishOrEstonianDecoder)
+
+
+englishOrEstonianDecoder : Json.Decode.Decoder EnglishOrEstonian
+englishOrEstonianDecoder =
+    Json.Decode.string
+        |> Json.Decode.andThen
+            (\s ->
+                if s == "english" then
+                    Json.Decode.succeed English
+
+                else if s == "estonian" then
+                    Json.Decode.succeed Estonian
+
+                else
+                    Json.Decode.fail "'translate_to' field did not include an expected string of 'english' or 'estonian'"
+            )
 
 
 processGptResponse : Result Http.Error String -> Result GptAssistError Translation

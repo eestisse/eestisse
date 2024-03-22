@@ -54,7 +54,13 @@ type GptAssistError
 type alias Translation =
     { breakdown : Breakdown
     , translation : String
+    , translatedTo : EnglishOrEstonian
     }
+
+
+type EnglishOrEstonian
+    = English
+    | Estonian
 
 
 type alias Breakdown =
