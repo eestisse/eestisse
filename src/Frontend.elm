@@ -2,6 +2,7 @@ port module Frontend exposing (..)
 
 import Browser exposing (UrlRequest(..))
 import Browser.Dom as Dom
+import Browser.Events
 import Browser.Navigation as Nav
 import Dict exposing (Dict)
 import Lamdera
@@ -26,7 +27,7 @@ app =
         , update = update
         , updateFromBackend = updateFromBackend
         , subscriptions = subscriptions
-        , view = view
+        , view = View.root
         }
 
 
@@ -45,6 +46,7 @@ init url key =
       -- RequestSent <| RequestComplete Testing.completedRequestExample
       , signupState = Inactive
       , maybeImportantNumber = Nothing
+      , animationTime = Time.millisToPosix 0
       }
     , Cmd.none
     )
@@ -167,6 +169,11 @@ update msg model =
             , Lamdera.sendToBackend RequestImportantNumber
             )
 
+        Animate time ->
+            ( { model | animationTime = time }
+            , Cmd.none
+            )
+
 
 updateFromBackend : ToFrontend -> Model -> ( Model, Cmd FrontendMsg )
 updateFromBackend msg model =
@@ -218,21 +225,6 @@ updateFromBackend msg model =
             )
 
 
-view : Model -> Browser.Document FrontendMsg
-view model =
-    View.root model
-
-
-subscriptions : Model -> Sub FrontendMsg
-subscriptions model =
-    case model.translationPageModel of
-        RequestSent (Waiting _ _) ->
-            Time.every 1500 (always CycleLoadingAnimation)
-
-        _ ->
-            Sub.none
-
-
 focusEmailInputCmd : Cmd FrontendMsg
 focusEmailInputCmd =
     Task.attempt (\_ -> NoOpFrontendMsg) (Dom.focus "email-input")
@@ -241,6 +233,24 @@ focusEmailInputCmd =
 plausibleEventOutCmd : String -> Cmd msg
 plausibleEventOutCmd name =
     plausible_event_out name
+
+
+subscriptions : Model -> Sub FrontendMsg
+subscriptions model =
+    Sub.batch
+        [ case model.translationPageModel of
+            RequestSent (Waiting _ _) ->
+                Time.every 1500 (always CycleLoadingAnimation)
+
+            _ ->
+                Sub.none
+        , case model.route of
+            Route.Landing ->
+                Browser.Events.onAnimationFrame Animate
+
+            _ ->
+                Sub.none
+        ]
 
 
 port plausible_event_out : String -> Cmd msg

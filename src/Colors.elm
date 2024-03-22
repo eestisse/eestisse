@@ -41,3 +41,28 @@ gray =
 transparent : Color
 transparent =
     Element.rgba 0 0 0 0
+
+
+vibrantTeal : Color
+vibrantTeal =
+    Element.rgb 0 0.8 0.8
+
+
+coralPink : Color
+coralPink =
+    Element.rgb 1 0.5 0.5
+
+
+softOrange : Color
+softOrange =
+    Element.rgb 1 0.8 0.6
+
+
+sunshineYellow : Color
+sunshineYellow =
+    Element.rgb 1 0.9 0.3
+
+
+lavender : Color
+lavender =
+    Element.rgb 0.7 0.6 1

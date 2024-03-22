@@ -17,6 +17,7 @@ type alias FrontendModel =
     , translationPageModel : TranslationPageModel
     , signupState : SignupState
     , maybeImportantNumber : Maybe Int
+    , animationTime : Time.Posix
     }
 
 
@@ -96,6 +97,7 @@ type FrontendMsg
     | SubmitSignup String
     | SignupTextChanged String
     | FetchImportantNumber
+    | Animate Time.Posix
 
 
 type ToBackend

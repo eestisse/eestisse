@@ -1,5 +1,6 @@
 module Landing.View exposing (..)
 
+import BackgroundAnimation
 import Colors
 import CommonView
 import Element exposing (Attribute, Element)
@@ -8,12 +9,18 @@ import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input
 import Route
+import Time
 import Types exposing (..)
 import Utils
 
 
-page : SignupState -> Element FrontendMsg
-page signupState =
+page : Time.Posix -> SignupState -> Element FrontendMsg
+page animationTime signupState =
+    BackgroundAnimation.view animationTime
+
+
+tempDisabledPage : SignupState -> Element FrontendMsg
+tempDisabledPage signupState =
     Element.column
         [ Element.width Element.fill
         , Element.height Element.fill
