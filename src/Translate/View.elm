@@ -49,7 +49,15 @@ viewTranslationPageInput inputText =
                         [ Font.italic
                         ]
                     <|
-                        Element.text "Enter Estonian text"
+                        Element.column
+                            [ Element.spacing 10
+                            ]
+                            [ Element.text "Enter English or Estonian text here!"
+                            , Element.el [ Element.height <| Element.px 5 ] <| Element.none
+                            , Element.text "• minu nimi on Bob"
+                            , Element.text "• where can I find cooking oil?"
+                            , Element.text "• põnev!"
+                            ]
             , label = Input.labelHidden "Enter text"
             , spellcheck = False
             }
