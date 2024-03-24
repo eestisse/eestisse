@@ -1,18 +1,26 @@
 module Background.Config exposing (..)
 
 
-numElbowsInPath =
-    20
+width =
+    2000
 
 
-elbowXLengthRange =
-    ( 100, 300 )
+horizontalSegmentXMin =
+    100
 
 
-elbowYRange =
-    ( -100, 100 )
+horizontalSegmentXVariance =
+    200
+
+
+pathAcrossYVariance =
+    200
 
 
 elbowRadius =
     -- make sure this is less than the minimum lengths above!
-    20
+    40
+
+
+heightOfPanelsFromLastY =
+    500
