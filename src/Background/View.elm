@@ -3,7 +3,7 @@ module Background.View exposing (..)
 import Background.Config as Config
 import Background.Types exposing (..)
 import Element exposing (Element)
-import Svg
+import Svg exposing (Svg)
 import Svg.Attributes
 import Time
 import Types exposing (..)
@@ -11,37 +11,45 @@ import Types exposing (..)
 
 view : Time.Posix -> Model -> Element FrontendMsg
 view time model =
+    Element.el [ Element.width Element.fill, Element.height Element.fill ] <|
+        Element.html <|
+            Svg.svg
+                [ Svg.Attributes.height <| String.fromInt Config.minDrawableHeightToFill ]
+                (List.map renderPath model.pathsAcross)
+
+
+renderPath : PathAcross -> Svg FrontendMsg
+renderPath path =
     let
         basePoint =
-            { x = 0, y = model.singlePathAcross.yPathStart }
+            { x = 0, y = path.yPathStart }
 
         pathStartString =
             "M " ++ pointToString basePoint
 
         pathBodyString =
-            model.singlePathAcross.sections
+            path.sections
                 |> List.map (makePathStringSnippet basePoint)
                 |> String.join " "
 
         pathEndString =
-            ""
+            [ "L " ++ (pointToString <| addPoints basePoint { x = Config.minTotalWidth, y = Config.drawableShapeBottomY })
+            , "L " ++ (pointToString <| addPoints basePoint { x = 0, y = Config.drawableShapeBottomY })
+            , "Z"
+            ]
+                |> String.join " "
 
         dString =
             String.join " "
                 [ pathStartString, pathBodyString, pathEndString ]
     in
-    Element.el [ Element.width Element.fill, Element.height Element.fill ] <|
-        Element.html <|
-            Svg.svg
-                [ Svg.Attributes.height "2000" ]
-                [ Svg.path
-                    [ Svg.Attributes.d dString
-                    , Svg.Attributes.fill "red"
-                    , Svg.Attributes.stroke "black"
-                    , Svg.Attributes.strokeWidth "20"
-                    ]
-                    []
-                ]
+    Svg.path
+        [ Svg.Attributes.d dString
+        , Svg.Attributes.fill "red"
+        , Svg.Attributes.stroke "black"
+        , Svg.Attributes.strokeWidth "20"
+        ]
+        []
 
 
 makePathStringSnippet : Point -> PathSection -> String

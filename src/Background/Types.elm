@@ -5,7 +5,7 @@ import Random
 
 type alias Model =
     { seed : Random.Seed
-    , singlePathAcross : PathAcross
+    , pathsAcross : List PathAcross
     }
 
 

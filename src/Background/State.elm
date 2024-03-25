@@ -12,32 +12,44 @@ import Random.Extra
 init : Int -> Model
 init seedInt =
     let
-        ( singlePathAcross, seed ) =
-            generatePathAcross 300 (Random.initialSeed seedInt)
+        ( pathsAcross, seed ) =
+            generatePathsAcross (Random.initialSeed seedInt)
     in
     { seed = seed
-    , singlePathAcross = singlePathAcross
+    , pathsAcross = pathsAcross
     }
+
+
+generatePathsAcross : Random.Seed -> ( List PathAcross, Random.Seed )
+generatePathsAcross seed0 =
+    let
+        iterativelyBuildPathsAcross : ( List PathAcross, Random.Seed ) -> ( List PathAcross, Random.Seed )
+        iterativelyBuildPathsAcross ( existingPathsAcross, seed ) =
+            let
+                heightFilledSoFar =
+                    case List.Extra.last existingPathsAcross of
+                        Nothing ->
+                            0
+
+                        Just pathAcross ->
+                            pathAcross.yPathStart + (Config.pathAcrossYVariance // 2)
+            in
+            if heightFilledSoFar > Config.minDrawableHeightToFill then
+                ( existingPathsAcross, seed )
+
+            else
+                let
+                    ( newPathAcross, newSeed ) =
+                        generatePathAcross heightFilledSoFar seed
+                in
+                iterativelyBuildPathsAcross ( existingPathsAcross ++ [ newPathAcross ], newSeed )
+    in
+    iterativelyBuildPathsAcross ( [], seed0 )
 
 
 generatePathAcross : Int -> Random.Seed -> ( PathAcross, Random.Seed )
 generatePathAcross yMin seed0 =
     let
-        ( yPathStart, seed1 ) =
-            let
-                yMax =
-                    yMin + Config.pathAcrossYVariance
-            in
-            Random.step
-                (Random.int yMin yMax)
-                seed0
-
-        ( sections, seed2 ) =
-            iterativelyBuildSectionList ( [], seed1 )
-
-        ( color, seed3 ) =
-            Random.step colorGenerator seed2
-
         iterativelyBuildSectionList : ( List PathSection, Random.Seed ) -> ( List PathSection, Random.Seed )
         iterativelyBuildSectionList ( existingPathSections, seed ) =
             let
@@ -52,6 +64,21 @@ generatePathAcross yMin seed0 =
 
             else
                 iterativelyBuildSectionList <| addNewSection ( existingPathSections, seed )
+
+        ( yPathStart, seed1 ) =
+            let
+                yMax =
+                    yMin + Config.pathAcrossYVariance
+            in
+            Random.step
+                (Random.int yMin yMax)
+                seed0
+
+        ( sections, seed2 ) =
+            iterativelyBuildSectionList ( [], seed1 )
+
+        ( color, seed3 ) =
+            Random.step colorGenerator seed2
     in
     ( { yPathStart = yPathStart
       , sections = sections

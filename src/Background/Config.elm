@@ -20,3 +20,11 @@ pathAcrossYVariance =
 elbowRadius =
     -- this must be less than 1/4 of pathAcrossYVariance
     40
+
+
+drawableShapeBottomY =
+    800
+
+
+minDrawableHeightToFill =
+    3000
