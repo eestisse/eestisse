@@ -177,7 +177,7 @@ update msg model =
                 , backgroundModel =
                     case model.backgroundModel of
                         Nothing ->
-                            Just <| Background.init <| Time.posixToMillis time
+                            Just <| Background.init time
 
                         Just _ ->
                             model.backgroundModel

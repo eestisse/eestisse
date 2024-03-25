@@ -7,17 +7,22 @@ import Element
 import List.Extra
 import Random
 import Random.Extra
+import Time
 import Types exposing (..)
 import Utils
 
 
-init : Int -> Model
-init seedInt =
+init : Time.Posix -> Model
+init now =
     let
+        seedInt =
+            Time.posixToMillis now
+
         ( pathsAcross, seed ) =
             generatePathsAcross (Random.initialSeed seedInt)
     in
     { seed = seed
+    , startTime = now
     , pathsAcross = pathsAcross
     }
 
@@ -28,29 +33,38 @@ generatePathsAcross seed0 =
         iterativelyBuildPathsAcross : ( List PathAcross, Random.Seed ) -> ( List PathAcross, Random.Seed )
         iterativelyBuildPathsAcross ( existingPathsAcross, seed ) =
             let
-                heightFilledSoFar =
+                ( heightFilledSoFar, maybeLastColor ) =
                     case List.Extra.last existingPathsAcross of
                         Nothing ->
-                            0
+                            ( 0, Nothing )
 
                         Just pathAcross ->
-                            pathAcross.yPathStart + (Config.pathAcrossYVariance // 2)
+                            ( pathAcross.yPathStart + (Config.pathAcrossYVariance // 2)
+                            , Just pathAcross.color
+                            )
             in
             if heightFilledSoFar > Config.minDrawableHeightToFill then
                 ( existingPathsAcross, seed )
 
             else
                 let
+                    newColor =
+                        if maybeLastColor == (Just <| Utils.elementColorToRgb Colors.vibrantTeal) then
+                            Colors.mainBlue
+
+                        else
+                            Colors.vibrantTeal
+
                     ( newPathAcross, newSeed ) =
-                        generatePathAcross heightFilledSoFar seed
+                        generatePathAcross heightFilledSoFar (Utils.elementColorToRgb newColor) seed
                 in
                 iterativelyBuildPathsAcross ( existingPathsAcross ++ [ newPathAcross ], newSeed )
     in
     iterativelyBuildPathsAcross ( [], seed0 )
 
 
-generatePathAcross : Int -> Random.Seed -> ( PathAcross, Random.Seed )
-generatePathAcross yMin seed0 =
+generatePathAcross : Int -> RGB -> Random.Seed -> ( PathAcross, Random.Seed )
+generatePathAcross yMin color seed0 =
     let
         iterativelyBuildSectionList : ( List PathSection, Random.Seed ) -> ( List PathSection, Random.Seed )
         iterativelyBuildSectionList ( existingPathSections, seed ) =
@@ -78,15 +92,12 @@ generatePathAcross yMin seed0 =
 
         ( sections, seed2 ) =
             iterativelyBuildSectionList ( [], seed1 )
-
-        ( color, seed3 ) =
-            Random.step colorGenerator seed2
     in
     ( { yPathStart = yPathStart
       , sections = sections
       , color = color
       }
-    , seed3
+    , seed2
     )
 
 

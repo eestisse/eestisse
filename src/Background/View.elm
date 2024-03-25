@@ -13,6 +13,10 @@ import Types exposing (..)
 
 view : Time.Posix -> Model -> Element FrontendMsg
 view time model =
+    let
+        millisElapsed =
+            Time.posixToMillis time - Time.posixToMillis model.startTime
+    in
     Element.el
         [ Element.width Element.fill
         , Element.height Element.fill
@@ -22,14 +26,18 @@ view time model =
         Element.html <|
             Svg.svg
                 [ Svg.Attributes.height <| String.fromInt Config.minDrawableHeightToFill ]
-                (List.map renderPath model.pathsAcross)
+                (List.map (renderPath millisElapsed) model.pathsAcross)
 
 
-renderPath : PathAcross -> Svg FrontendMsg
-renderPath path =
+renderPath : Int -> PathAcross -> Svg FrontendMsg
+renderPath millisElapsed path =
     let
+        xOffset =
+            -50
+
+        -- -50 - (toFloat millisElapsed / 30.0)
         basePoint =
-            { x = -50, y = path.yPathStart }
+            { x = round xOffset, y = path.yPathStart }
 
         pathStartString =
             "M " ++ pointToString basePoint
@@ -114,8 +122,8 @@ colorToSvgString rgb =
     let
         numbersString =
             [ rgb.red
-            , rgb.blue
             , rgb.green
+            , rgb.blue
             ]
                 |> List.map
                     (\f ->

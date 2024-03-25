@@ -1,10 +1,12 @@
 module Background.Types exposing (..)
 
 import Random
+import Time
 
 
 type alias Model =
     { seed : Random.Seed
+    , startTime : Time.Posix
     , pathsAcross : List PathAcross
     }
 
