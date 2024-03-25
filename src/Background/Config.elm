@@ -13,14 +13,22 @@ horizontalSegmentXVariance =
     200
 
 
+
+-- pathAcrossYVariance =
+--     200
+-- heightOfPanelsFromLastY =
+--     500
+-- other stuff - delete some of above?
+
+
+minTotalWidth =
+    2000
+
+
 pathAcrossYVariance =
-    200
+    400
 
 
 elbowRadius =
-    -- make sure this is less than the minimum lengths above!
+    -- this must be less than 1/4 of pathAcrossYVariance
     40
-
-
-heightOfPanelsFromLastY =
-    500

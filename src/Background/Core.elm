@@ -4,6 +4,7 @@ import Background.Config as Config
 import Colors
 import List.Extra
 import Random
+import Random.Extra
 
 
 type alias Model =
@@ -12,16 +13,34 @@ type alias Model =
     }
 
 
+type alias Point =
+    { x : Int
+    , y : Int
+    }
+
+
 type alias PathAcross =
-    { elbows : List Elbow
+    { yPathStart : Int
+    , sections : List PathSection
     , color : ( Float, Float, Float )
     }
 
 
-type alias Elbow =
-    { yStart : Int
-    , xEnd : Int
+type alias PathSection =
+    { piece : PathPiece
+    , endPointRelative : Point
+    , startPointRelative : Point
     }
+
+
+type PathPiece
+    = ElbowLeftToUp
+    | ElbowLeftToDown
+    | ElbowUpToRight
+    | ElbowDownToRight
+    | Right Int
+    | Up Int
+    | Down Int
 
 
 init : Int -> Model
@@ -29,6 +48,13 @@ init seedInt =
     let
         ( singlePathAcross, seed ) =
             generatePathAcross 300 (Random.initialSeed seedInt)
+
+        _ =
+            Debug.log "yStart" singlePathAcross.yPathStart
+
+        _ =
+            singlePathAcross.sections
+                |> List.indexedMap (\i section -> Debug.log "section" ( i, section ))
     in
     { seed = seed
     , singlePathAcross = singlePathAcross
@@ -38,89 +64,211 @@ init seedInt =
 generatePathAcross : Int -> Random.Seed -> ( PathAcross, Random.Seed )
 generatePathAcross yMin seed0 =
     let
-        yGenerator =
-            Random.int yMin (yMin + Config.pathAcrossYVariance)
-
-        genElbow xMin seed =
-            Random.step
-                (Random.map2
-                    Elbow
-                    yGenerator
-                    (Random.int xMin (xMin + Config.horizontalSegmentXVariance))
-                )
-                seed
-
-        buildElbowList : ( List Elbow, Random.Seed ) -> ( List Elbow, Random.Seed )
-        buildElbowList ( existingList, seed ) =
+        ( yPathStart, seed1 ) =
             let
-                xMin =
-                    case List.Extra.last existingList of
-                        Just lastElbow ->
-                            lastElbow.xEnd + Config.horizontalSegmentXMin
-
-                        Nothing ->
-                            Config.horizontalSegmentXMin
+                yMax =
+                    yMin + Config.pathAcrossYVariance
             in
-            if xMin > Config.width then
-                ( existingList, seed )
+            Random.step
+                (Random.int yMin yMax)
+                seed0
+
+        ( sections, seed2 ) =
+            iterativelyBuildSectionList ( [], seed1 )
+
+        ( color, seed3 ) =
+            Random.step colorGenerator seed2
+
+        iterativelyBuildSectionList : ( List PathSection, Random.Seed ) -> ( List PathSection, Random.Seed )
+        iterativelyBuildSectionList ( existingPathSections, seed ) =
+            let
+                xStart =
+                    List.Extra.last existingPathSections
+                        |> Maybe.map .endPointRelative
+                        |> Maybe.map .x
+                        |> Maybe.withDefault 0
+            in
+            if xStart >= Config.minTotalWidth then
+                ( existingPathSections, seed )
 
             else
-                buildElbowList
-                    (let
-                        ( elbow, newSeed ) =
-                            genElbow xMin seed
-                     in
-                     ( existingList ++ [ elbow ], newSeed )
-                    )
-
-        ( elbowList, finalSeed ) =
-            buildElbowList ( [], seed0 )
+                iterativelyBuildSectionList <| addNewSection ( existingPathSections, seed )
     in
-    ( PathAcross
-        (elbowList |> correctElbowList)
-        ( 0, 0, 1 )
-    , finalSeed
+    ( { yPathStart = yPathStart
+      , sections = sections
+      , color = color
+      }
+    , seed3
     )
 
 
-correctElbowList : List Elbow -> List Elbow
-correctElbowList elbows =
+addNewSection : ( List PathSection, Random.Seed ) -> ( List PathSection, Random.Seed )
+addNewSection ( existingSections, seed ) =
     let
-        singlePassTweak =
-            elbows
-                |> List.indexedMap
-                    (\i elbow ->
-                        case List.Extra.getAt (i - 1) elbows of
-                            Nothing ->
-                                elbow
+        sectionGenerator : Random.Generator PathSection
+        sectionGenerator =
+            case List.Extra.last existingSections of
+                Nothing ->
+                    Random.uniform (always ElbowLeftToUp)
+                        [ always ElbowLeftToDown
+                        , always ElbowUpToRight
+                        , always ElbowDownToRight
+                        , Right
+                        ]
+                        |> Random.Extra.andMap (Random.int Config.horizontalSegmentXMin (Config.horizontalSegmentXMin + Config.horizontalSegmentXVariance))
+                        |> Random.map (pieceToSection (Point 0 0))
 
-                            Just prevElbow ->
-                                -- if they're too close together in Y, push them apart
-                                let
-                                    yChange =
-                                        elbow.yStart - prevElbow.yStart
-                                in
-                                if yChange > 0 && yChange < Config.elbowRadius * 2 then
-                                    { elbow | yStart = prevElbow.yStart + Config.elbowRadius * 2 }
+                Just lastSection ->
+                    case lastSection.piece of
+                        ElbowLeftToUp ->
+                            upwardVeritcalSectionGenerator lastSection.endPointRelative
 
-                                else if yChange < 0 && yChange > negate Config.elbowRadius * 2 then
-                                    { elbow | yStart = prevElbow.yStart - Config.elbowRadius * 2 }
+                        ElbowLeftToDown ->
+                            downwardVeritcalSectionGenerator lastSection.endPointRelative
 
-                                else
-                                    elbow
-                    )
+                        ElbowUpToRight ->
+                            rightSectionGenerator lastSection.endPointRelative
+
+                        ElbowDownToRight ->
+                            rightSectionGenerator lastSection.endPointRelative
+
+                        Right length ->
+                            elbowFromLeftGenerator lastSection.endPointRelative
+
+                        Up length ->
+                            Random.constant <|
+                                pieceToSection lastSection.endPointRelative ElbowDownToRight
+
+                        Down length ->
+                            Random.constant <|
+                                pieceToSection lastSection.endPointRelative ElbowUpToRight
     in
-    if elbows == singlePassTweak then
-        singlePassTweak
+    Random.step sectionGenerator seed
+        |> Tuple.mapFirst
+            (\newSection ->
+                existingSections ++ [ newSection ]
+            )
 
-    else
-        correctElbowList singlePassTweak
+
+rightSectionGenerator : Point -> Random.Generator PathSection
+rightSectionGenerator startPoint =
+    let
+        xMin =
+            Config.horizontalSegmentXMin
+
+        xMax =
+            xMin + Config.horizontalSegmentXVariance
+    in
+    Random.map
+        Right
+        (Random.int xMin xMax)
+        |> Random.map (pieceToSection startPoint)
+
+
+maxYRelative : Int
+maxYRelative =
+    Config.pathAcrossYVariance // 2
+
+
+minYRelative : Int
+minYRelative =
+    negate maxYRelative
+
+
+upwardVeritcalSectionGenerator : Point -> Random.Generator PathSection
+upwardVeritcalSectionGenerator startPoint =
+    let
+        verticalSpaceAvailable =
+            startPoint.y - minYRelative - Config.elbowRadius
+    in
+    Random.map
+        Up
+        (Random.int 0 verticalSpaceAvailable)
+        |> Random.map (pieceToSection startPoint)
+
+
+downwardVeritcalSectionGenerator : Point -> Random.Generator PathSection
+downwardVeritcalSectionGenerator startPoint =
+    let
+        verticalSpaceAvailable =
+            maxYRelative - startPoint.y - Config.elbowRadius
+    in
+    Random.map
+        Down
+        (Random.int 0 verticalSpaceAvailable)
+        |> Random.map (pieceToSection startPoint)
+
+
+elbowFromLeftGenerator : Point -> Random.Generator PathSection
+elbowFromLeftGenerator startPoint =
+    Random.map (pieceToSection startPoint) <|
+        if startPoint.y - Config.elbowRadius * 2 < minYRelative then
+            Random.constant ElbowLeftToDown
+
+        else if startPoint.y + Config.elbowRadius * 2 > maxYRelative then
+            Random.constant ElbowLeftToUp
+
+        else
+            Random.Extra.choice ElbowLeftToDown ElbowLeftToUp
+
+
+pieceTransformVector : PathPiece -> Point
+pieceTransformVector piece =
+    let
+        downRight =
+            { x = Config.elbowRadius
+            , y = Config.elbowRadius
+            }
+
+        upRight =
+            { x = Config.elbowRadius
+            , y = negate Config.elbowRadius
+            }
+    in
+    case piece of
+        ElbowLeftToUp ->
+            upRight
+
+        ElbowLeftToDown ->
+            downRight
+
+        ElbowUpToRight ->
+            downRight
+
+        ElbowDownToRight ->
+            upRight
+
+        Right length ->
+            { x = length
+            , y = 0
+            }
+
+        Up length ->
+            { x = 0
+            , y = negate length
+            }
+
+        Down length ->
+            { x = 0
+            , y = length
+            }
+
+
+pieceToSection : Point -> PathPiece -> PathSection
+pieceToSection startPoint piece =
+    { piece = piece
+    , endPointRelative = addPoints startPoint (pieceTransformVector piece)
+    , startPointRelative = startPoint
+    }
 
 
 colorGenerator : Random.Generator ( Float, Float, Float )
 colorGenerator =
-    Random.map3
-        (\a b c -> ( a, b, c ))
-        (Random.float 0 1)
-        (Random.float 0 1)
-        (Random.float 0 1)
+    Random.constant ( 0, 1, 1 )
+
+
+addPoints : Point -> Point -> Point
+addPoints a b =
+    Point
+        (a.x + b.x)
+        (a.y + b.y)
