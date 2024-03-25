@@ -121,3 +121,10 @@ type ToFrontend
     | TranslationResult String (Result GptAssistError Translation)
     | EmailSubmitAck
     | ImportantNumber Int
+
+
+type alias RGB =
+    { red : Float
+    , green : Float
+    , blue : Float
+    }

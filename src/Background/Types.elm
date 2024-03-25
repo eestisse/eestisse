@@ -18,7 +18,7 @@ type alias Point =
 type alias PathAcross =
     { yPathStart : Int
     , sections : List PathSection
-    , color : { red : Float, green : Float, blue : Float, alpha : Float }
+    , color : { red : Float, green : Float, blue : Float }
     }
 
 

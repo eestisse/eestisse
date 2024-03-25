@@ -4,6 +4,7 @@ import Element
 import Html.Events
 import Http
 import Json.Decode
+import Types exposing (..)
 
 
 httpErrorToString : Http.Error -> String
@@ -88,3 +89,15 @@ isValidEmail input =
     List.all (String.length >> (/=) 0)
         [ a, b, c ]
         && (List.length s1 == 2)
+
+
+elementColorToRgb : Element.Color -> RGB
+elementColorToRgb elColor =
+    let
+        rgba =
+            Element.toRgb elColor
+    in
+    RGB
+        rgba.red
+        rgba.green
+        rgba.blue

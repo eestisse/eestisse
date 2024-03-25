@@ -45,8 +45,8 @@ renderPath path =
     in
     Svg.path
         [ Svg.Attributes.d dString
-        , Svg.Attributes.fill "red"
-        , Svg.Attributes.stroke "black"
+        , Svg.Attributes.fill <| colorToSvgString path.color
+        , Svg.Attributes.stroke "white"
         , Svg.Attributes.strokeWidth "20"
         ]
         []
@@ -100,6 +100,24 @@ makePathStringSnippet basePoint section =
 pointToString : Point -> String
 pointToString p =
     String.fromInt p.x ++ "," ++ String.fromInt p.y
+
+
+colorToSvgString : RGB -> String
+colorToSvgString rgb =
+    let
+        numbersString =
+            [ rgb.red
+            , rgb.blue
+            , rgb.green
+            ]
+                |> List.map
+                    (\f ->
+                        f * 255 |> floor
+                    )
+                |> List.map String.fromInt
+                |> String.join " "
+    in
+    "rgb(" ++ numbersString ++ ")"
 
 
 boolToInt : Bool -> Int

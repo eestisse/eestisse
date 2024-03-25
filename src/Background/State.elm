@@ -7,6 +7,8 @@ import Element
 import List.Extra
 import Random
 import Random.Extra
+import Types exposing (..)
+import Utils
 
 
 init : Int -> Model
@@ -248,7 +250,7 @@ pieceToSection startPoint piece =
     }
 
 
-colorGenerator : Random.Generator { red : Float, green : Float, blue : Float, alpha : Float }
+colorGenerator : Random.Generator RGB
 colorGenerator =
     Random.uniform Colors.vibrantTeal
         [ Colors.coralPink
@@ -256,4 +258,4 @@ colorGenerator =
         , Colors.sunshineYellow
         , Colors.lavender
         ]
-        |> Random.map Element.toRgb
+        |> Random.map Utils.elementColorToRgb
