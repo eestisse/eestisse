@@ -2,6 +2,7 @@ module Background.Core exposing (..)
 
 import Background.Config as Config
 import Colors
+import Element
 import List.Extra
 import Random
 import Random.Extra
@@ -22,7 +23,7 @@ type alias Point =
 type alias PathAcross =
     { yPathStart : Int
     , sections : List PathSection
-    , color : ( Float, Float, Float )
+    , color : { red : Float, green : Float, blue : Float, alpha : Float }
     }
 
 
@@ -132,14 +133,14 @@ addNewSection ( existingSections, seed ) =
                         ElbowDownToRight ->
                             rightSectionGenerator lastSection.endPointRelative
 
-                        Right length ->
+                        Right _ ->
                             elbowFromLeftGenerator lastSection.endPointRelative
 
-                        Up length ->
+                        Up _ ->
                             Random.constant <|
                                 pieceToSection lastSection.endPointRelative ElbowDownToRight
 
-                        Down length ->
+                        Down _ ->
                             Random.constant <|
                                 pieceToSection lastSection.endPointRelative ElbowUpToRight
     in
@@ -262,9 +263,15 @@ pieceToSection startPoint piece =
     }
 
 
-colorGenerator : Random.Generator ( Float, Float, Float )
+colorGenerator : Random.Generator { red : Float, green : Float, blue : Float, alpha : Float }
 colorGenerator =
-    Random.constant ( 0, 1, 1 )
+    Random.uniform Colors.vibrantTeal
+        [ Colors.coralPink
+        , Colors.softOrange
+        , Colors.sunshineYellow
+        , Colors.lavender
+        ]
+        |> Random.map Element.toRgb
 
 
 addPoints : Point -> Point -> Point
