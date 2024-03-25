@@ -1,6 +1,6 @@
 module Types exposing (..)
 
-import Background.Core as Background
+import Background.Types as Background
 import Browser exposing (UrlRequest)
 import Browser.Navigation exposing (Key)
 import Dict exposing (Dict)

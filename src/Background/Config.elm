@@ -1,24 +1,12 @@
 module Background.Config exposing (..)
 
 
-width =
-    2000
-
-
 horizontalSegmentXMin =
     100
 
 
 horizontalSegmentXVariance =
     200
-
-
-
--- pathAcrossYVariance =
---     200
--- heightOfPanelsFromLastY =
---     500
--- other stuff - delete some of above?
 
 
 minTotalWidth =

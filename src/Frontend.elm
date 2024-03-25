@@ -1,6 +1,6 @@
 port module Frontend exposing (..)
 
-import Background.Core as Background
+import Background.State as Background
 import Browser exposing (UrlRequest(..))
 import Browser.Dom as Dom
 import Browser.Events
