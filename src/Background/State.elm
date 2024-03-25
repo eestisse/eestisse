@@ -14,13 +14,6 @@ init seedInt =
     let
         ( singlePathAcross, seed ) =
             generatePathAcross 300 (Random.initialSeed seedInt)
-
-        _ =
-            Debug.log "yStart" singlePathAcross.yPathStart
-
-        _ =
-            singlePathAcross.sections
-                |> List.indexedMap (\i section -> Debug.log "section" ( i, section ))
     in
     { seed = seed
     , singlePathAcross = singlePathAcross
