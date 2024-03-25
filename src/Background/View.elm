@@ -2,7 +2,9 @@ module Background.View exposing (..)
 
 import Background.Config as Config
 import Background.Types exposing (..)
+import Colors
 import Element exposing (Element)
+import Element.Background
 import Svg exposing (Svg)
 import Svg.Attributes
 import Time
@@ -11,7 +13,12 @@ import Types exposing (..)
 
 view : Time.Posix -> Model -> Element FrontendMsg
 view time model =
-    Element.el [ Element.width Element.fill, Element.height Element.fill ] <|
+    Element.el
+        [ Element.width Element.fill
+        , Element.height Element.fill
+        , Element.Background.color <| Colors.mainBlue
+        ]
+    <|
         Element.html <|
             Svg.svg
                 [ Svg.Attributes.height <| String.fromInt Config.minDrawableHeightToFill ]
@@ -22,7 +29,7 @@ renderPath : PathAcross -> Svg FrontendMsg
 renderPath path =
     let
         basePoint =
-            { x = 0, y = path.yPathStart }
+            { x = -50, y = path.yPathStart }
 
         pathStartString =
             "M " ++ pointToString basePoint
