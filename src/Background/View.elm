@@ -9,6 +9,7 @@ import Svg exposing (Svg)
 import Svg.Attributes
 import Time
 import Types exposing (..)
+import Utils
 
 
 view : Time.Posix -> Model -> Element FrontendMsg
@@ -20,7 +21,7 @@ view time model =
     Element.el
         [ Element.width Element.fill
         , Element.height Element.fill
-        , Element.Background.color <| Colors.mainBlue
+        , Element.Background.color <| Config.color1
         ]
     <|
         Element.html <|
@@ -32,10 +33,16 @@ view time model =
 renderPath : Int -> PathAcross -> Svg FrontendMsg
 renderPath millisElapsed path =
     let
+        -- xOffset =
+        --     if path.color == Utils.elementColorToRgb Config.color1 then
+        --         -50 - (toFloat millisElapsed / 30.0)
+        --     else if path.color == Utils.elementColorToRgb Config.color2 then
+        --         -50 + (toFloat millisElapsed / 30.0)
+        --     else
+        --         -50
         xOffset =
             -50
 
-        -- -50 - (toFloat millisElapsed / 30.0)
         basePoint =
             { x = round xOffset, y = path.yPathStart }
 

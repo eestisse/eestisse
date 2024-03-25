@@ -36,7 +36,7 @@ generatePathsAcross seed0 =
                 ( heightFilledSoFar, maybeLastColor ) =
                     case List.Extra.last existingPathsAcross of
                         Nothing ->
-                            ( 0, Nothing )
+                            ( 300, Nothing )
 
                         Just pathAcross ->
                             ( pathAcross.yPathStart + (Config.pathAcrossYVariance // 2)
@@ -49,11 +49,20 @@ generatePathsAcross seed0 =
             else
                 let
                     newColor =
-                        if maybeLastColor == (Just <| Utils.elementColorToRgb Colors.vibrantTeal) then
-                            Colors.mainBlue
+                        case maybeLastColor of
+                            Nothing ->
+                                -- since background will be color1
+                                Config.color2
 
-                        else
-                            Colors.vibrantTeal
+                            Just lastColor ->
+                                if lastColor == Utils.elementColorToRgb Config.color1 then
+                                    Config.color2
+
+                                else if lastColor == Utils.elementColorToRgb Config.color2 then
+                                    Config.color3
+
+                                else
+                                    Config.color1
 
                     ( newPathAcross, newSeed ) =
                         generatePathAcross heightFilledSoFar (Utils.elementColorToRgb newColor) seed
@@ -84,7 +93,7 @@ generatePathAcross yMin color seed0 =
         ( yPathStart, seed1 ) =
             let
                 yMax =
-                    yMin + Config.pathAcrossYVariance
+                    yMin
             in
             Random.step
                 (Random.int yMin yMax)
@@ -179,10 +188,13 @@ upwardVeritcalSectionGenerator startPoint =
     let
         verticalSpaceAvailable =
             startPoint.y - minYRelative - Config.elbowRadius
+
+        maxValue =
+            min verticalSpaceAvailable Config.maxVerticalLength
     in
     Random.map
         Up
-        (Random.int 0 verticalSpaceAvailable)
+        (Random.int 0 maxValue)
         |> Random.map (pieceToSection startPoint)
 
 
@@ -191,10 +203,13 @@ downwardVeritcalSectionGenerator startPoint =
     let
         verticalSpaceAvailable =
             maxYRelative - startPoint.y - Config.elbowRadius
+
+        maxValue =
+            min verticalSpaceAvailable Config.maxVerticalLength
     in
     Random.map
         Down
-        (Random.int 0 verticalSpaceAvailable)
+        (Random.int 0 maxValue)
         |> Random.map (pieceToSection startPoint)
 
 

@@ -1,5 +1,8 @@
 module Background.Config exposing (..)
 
+import Colors
+import Element
+
 
 horizontalSegmentXMin =
     100
@@ -10,11 +13,11 @@ horizontalSegmentXVariance =
 
 
 minTotalWidth =
-    2000
+    4000
 
 
 pathAcrossYVariance =
-    400
+    300
 
 
 elbowRadius =
@@ -28,3 +31,19 @@ drawableShapeBottomY =
 
 minDrawableHeightToFill =
     3000
+
+
+maxVerticalLength =
+    30
+
+
+color1 =
+    Colors.vibrantTeal
+
+
+color2 =
+    Element.rgb 0.5 0.5 1
+
+
+color3 =
+    Element.rgb 0.5 1 0.5
