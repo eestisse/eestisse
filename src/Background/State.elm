@@ -49,20 +49,30 @@ generatePathsAcross seed0 =
             else
                 let
                     newColor =
-                        case maybeLastColor of
-                            Nothing ->
-                                -- since background will be color1
-                                Config.color2
+                        let
+                            indexOfLastColor =
+                                maybeLastColor
+                                    |> Maybe.andThen (\lastColor -> Config.colors |> List.map Utils.elementColorToRgb |> List.Extra.findIndex ((==) lastColor))
 
-                            Just lastColor ->
-                                if lastColor == Utils.elementColorToRgb Config.color1 then
-                                    Config.color2
+                            indexOfThisColor =
+                                indexOfLastColor
+                                    |> Maybe.map ((+) 1)
+                                    |> Maybe.map
+                                        (\i ->
+                                            if i >= List.length Config.colors then
+                                                0
 
-                                else if lastColor == Utils.elementColorToRgb Config.color2 then
-                                    Config.color3
+                                            else
+                                                i
+                                        )
+                                    |> Maybe.withDefault 1
 
-                                else
-                                    Config.color1
+                            _ =
+                                Debug.log "l" ( List.length existingPathsAcross, maybeLastColor )
+                        in
+                        Config.colors
+                            |> List.Extra.getAt indexOfThisColor
+                            |> Maybe.withDefault Colors.black
 
                     ( newPathAcross, newSeed ) =
                         generatePathAcross heightFilledSoFar (Utils.elementColorToRgb newColor) seed

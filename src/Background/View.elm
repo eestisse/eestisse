@@ -21,7 +21,7 @@ view time model =
     Element.el
         [ Element.width Element.fill
         , Element.height Element.fill
-        , Element.Background.color <| Config.color1
+        , Element.Background.color (Config.colors |> List.head |> Maybe.withDefault Colors.black)
         ]
     <|
         Element.html <|

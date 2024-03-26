@@ -37,13 +37,9 @@ maxVerticalLength =
     30
 
 
-color1 =
-    Colors.vibrantTeal
+colors =
+    [ Colors.vibrantTeal
+    , Colors.sunshineYellow
 
-
-color2 =
-    Element.rgb 0.5 0.5 1
-
-
-color3 =
-    Element.rgb 0.5 1 0.5
+    -- , Element.rgb 0.5 1 0.5
+    ]
