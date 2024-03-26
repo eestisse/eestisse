@@ -21,13 +21,36 @@ view time model =
     Element.el
         [ Element.width Element.fill
         , Element.height Element.fill
-        , Element.Background.color (Config.colors |> List.head |> Maybe.withDefault Colors.black)
+        , Element.Background.color Config.firstSectionColor
         ]
     <|
         Element.html <|
             Svg.svg
-                [ Svg.Attributes.height <| String.fromInt Config.minDrawableHeightToFill ]
-                (List.map (renderPath millisElapsed) model.pathsAcross)
+                [ Svg.Attributes.height "100%" ]
+                (Svg.defs
+                    []
+                    [ shadowFilterSvg ]
+                    :: List.map (renderPath millisElapsed) model.pathsAcross
+                )
+
+
+shadowFilterSvg : Svg FrontendMsg
+shadowFilterSvg =
+    Svg.filter
+        [ Svg.Attributes.id "shadow" ]
+        [ Svg.node "feDropShadow"
+            [ Svg.Attributes.dx "-5"
+            , Svg.Attributes.dy "-5"
+            , Svg.Attributes.stdDeviation "5"
+            , Svg.Attributes.floodOpacity "0.5"
+            ]
+            []
+        ]
+
+
+useShadowSvgAttribute : Svg.Attribute FrontendMsg
+useShadowSvgAttribute =
+    Svg.Attributes.style "filter:url(#shadow)"
 
 
 renderPath : Int -> PathAcross -> Svg FrontendMsg
@@ -70,6 +93,7 @@ renderPath millisElapsed path =
         , Svg.Attributes.fill <| rgbToSvgString path.color
         , Svg.Attributes.stroke <| colorToSvgString Config.pathColor
         , Svg.Attributes.strokeWidth <| String.fromInt Config.pathThickness
+        , useShadowSvgAttribute
         ]
         []
 

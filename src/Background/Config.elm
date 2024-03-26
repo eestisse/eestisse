@@ -44,9 +44,14 @@ maxVerticalLength =
 colors =
     [ Colors.vibrantTeal
     , Colors.sunshineYellow
+    , Element.rgb 0.8 0.8 1
 
     -- , Element.rgb 0.5 1 0.5
     ]
+
+
+firstSectionColor =
+    Element.rgb 0.8 0.8 1
 
 
 pathColor =

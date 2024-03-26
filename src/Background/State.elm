@@ -65,7 +65,7 @@ generatePathsAcross seed0 =
                                             else
                                                 i
                                         )
-                                    |> Maybe.withDefault 1
+                                    |> Maybe.withDefault 0
                         in
                         Config.colors
                             |> List.Extra.getAt indexOfThisColor
