@@ -67,9 +67,9 @@ renderPath millisElapsed path =
     in
     Svg.path
         [ Svg.Attributes.d dString
-        , Svg.Attributes.fill <| colorToSvgString path.color
-        , Svg.Attributes.stroke "white"
-        , Svg.Attributes.strokeWidth "20"
+        , Svg.Attributes.fill <| rgbToSvgString path.color
+        , Svg.Attributes.stroke <| colorToSvgString Config.pathColor
+        , Svg.Attributes.strokeWidth <| String.fromInt Config.pathThickness
         ]
         []
 
@@ -124,8 +124,8 @@ pointToString p =
     String.fromInt p.x ++ "," ++ String.fromInt p.y
 
 
-colorToSvgString : RGB -> String
-colorToSvgString rgb =
+rgbToSvgString : RGB -> String
+rgbToSvgString rgb =
     let
         numbersString =
             [ rgb.red
@@ -140,6 +140,11 @@ colorToSvgString rgb =
                 |> String.join " "
     in
     "rgb(" ++ numbersString ++ ")"
+
+
+colorToSvgString : Element.Color -> String
+colorToSvgString =
+    Utils.elementColorToRgb >> rgbToSvgString
 
 
 boolToInt : Bool -> Int

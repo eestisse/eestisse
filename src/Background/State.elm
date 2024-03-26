@@ -36,7 +36,7 @@ generatePathsAcross seed0 =
                 ( heightFilledSoFar, maybeLastColor ) =
                     case List.Extra.last existingPathsAcross of
                         Nothing ->
-                            ( 300, Nothing )
+                            ( Config.horizontalSpaceBeforePaths, Nothing )
 
                         Just pathAcross ->
                             ( pathAcross.yPathStart + (Config.pathAcrossYVariance // 2)
@@ -66,9 +66,6 @@ generatePathsAcross seed0 =
                                                 i
                                         )
                                     |> Maybe.withDefault 1
-
-                            _ =
-                                Debug.log "l" ( List.length existingPathsAcross, maybeLastColor )
                         in
                         Config.colors
                             |> List.Extra.getAt indexOfThisColor

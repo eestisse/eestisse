@@ -4,6 +4,10 @@ import Colors
 import Element
 
 
+horizontalSpaceBeforePaths =
+    270
+
+
 horizontalSegmentXMin =
     100
 
@@ -22,7 +26,7 @@ pathAcrossYVariance =
 
 elbowRadius =
     -- this must be less than 1/4 of pathAcrossYVariance
-    40
+    30
 
 
 drawableShapeBottomY =
@@ -43,3 +47,11 @@ colors =
 
     -- , Element.rgb 0.5 1 0.5
     ]
+
+
+pathColor =
+    Element.rgb 0.2 0.2 0.2
+
+
+pathThickness =
+    10
