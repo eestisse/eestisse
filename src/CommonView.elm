@@ -1,6 +1,7 @@
 module CommonView exposing (..)
 
 import Colors
+import CommonTypes exposing (..)
 import Element exposing (Attribute, Element)
 import Element.Background as Background
 import Element.Border as Border
@@ -155,3 +156,13 @@ newTabLink extraAttributes url labelText =
 htmlId : String -> Attribute msg
 htmlId idStr =
     Element.htmlAttribute <| Html.Attributes.id idStr
+
+
+responsiveVal : DisplayProfile -> a -> a -> a
+responsiveVal dProfile a b =
+    case dProfile of
+        Mobile ->
+            a
+
+        Desktop ->
+            b

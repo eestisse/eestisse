@@ -2,7 +2,9 @@ module Types exposing (..)
 
 import Background.Types as Background
 import Browser exposing (UrlRequest)
+import Browser.Dom
 import Browser.Navigation exposing (Key)
+import CommonTypes exposing (..)
 import Dict exposing (Dict)
 import Http
 import Lamdera exposing (ClientId)
@@ -15,6 +17,7 @@ import Url exposing (Url)
 type alias FrontendModel =
     { key : Key
     , route : Route
+    , dProfile : Maybe DisplayProfile
     , translationPageModel : TranslationPageModel
     , signupState : SignupState
     , maybeImportantNumber : Maybe Int
@@ -24,9 +27,11 @@ type alias FrontendModel =
 
 
 type FrontendMsg
-    = UrlClicked UrlRequest
+    = NoOpFrontendMsg
+    | UrlClicked UrlRequest
     | UrlChanged Url
-    | NoOpFrontendMsg
+    | GotViewport Browser.Dom.Viewport
+    | Resize Int Int
     | TextInputChanged String
     | SubmitText String
     | ShowExplanation BreakdownPart

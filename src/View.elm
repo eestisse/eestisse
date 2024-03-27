@@ -4,6 +4,7 @@ import Admin.View
 import Background.View
 import Browser
 import Colors
+import CommonTypes exposing (..)
 import CommonView exposing (..)
 import Element exposing (Attribute, Element)
 import Element.Background
@@ -34,13 +35,18 @@ root model =
             , Element.height Element.fill
             ]
           <|
-            view model
+            case model.dProfile of
+                Just dProfile ->
+                    view dProfile model
+
+                Nothing ->
+                    Element.none
         ]
     }
 
 
-view : FrontendModel -> Element FrontendMsg
-view model =
+view : DisplayProfile -> FrontendModel -> Element FrontendMsg
+view dProfile model =
     Element.el
         [ Element.width Element.fill
         , Element.height Element.fill
@@ -70,7 +76,7 @@ view model =
                     [ Element.el [ Element.width Element.fill ] <|
                         Element.none
                     , Element.el [ Element.centerX ] <|
-                        titleElement (model.route == Route.Landing)
+                        titleElement dProfile (model.route == Route.Landing)
                     , Element.el [ Element.width Element.fill ] <|
                         Element.none
                     ]
@@ -90,8 +96,8 @@ view model =
             ]
 
 
-titleElement : Bool -> Element FrontendMsg
-titleElement showSubtitle =
+titleElement : DisplayProfile -> Bool -> Element FrontendMsg
+titleElement dProfile showSubtitle =
     let
         emphasizedText =
             -- Element.el [ Font.color <| Element.rgb 0.22 0.557 0.235 ] << Element.text
@@ -123,7 +129,7 @@ titleElement showSubtitle =
         , if showSubtitle then
             Element.column
                 [ Font.color <| Element.rgb 0.2 0.2 0.2
-                , Font.size 20
+                , Font.size <| responsiveVal dProfile 20 26
                 ]
                 [ Element.row [ Element.centerX ]
                     [ Element.text "A "
