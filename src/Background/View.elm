@@ -57,10 +57,8 @@ renderPath : Int -> PathAcross -> Svg FrontendMsg
 renderPath millisElapsed path =
     let
         -- xOffset =
-        --     if path.color == Utils.elementColorToRgb Config.color1 then
-        --         -50 - (toFloat millisElapsed / 30.0)
-        --     else if path.color == Utils.elementColorToRgb Config.color2 then
-        --         -50 + (toFloat millisElapsed / 30.0)
+        --     if path.color == Utils.elementColorToRgb Colors.vibrantTeal then
+        --         -50 - (toFloat millisElapsed / 100.0)
         --     else
         --         -50
         xOffset =
