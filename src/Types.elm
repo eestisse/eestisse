@@ -23,6 +23,44 @@ type alias FrontendModel =
     }
 
 
+type FrontendMsg
+    = UrlClicked UrlRequest
+    | UrlChanged Url
+    | NoOpFrontendMsg
+    | TextInputChanged String
+    | SubmitText String
+    | ShowExplanation BreakdownPart
+    | CycleLoadingAnimation
+    | EditTranslation String
+    | GotoRoute Route
+    | StartSignup
+    | SubmitSignup String
+    | SignupTextChanged String
+    | FetchImportantNumber
+    | Animate Time.Posix
+
+
+type ToBackend
+    = NoOpToBackend
+    | SubmitTextForTranslation String
+    | SubmitEmail String
+    | RequestImportantNumber
+
+
+type BackendMsg
+    = NoOpBackendMsg
+    | GptResponseReceived ClientId String (Result Http.Error String)
+    | AddPublicCredits
+    | UpdateNow Time.Posix
+
+
+type ToFrontend
+    = NoOpToFrontend
+    | TranslationResult String (Result GptAssistError Translation)
+    | EmailSubmitAck
+    | ImportantNumber Int
+
+
 type SignupState
     = Inactive
     | Active String
@@ -83,44 +121,6 @@ type alias BackendModel =
     , emails : Set String
     , requests : List ( Time.Posix, String, Result GptAssistError Translation )
     }
-
-
-type FrontendMsg
-    = UrlClicked UrlRequest
-    | UrlChanged Url
-    | NoOpFrontendMsg
-    | TextInputChanged String
-    | SubmitText String
-    | ShowExplanation BreakdownPart
-    | CycleLoadingAnimation
-    | EditTranslation String
-    | GotoRoute Route
-    | StartSignup
-    | SubmitSignup String
-    | SignupTextChanged String
-    | FetchImportantNumber
-    | Animate Time.Posix
-
-
-type ToBackend
-    = NoOpToBackend
-    | SubmitTextForTranslation String
-    | SubmitEmail String
-    | RequestImportantNumber
-
-
-type BackendMsg
-    = NoOpBackendMsg
-    | GptResponseReceived ClientId String (Result Http.Error String)
-    | AddPublicCredits
-    | UpdateNow Time.Posix
-
-
-type ToFrontend
-    = NoOpToFrontend
-    | TranslationResult String (Result GptAssistError Translation)
-    | EmailSubmitAck
-    | ImportantNumber Int
 
 
 type alias RGB =
