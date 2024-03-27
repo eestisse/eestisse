@@ -55,7 +55,7 @@ firstSectionColor =
 
 
 pathColor =
-    Element.rgb 0.98 0.98 0.96
+    Colors.offWhite
 
 
 pathThickness =

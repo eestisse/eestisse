@@ -22,7 +22,8 @@ page signupState =
         , Element.spacing 25
         ]
         [ mainExplainer
-        , futureFeaturesAndSignupElement signupState
+
+        -- , futureFeaturesAndSignupElement signupState
         ]
 
 
@@ -31,58 +32,78 @@ emphasizedText =
     Element.el [ Font.bold, Font.color Colors.darkGreen ] << Element.text
 
 
+primaryBox : List (Attribute msg) -> Element msg -> Element msg
+primaryBox extraAttributes innerEl =
+    Element.el
+        ([ Element.padding 10
+         , Border.rounded 30
+         , Border.shadow
+            { offset = ( -5, -5 )
+            , size = 5
+            , blur = 10
+            , color = Element.rgba 0 0 0 0.3
+            }
+
+         -- , Border.color <| Colors.offWhite
+         , Border.color <| Element.rgb 0.8 0.8 1
+         , Border.width 10
+         , Element.Background.color <| Element.rgb 0.95 0.95 1
+         ]
+            ++ extraAttributes
+        )
+        innerEl
+
+
 mainExplainer : Element FrontendMsg
 mainExplainer =
     let
         italics s =
             Element.el [ Font.italic ] <| Element.text s
     in
-    Element.column
-        [ Element.width Element.fill
-        , Element.spacing 20
-        , Element.padding 10
-        , Border.width 1
-        , Element.Background.color <| Element.rgb 0.95 0.95 1
-        , Border.color <| Element.rgb 0.8 0.8 1
-        , Border.rounded 6
-        ]
-        [ CommonView.makeParagraphs
-            []
-            [ [ CommonView.coloredEestisseText []
-              , Element.text " (meaning \"into Estonia\") is a tutoring and assistance tool for anyone learning the Estonian language. "
-              ]
-            , [ emphasizedText "Deep translation"
-              , Element.text " is the central feature: Estonian is not just translated, but explained piece by piece, with the help of AI."
-              ]
+    primaryBox
+        [ Element.width Element.fill ]
+    <|
+        Element.column
+            [ Element.spacing 20
+            , Element.width Element.fill
             ]
-        , Input.button
-            [ Element.paddingXY 30 8
-            , Element.centerX
-            , Element.Background.color <| Element.rgb 0 0 1
-            , Font.color <| Element.rgb 1 1 1
-            , Font.size 22
-            , Border.rounded 10
-            , CommonView.madimiFont
-            ]
-            { onPress = Just <| GotoRoute Route.Translate
-            , label = Element.text "Try out Deep Translation"
-            }
-        , CommonView.makeParagraphs
-            []
-            [ [ Element.text "As you navigate Estonia, "
-              , CommonView.coloredEestisseText []
-              , Element.text " can be your personal tutor, translating and explaining anything you see. "
-              , Element.text "Ads, bills, news articles, and Tinder messages all work well."
-              ]
-            , [ Element.text "Or if you really want to learn fast, pick up an Estonian children's book! Trust me. Just tell them it's for your child... your "
-              , italics "inner"
-              , Element.text " child."
-              ]
+            [ CommonView.makeParagraphs
+                []
+                [ [ CommonView.coloredEestisseText []
+                  , Element.text " (meaning \"into Estonia\") is a tutoring and assistance tool for anyone learning the Estonian language. "
+                  ]
+                , [ emphasizedText "Deep translation"
+                  , Element.text " is the central feature: Estonian is not just translated, but explained piece by piece, with the help of AI."
+                  ]
+                ]
+            , Input.button
+                [ Element.paddingXY 30 8
+                , Element.centerX
+                , Element.Background.color <| Element.rgb 0 0 1
+                , Font.color <| Element.rgb 1 1 1
+                , Font.size 22
+                , Border.rounded 10
+                , CommonView.madimiFont
+                ]
+                { onPress = Just <| GotoRoute Route.Translate
+                , label = Element.text "Try out Deep Translation"
+                }
+            , CommonView.makeParagraphs
+                []
+                [ [ Element.text "As you navigate Estonia, "
+                  , CommonView.coloredEestisseText []
+                  , Element.text " can be your personal tutor, translating and explaining anything you see. "
+                  , Element.text "Ads, bills, news articles, and Tinder messages all work well."
+                  ]
+                , [ Element.text "Or if you really want to learn fast, pick up an Estonian children's book! Trust me. Just tell them it's for your child... your "
+                  , italics "inner"
+                  , Element.text " child."
+                  ]
 
-            -- , [ Element.text "Before long you'll find you're picking up common words and getting a feel for the grammar and the case system (of which \"eestisse\" is an example, by the way!)"
-            --   ]
+                -- , [ Element.text "Before long you'll find you're picking up common words and getting a feel for the grammar and the case system (of which \"eestisse\" is an example, by the way!)"
+                --   ]
+                ]
             ]
-        ]
 
 
 futureFeaturesAndSignupElement : SignupState -> Element FrontendMsg
