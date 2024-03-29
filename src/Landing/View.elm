@@ -2,10 +2,12 @@ module Landing.View exposing (..)
 
 import Background.View
 import Colors
-import CommonView
+import CommonTypes exposing (..)
+import CommonView exposing (..)
 import Element exposing (Attribute, Element)
 import Element.Background
 import Element.Border as Border
+import Element.Events as Events
 import Element.Font as Font
 import Element.Input as Input
 import Route
@@ -14,14 +16,14 @@ import Types exposing (..)
 import Utils
 
 
-page : SignupState -> Element FrontendMsg
-page signupState =
+page : DisplayProfile -> SignupState -> Element FrontendMsg
+page dProfile signupState =
     Element.column
         [ Element.width Element.fill
         , Element.height Element.fill
         , Element.spacing 25
         ]
-        [ mainExplainer
+        [ mainExplainer dProfile
 
         -- , futureFeaturesAndSignupElement signupState
         ]
@@ -54,8 +56,8 @@ primaryBox extraAttributes innerEl =
         innerEl
 
 
-mainExplainer : Element FrontendMsg
-mainExplainer =
+mainExplainer : DisplayProfile -> Element FrontendMsg
+mainExplainer dProfile =
     let
         italics s =
             Element.el [ Font.italic ] <| Element.text s
@@ -66,27 +68,32 @@ mainExplainer =
         Element.column
             [ Element.spacing 20
             , Element.width Element.fill
+            , Font.size <| responsiveVal dProfile 20 26
+            , Font.bold
             ]
             [ CommonView.makeParagraphs
                 []
                 [ [ CommonView.coloredEestisseText []
-                  , Element.text " (meaning \"into Estonia\") is a tutoring and assistance tool for anyone learning the Estonian language. "
-                  ]
-                , [ emphasizedText "Deep translation"
-                  , Element.text " is the central feature: Estonian is not just translated, but explained piece by piece, with the help of AI."
+                  , Element.text " (meaning \"into Estonia\") translates between English and Estonian and "
+                  , emphasizedText "explains the translation"
+                  , Element.text " piece by piece."
                   ]
                 ]
-            , Input.button
-                [ Element.paddingXY 30 8
-                , Element.centerX
-                , Element.Background.color <| Element.rgb 0 0 1
-                , Font.color <| Element.rgb 1 1 1
-                , Font.size 22
-                , Border.rounded 10
-                , CommonView.madimiFont
+            , Input.text
+                [ Border.rounded 10
+                , Element.padding <| responsiveVal dProfile 18 20
+                , Element.height <| Element.px <| responsiveVal dProfile 60 70
+                , Events.onFocus GotoTranslateAndFocus
                 ]
-                { onPress = Just <| GotoRoute Route.Translate
-                , label = Element.text "Try out Deep Translation"
+                { onChange = always NoOpFrontendMsg
+                , text = ""
+                , placeholder =
+                    Just <|
+                        Input.placeholder
+                            [ Font.italic ]
+                        <|
+                            Element.text "Enter English or Estonian text"
+                , label = Input.labelHidden "Enter text"
                 }
             , CommonView.makeParagraphs
                 []

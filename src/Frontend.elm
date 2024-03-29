@@ -184,6 +184,18 @@ update msg model =
                 (Route.routeToString route)
             )
 
+        GotoTranslateAndFocus ->
+            ( { model
+                | route = Route.Translate
+              }
+            , Cmd.batch
+                [ Nav.pushUrl
+                    model.key
+                    (Route.routeToString Route.Translate)
+                , focusTranslateInputCmd
+                ]
+            )
+
         FetchImportantNumber ->
             ( model
             , Lamdera.sendToBackend RequestImportantNumber
@@ -257,6 +269,11 @@ updateFromBackend msg model =
 focusEmailInputCmd : Cmd FrontendMsg
 focusEmailInputCmd =
     Task.attempt (\_ -> NoOpFrontendMsg) (Browser.Dom.focus "email-input")
+
+
+focusTranslateInputCmd : Cmd FrontendMsg
+focusTranslateInputCmd =
+    Task.attempt (\_ -> NoOpFrontendMsg) (Browser.Dom.focus "translate-input")
 
 
 plausibleEventOutCmd : String -> Cmd msg

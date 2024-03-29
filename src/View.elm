@@ -86,7 +86,7 @@ view dProfile model =
                     Translate.View.page model.translationPageModel
 
                 Route.Landing ->
-                    Landing.View.page model.signupState
+                    Landing.View.page dProfile model.signupState
 
                 Route.Admin ->
                     Admin.View.page model.maybeImportantNumber
