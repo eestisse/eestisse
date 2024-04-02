@@ -126,10 +126,8 @@ titleElement dProfile showSubtitle =
                 , Font.size <| responsiveVal dProfile 24 36
                 ]
                 [ Element.row [ Element.centerX ]
-                    [ Element.text "A "
-                    , emphasizedText "tutor in your pocket"
+                    [ emphasizedText "An Estonian tutor in your pocket"
                     ]
-                , Element.el [ Element.centerX ] <| Element.text "for the Estonian language"
                 ]
 
           else
