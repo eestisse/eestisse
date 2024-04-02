@@ -366,11 +366,11 @@ subscriptions model =
                     [ Time.every 1500 (always CycleLoadingAnimation)
 
                     -- , Time.every 900 FiddleRandomBackroundPath
+                    , Time.every 900 FiddleRandomBackroundPath
                     ]
 
             _ ->
                 Sub.none
-        , Time.every 900 FiddleRandomBackroundPath
         , Browser.Events.onAnimationFrame Animate
         , Browser.Events.onResize Types.Resize
         ]

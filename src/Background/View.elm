@@ -60,7 +60,8 @@ renderPath dProfile animationTime ( path, maybeAnimationState ) =
             in
             min
                 (toFloat timeDiffMillis / Config.pathAnimationTimeLengthMillis)
-                1
+                1.0
+                |> Config.easingFunction
 
         pathToRender =
             case maybeAnimationState of
@@ -235,7 +236,7 @@ interpolatePoint progressFloat oldPoint newPoint =
 interpolateInt : Float -> Int -> Int -> Int
 interpolateInt progressFloat old new =
     interpolateFloat progressFloat (toFloat old) (toFloat new)
-        |> floor
+        |> round
 
 
 interpolateFloat : Float -> Float -> Float -> Float
