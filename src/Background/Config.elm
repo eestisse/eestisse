@@ -17,6 +17,10 @@ horizontalSegmentXVariance =
     200
 
 
+verticalSegmentTweakMaxLength =
+    40
+
+
 minTotalWidth =
     4000
 
@@ -34,8 +38,8 @@ drawableShapeBottomY =
     800
 
 
-minDrawableHeightToFill =
-    3000
+numPaths =
+    6
 
 
 maxVerticalLength =
@@ -61,3 +65,16 @@ pathColor =
 
 pathThickness =
     10
+
+
+pathAnimationTimeLengthMillis =
+    1000
+
+
+easingFunction : Float -> Float
+easingFunction x =
+    if x == 1 then
+        1
+
+    else
+        1 - (2 ^ (-20 * x))

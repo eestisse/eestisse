@@ -44,6 +44,7 @@ type FrontendMsg
     | SignupTextChanged String
     | FetchImportantNumber
     | Animate Time.Posix
+    | FiddleRandomBackroundPath Time.Posix
 
 
 type ToBackend

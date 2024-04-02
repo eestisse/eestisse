@@ -1,12 +1,16 @@
 port module Frontend exposing (..)
 
+import Background.Config
 import Background.State as Background
+import Background.Types as Background
 import Browser exposing (UrlRequest(..))
 import Browser.Dom
 import Browser.Events
 import Browser.Navigation as Nav
 import Dict exposing (Dict)
 import Lamdera
+import List.Extra
+import Random
 import Responsive exposing (..)
 import Route exposing (Route)
 import Task
@@ -14,6 +18,7 @@ import Testing
 import Time
 import Types exposing (..)
 import Url
+import Utils
 import View
 
 
@@ -176,25 +181,17 @@ update msg model =
             )
 
         GotoRoute route ->
-            ( { model
-                | route = route
-              }
-            , Nav.pushUrl
-                model.key
-                (Route.routeToString route)
-            )
+            changeRouteAndAnimate model route
 
         GotoTranslateAndFocus ->
-            ( { model
-                | route = Route.Translate
-              }
-            , Cmd.batch
-                [ Nav.pushUrl
-                    model.key
-                    (Route.routeToString Route.Translate)
-                , focusTranslateInputCmd
-                ]
-            )
+            changeRouteAndAnimate model Route.Translate
+                |> Tuple.mapSecond
+                    (\cmd ->
+                        Cmd.batch
+                            [ cmd
+                            , focusTranslateInputCmd
+                            ]
+                    )
 
         FetchImportantNumber ->
             ( model
@@ -209,11 +206,25 @@ update msg model =
                         Nothing ->
                             Just <| Background.init time
 
-                        Just _ ->
-                            model.backgroundModel
+                        Just bgModel ->
+                            Just <|
+                                Background.clearFinishedAnimations <|
+                                    { bgModel | animationTime = time }
               }
             , Cmd.none
             )
+
+        FiddleRandomBackroundPath time ->
+            case model.backgroundModel of
+                Nothing ->
+                    ( model, Cmd.none )
+
+                Just backgroundModel ->
+                    ( { model
+                        | backgroundModel = Just <| Background.fiddleRandomPath backgroundModel
+                      }
+                    , Cmd.none
+                    )
 
 
 updateFromBackend : ToFrontend -> Model -> ( Model, Cmd FrontendMsg )
@@ -266,6 +277,20 @@ updateFromBackend msg model =
             )
 
 
+changeRouteAndAnimate : Model -> Route -> ( Model, Cmd FrontendMsg )
+changeRouteAndAnimate model route =
+    ( { model
+        | route = route
+        , backgroundModel =
+            model.backgroundModel
+                |> Maybe.map Background.fiddleAllPaths
+      }
+    , Nav.pushUrl
+        model.key
+        (Route.routeToString route)
+    )
+
+
 focusEmailInputCmd : Cmd FrontendMsg
 focusEmailInputCmd =
     Task.attempt (\_ -> NoOpFrontendMsg) (Browser.Dom.focus "email-input")
@@ -292,7 +317,10 @@ subscriptions model =
     Sub.batch
         [ case model.translationPageModel of
             RequestSent (Waiting _ _) ->
-                Time.every 1500 (always CycleLoadingAnimation)
+                Sub.batch
+                    [ Time.every 1500 (always CycleLoadingAnimation)
+                    , Time.every 900 FiddleRandomBackroundPath
+                    ]
 
             _ ->
                 Sub.none

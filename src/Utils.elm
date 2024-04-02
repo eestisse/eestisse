@@ -4,6 +4,8 @@ import Element
 import Html.Events
 import Http
 import Json.Decode
+import Random
+import Time
 import Types exposing (..)
 
 
@@ -101,3 +103,8 @@ elementColorToRgb elColor =
         rgba.red
         rgba.green
         rgba.blue
+
+
+timeToRandomSeed : Time.Posix -> Random.Seed
+timeToRandomSeed =
+    Time.posixToMillis >> Random.initialSeed

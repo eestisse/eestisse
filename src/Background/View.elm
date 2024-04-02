@@ -15,10 +15,6 @@ import Utils
 
 view : DisplayProfile -> Time.Posix -> Model -> Element FrontendMsg
 view dProfile time model =
-    let
-        millisElapsed =
-            Time.posixToMillis time - Time.posixToMillis model.startTime
-    in
     Element.el
         [ Element.width Element.fill
         , Element.height Element.fill
@@ -31,7 +27,7 @@ view dProfile time model =
                 (Svg.defs
                     []
                     [ shadowFilterSvg ]
-                    :: List.map (renderPath dProfile millisElapsed) model.pathsAcross
+                    :: List.map (renderPath dProfile time) model.pathsAcross
                 )
 
 
@@ -54,25 +50,23 @@ useShadowSvgAttribute =
     Svg.Attributes.style "filter:url(#shadow)"
 
 
-renderPath : DisplayProfile -> Int -> PathAcross -> Svg FrontendMsg
-renderPath dProfile millisElapsed path =
+renderPath : DisplayProfile -> Time.Posix -> ( PathAcross, Maybe PathAcrossAnimationState ) -> Svg FrontendMsg
+renderPath dProfile animationTime ( path, maybeAnimationState ) =
     let
-        -- xOffset =
-        --     if path.color == Utils.elementColorToRgb Colors.vibrantTeal then
-        --         -50 - (toFloat millisElapsed / 100.0)
-        --     else
-        --         -50
+        pathToRender =
+            getRenderablePath animationTime ( path, maybeAnimationState )
+
         xOffset =
             -50
 
         basePoint =
-            { x = round xOffset, y = path.yPathStart + Config.horizontalSpaceBeforePaths dProfile }
+            { x = round xOffset, y = pathToRender.yPathStart + Config.horizontalSpaceBeforePaths dProfile }
 
         pathStartString =
             "M " ++ pointToString basePoint
 
         pathBodyString =
-            path.sections
+            pathToRender.sections
                 |> List.map (makePathStringSnippet basePoint)
                 |> String.join " "
 
@@ -89,7 +83,7 @@ renderPath dProfile millisElapsed path =
     in
     Svg.path
         [ Svg.Attributes.d dString
-        , Svg.Attributes.fill <| rgbToSvgString path.color
+        , Svg.Attributes.fill <| rgbToSvgString pathToRender.color
         , Svg.Attributes.stroke <| colorToSvgString Config.pathColor
         , Svg.Attributes.strokeWidth <| String.fromInt Config.pathThickness
         , useShadowSvgAttribute

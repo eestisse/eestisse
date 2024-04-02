@@ -22,8 +22,8 @@ init now =
             generatePathsAcross (Random.initialSeed seedInt)
     in
     { seed = seed
-    , startTime = now
-    , pathsAcross = pathsAcross
+    , animationTime = now
+    , pathsAcross = pathsAcross |> List.map (\p -> ( p, Nothing ))
     }
 
 
@@ -43,7 +43,7 @@ generatePathsAcross seed0 =
                             , Just pathAcross.color
                             )
             in
-            if heightFilledSoFar > Config.minDrawableHeightToFill then
+            if List.length existingPathsAcross >= Config.numPaths then
                 ( existingPathsAcross, seed )
 
             else
@@ -80,7 +80,7 @@ generatePathsAcross seed0 =
 
 
 generatePathAcross : Int -> RGB -> Random.Seed -> ( PathAcross, Random.Seed )
-generatePathAcross yMin color seed0 =
+generatePathAcross yPathStart color seed0 =
     let
         iterativelyBuildSectionList : ( List PathSection, Random.Seed ) -> ( List PathSection, Random.Seed )
         iterativelyBuildSectionList ( existingPathSections, seed ) =
@@ -97,23 +97,14 @@ generatePathAcross yMin color seed0 =
             else
                 iterativelyBuildSectionList <| addNewSection ( existingPathSections, seed )
 
-        ( yPathStart, seed1 ) =
-            let
-                yMax =
-                    yMin
-            in
-            Random.step
-                (Random.int yMin yMax)
-                seed0
-
-        ( sections, seed2 ) =
-            iterativelyBuildSectionList ( [], seed1 )
+        ( sections, seed1 ) =
+            iterativelyBuildSectionList ( [], seed0 )
     in
     ( { yPathStart = yPathStart
       , sections = sections
       , color = color
       }
-    , seed2
+    , seed1
     )
 
 
@@ -292,3 +283,153 @@ colorGenerator =
         , Colors.lavender
         ]
         |> Random.map Utils.elementColorToRgb
+
+
+tweakPathAcross : ( PathAcross, Random.Seed ) -> ( PathAcross, Random.Seed )
+tweakPathAcross ( pathAcross, seed ) =
+    let
+        ( newSections, newSeed ) =
+            getModifiedSectionsAcross ( pathAcross.sections, seed )
+    in
+    ( { pathAcross | sections = newSections }
+    , newSeed
+    )
+
+
+getModifiedSectionsAcross : ( List PathSection, Random.Seed ) -> ( List PathSection, Random.Seed )
+getModifiedSectionsAcross ( pathSections, seed0 ) =
+    let
+        ( ( _, finalSeed ), newSections ) =
+            pathSections
+                |> List.Extra.mapAccuml
+                    (\( maybeNewSectionStartPoint, seed ) section ->
+                        let
+                            newStartPoint =
+                                maybeNewSectionStartPoint |> Maybe.withDefault section.startPointRelative
+
+                            ( newPiece, newSeed ) =
+                                ( section.piece, seed ) |> tweakPiece
+                        in
+                        ( ( Just <| addPoints newStartPoint (pieceTransformVector newPiece), newSeed )
+                        , pieceToSection newStartPoint newPiece
+                        )
+                    )
+                    ( Nothing, seed0 )
+    in
+    ( newSections, finalSeed )
+
+
+tweakPiece : ( PathPiece, Random.Seed ) -> ( PathPiece, Random.Seed )
+tweakPiece ( pathPiece, seed0 ) =
+    case pathPiece of
+        Right _ ->
+            Random.step
+                (Random.int Config.horizontalSegmentXMin (Config.horizontalSegmentXMin + Config.horizontalSegmentXVariance))
+                seed0
+                |> Tuple.mapFirst Right
+
+        Up _ ->
+            Random.step
+                (Random.int 0 Config.verticalSegmentTweakMaxLength)
+                seed0
+                |> Tuple.mapFirst Up
+
+        Down _ ->
+            Random.step
+                (Random.int 0 Config.verticalSegmentTweakMaxLength)
+                seed0
+                |> Tuple.mapFirst Down
+
+        _ ->
+            ( pathPiece, seed0 )
+
+
+clearFinishedAnimations : Model -> Model
+clearFinishedAnimations model =
+    { model
+        | pathsAcross =
+            model.pathsAcross
+                |> List.map
+                    (\( pathAcross, maybeAnimationState ) ->
+                        case maybeAnimationState of
+                            Nothing ->
+                                ( pathAcross, Nothing )
+
+                            Just animationState ->
+                                let
+                                    animationAgeInMillis =
+                                        Time.posixToMillis model.animationTime - Time.posixToMillis animationState.animationStart
+                                in
+                                if animationAgeInMillis > Config.pathAnimationTimeLengthMillis then
+                                    ( animationState.pathAcrossTarget, Nothing )
+
+                                else
+                                    ( pathAcross, Just animationState )
+                    )
+    }
+
+
+fiddleRandomPath : Model -> Model
+fiddleRandomPath model =
+    let
+        ( pathNum, seed1 ) =
+            Random.step
+                (Random.int 0 (Config.numPaths - 1))
+                model.seed
+    in
+    case List.Extra.getAt pathNum model.pathsAcross of
+        Nothing ->
+            model
+
+        Just ( pathAcross, maybeAnimationState ) ->
+            let
+                currentlyRenderedPathAcross =
+                    getRenderablePath model.animationTime ( pathAcross, maybeAnimationState )
+
+                ( newPathAcross, seed2 ) =
+                    tweakPathAcross ( currentlyRenderedPathAcross, seed1 )
+            in
+            { model
+                | pathsAcross =
+                    model.pathsAcross
+                        |> List.Extra.setAt pathNum
+                            ( currentlyRenderedPathAcross
+                            , Just <|
+                                PathAcrossAnimationState
+                                    newPathAcross
+                                    model.animationTime
+                            )
+                , seed = seed2
+            }
+
+
+fiddleAllPaths : Model -> Model
+fiddleAllPaths model =
+    let
+        ( newSeed, newPathsAcross ) =
+            model.pathsAcross
+                |> List.Extra.mapAccuml
+                    (\seed ( pathAcross, maybeAnimationState ) ->
+                        let
+                            currentlyRenderedPathAcross =
+                                getRenderablePath model.animationTime ( pathAcross, maybeAnimationState )
+                        in
+                        let
+                            ( pathAcrossTarget, newSeed_ ) =
+                                tweakPathAcross ( currentlyRenderedPathAcross, seed )
+                        in
+                        ( newSeed_
+                        , ( currentlyRenderedPathAcross
+                          , Just <|
+                                { pathAcrossTarget = pathAcrossTarget
+                                , animationStart = model.animationTime
+                                }
+                          )
+                        )
+                    )
+                    model.seed
+    in
+    { model
+        | pathsAcross = newPathsAcross
+        , seed = newSeed
+    }
