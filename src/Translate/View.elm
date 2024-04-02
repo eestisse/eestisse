@@ -1,5 +1,6 @@
 module Translate.View exposing (..)
 
+import Colors
 import CommonView exposing (..)
 import Element exposing (Attribute, Element)
 import Element.Background
@@ -23,7 +24,14 @@ page translationPageModel =
 
 viewTranslationPageInput : String -> Element FrontendMsg
 viewTranslationPageInput inputText =
-    Element.column
+    CommonView.primaryBox
+        Colors.calmTeal
+        Colors.white
+        [ Element.width Element.fill
+        , Element.height Element.fill
+        ]
+    <|
+        Element.column
         [ Element.width Element.fill
         , Element.height Element.fill
         , Utils.onEnter
