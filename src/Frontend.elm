@@ -209,11 +209,28 @@ update msg model =
                         Nothing ->
                             Just <| Background.init time
 
-                        Just _ ->
-                            model.backgroundModel
+                        Just bgModel ->
+                            Just bgModel
               }
             , Cmd.none
             )
+
+        StartBackgroundChange time ->
+            case model.backgroundModel of
+                Nothing ->
+                    ( model, Cmd.none )
+
+                Just bgModel ->
+                    ( { model
+                        | backgroundModel =
+                            Just <|
+                                { bgModel
+                                    | maybeMovingToNewPaths =
+                                        Just ( time, Background.getModifiedPathTargets bgModel.pathsAcross )
+                                }
+                      }
+                    , Cmd.none
+                    )
 
 
 updateFromBackend : ToFrontend -> Model -> ( Model, Cmd FrontendMsg )
@@ -292,7 +309,10 @@ subscriptions model =
     Sub.batch
         [ case model.translationPageModel of
             RequestSent (Waiting _ _) ->
-                Time.every 1500 (always CycleLoadingAnimation)
+                Sub.batch
+                    [ Time.every 1500 (always CycleLoadingAnimation)
+                    , Time.every 900 StartBackgroundChange
+                    ]
 
             _ ->
                 Sub.none

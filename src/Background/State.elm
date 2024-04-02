@@ -24,6 +24,7 @@ init now =
     { seed = seed
     , startTime = now
     , pathsAcross = pathsAcross
+    , maybeMovingToNewPaths = Nothing
     }
 
 
@@ -80,7 +81,7 @@ generatePathsAcross seed0 =
 
 
 generatePathAcross : Int -> RGB -> Random.Seed -> ( PathAcross, Random.Seed )
-generatePathAcross yMin color seed0 =
+generatePathAcross yPathStart color seed0 =
     let
         iterativelyBuildSectionList : ( List PathSection, Random.Seed ) -> ( List PathSection, Random.Seed )
         iterativelyBuildSectionList ( existingPathSections, seed ) =
@@ -97,23 +98,14 @@ generatePathAcross yMin color seed0 =
             else
                 iterativelyBuildSectionList <| addNewSection ( existingPathSections, seed )
 
-        ( yPathStart, seed1 ) =
-            let
-                yMax =
-                    yMin
-            in
-            Random.step
-                (Random.int yMin yMax)
-                seed0
-
-        ( sections, seed2 ) =
-            iterativelyBuildSectionList ( [], seed1 )
+        ( sections, seed1 ) =
+            iterativelyBuildSectionList ( [], seed0 )
     in
     ( { yPathStart = yPathStart
       , sections = sections
       , color = color
       }
-    , seed2
+    , seed1
     )
 
 
@@ -292,3 +284,53 @@ colorGenerator =
         , Colors.lavender
         ]
         |> Random.map Utils.elementColorToRgb
+
+
+getModifiedPathTargets : ( List PathAcross, Random.Seed ) -> ( List PathAcross, Random.Seed )
+getModifiedPathTargets ( pathsAcross, seed0 ) =
+    let
+        ( finalSeed, newPathsAcross ) =
+            pathsAcross
+                |> List.Extra.mapAccuml
+                    (\seed pathAcross ->
+                        let
+                            ( newSections, newSeed ) =
+                                getModifiedSectionsAcross ( pathAcross.sections, seed )
+                        in
+                        ( newSeed
+                        , { pathAcross
+                            | sections = newSections
+                          }
+                        )
+                    )
+                    seed0
+    in
+    ( newPathsAcross, finalSeed )
+
+
+getModifiedSectionsAcross : ( List PathSection, Random.Seed ) -> ( List PathSection, Random.Seed )
+getModifiedSectionsAcross ( pathSections, seed0 ) =
+    let
+        ( ( _, finalSeed ), newSections ) =
+            pathSections
+                |> List.Extra.mapAccuml
+                    (\( maybeNewSectionStartPoint, seed ) section ->
+                        let
+                            newStartPoint =
+                                maybeNewSectionStartPoint |> Maybe.withDefault section.startPointRelative
+
+                            ( newPiece, newSeed ) =
+                                ( section.piece, seed ) |> tweakPiece
+                        in
+                        ( ( Just newStartPoint, newSeed )
+                        , pieceToSection newStartPoint newPiece
+                        )
+                    )
+                    ( Nothing, seed0 )
+    in
+    ( newSections, finalSeed )
+
+
+tweakPiece : ( PathPiece, Random.Seed ) -> ( PathPiece, Random.Seed )
+tweakPiece =
+    Debug.todo ""

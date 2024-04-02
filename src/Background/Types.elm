@@ -8,6 +8,7 @@ type alias Model =
     { seed : Random.Seed
     , startTime : Time.Posix
     , pathsAcross : List PathAcross
+    , maybeMovingToNewPaths : Maybe ( Time.Posix, List PathAcross )
     }
 
 

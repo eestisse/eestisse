@@ -44,6 +44,7 @@ type FrontendMsg
     | SignupTextChanged String
     | FetchImportantNumber
     | Animate Time.Posix
+    | StartBackgroundChange Time.Posix
 
 
 type ToBackend
