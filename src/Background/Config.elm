@@ -73,14 +73,8 @@ pathAnimationTimeLengthMillis =
 
 easingFunction : Float -> Float
 easingFunction x =
-    if x == 0 then
-        0
-
-    else if x == 1 then
+    if x == 1 then
         1
 
-    else if x < 0.5 then
-        (2 ^ (40 * x - 20)) / 2
-
     else
-        (2 - (2 ^ (-40 * x + 20))) / 2
+        1 - (2 ^ (-20 * x))

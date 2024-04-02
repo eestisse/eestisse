@@ -296,29 +296,6 @@ tweakPathAcross ( pathAcross, seed ) =
     )
 
 
-
--- getModifiedPathTargets : ( List PathAcross, Random.Seed ) -> ( List PathAcross, Random.Seed )
--- getModifiedPathTargets ( pathsAcross, seed0 ) =
---     let
---         ( finalSeed, newPathsAcross ) =
---             pathsAcross
---                 |> List.Extra.mapAccuml
---                     (\seed pathAcross ->
---                         let
---                             ( newSections, newSeed ) =
---                                 getModifiedSectionsAcross ( pathAcross.sections, seed )
---                         in
---                         ( newSeed
---                         , { pathAcross
---                             | sections = newSections
---                           }
---                         )
---                     )
---                     seed0
---     in
---     ( newPathsAcross, finalSeed )
-
-
 getModifiedSectionsAcross : ( List PathSection, Random.Seed ) -> ( List PathSection, Random.Seed )
 getModifiedSectionsAcross ( pathSections, seed0 ) =
     let
@@ -389,4 +366,70 @@ clearFinishedAnimations model =
                                 else
                                     ( pathAcross, Just animationState )
                     )
+    }
+
+
+fiddleRandomPath : Model -> Model
+fiddleRandomPath model =
+    let
+        ( pathNum, seed1 ) =
+            Random.step
+                (Random.int 0 (Config.numPaths - 1))
+                model.seed
+    in
+    case List.Extra.getAt pathNum model.pathsAcross of
+        Nothing ->
+            model
+
+        Just ( pathAcross, maybeAnimationState ) ->
+            let
+                currentlyRenderedPathAcross =
+                    getRenderablePath model.animationTime ( pathAcross, maybeAnimationState )
+
+                ( newPathAcross, seed2 ) =
+                    tweakPathAcross ( currentlyRenderedPathAcross, seed1 )
+            in
+            { model
+                | pathsAcross =
+                    model.pathsAcross
+                        |> List.Extra.setAt pathNum
+                            ( currentlyRenderedPathAcross
+                            , Just <|
+                                PathAcrossAnimationState
+                                    newPathAcross
+                                    model.animationTime
+                            )
+                , seed = seed2
+            }
+
+
+fiddleAllPaths : Model -> Model
+fiddleAllPaths model =
+    let
+        ( newSeed, newPathsAcross ) =
+            model.pathsAcross
+                |> List.Extra.mapAccuml
+                    (\seed ( pathAcross, maybeAnimationState ) ->
+                        let
+                            currentlyRenderedPathAcross =
+                                getRenderablePath model.animationTime ( pathAcross, maybeAnimationState )
+                        in
+                        let
+                            ( pathAcrossTarget, newSeed_ ) =
+                                tweakPathAcross ( currentlyRenderedPathAcross, seed )
+                        in
+                        ( newSeed_
+                        , ( currentlyRenderedPathAcross
+                          , Just <|
+                                { pathAcrossTarget = pathAcrossTarget
+                                , animationStart = model.animationTime
+                                }
+                          )
+                        )
+                    )
+                    model.seed
+    in
+    { model
+        | pathsAcross = newPathsAcross
+        , seed = newSeed
     }

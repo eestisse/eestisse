@@ -181,25 +181,17 @@ update msg model =
             )
 
         GotoRoute route ->
-            ( { model
-                | route = route
-              }
-            , Nav.pushUrl
-                model.key
-                (Route.routeToString route)
-            )
+            changeRouteAndAnimate model route
 
         GotoTranslateAndFocus ->
-            ( { model
-                | route = Route.Translate
-              }
-            , Cmd.batch
-                [ Nav.pushUrl
-                    model.key
-                    (Route.routeToString Route.Translate)
-                , focusTranslateInputCmd
-                ]
-            )
+            changeRouteAndAnimate model Route.Translate
+                |> Tuple.mapSecond
+                    (\cmd ->
+                        Cmd.batch
+                            [ cmd
+                            , focusTranslateInputCmd
+                            ]
+                    )
 
         FetchImportantNumber ->
             ( model
@@ -222,68 +214,17 @@ update msg model =
             , Cmd.none
             )
 
-        FiddleAllBackgroundPaths time ->
-            Debug.todo ""
-
         FiddleRandomBackroundPath time ->
             case model.backgroundModel of
                 Nothing ->
                     ( model, Cmd.none )
 
                 Just backgroundModel ->
-                    let
-                        ( pathNum, seed1 ) =
-                            Random.step
-                                (Random.int 0 (Background.Config.numPaths - 1))
-                                (Utils.timeToRandomSeed time)
-                    in
-                    case List.Extra.getAt pathNum backgroundModel.pathsAcross of
-                        Nothing ->
-                            ( model, Cmd.none )
-
-                        Just ( _, Just _ ) ->
-                            -- if we're already animating, ignore
-                            ( model, Cmd.none )
-
-                        Just ( pathAcross, Nothing ) ->
-                            let
-                                ( newPathAcross, _ ) =
-                                    Background.tweakPathAcross ( pathAcross, seed1 )
-                            in
-                            ( { model
-                                | backgroundModel =
-                                    Just
-                                        { backgroundModel
-                                            | pathsAcross =
-                                                backgroundModel.pathsAcross
-                                                    |> List.Extra.setAt pathNum
-                                                        ( pathAcross
-                                                        , Just <|
-                                                            Background.PathAcrossAnimationState
-                                                                newPathAcross
-                                                                time
-                                                        )
-                                        }
-                              }
-                            , Cmd.none
-                            )
-
-
-
--- case model.backgroundModel of
---     Nothing ->
---         ( model, Cmd.none )
---     Just bgModel ->
---         ( { model
---             | backgroundModel =
---                 Just <|
---                     { bgModel
---                         | maybeMovingToNewPaths =
---                             Just ( time, Background.getModifiedPathTargets bgModel.pathsAcross )
---                     }
---           }
---         , Cmd.none
---         )
+                    ( { model
+                        | backgroundModel = Just <| Background.fiddleRandomPath backgroundModel
+                      }
+                    , Cmd.none
+                    )
 
 
 updateFromBackend : ToFrontend -> Model -> ( Model, Cmd FrontendMsg )
@@ -336,6 +277,20 @@ updateFromBackend msg model =
             )
 
 
+changeRouteAndAnimate : Model -> Route -> ( Model, Cmd FrontendMsg )
+changeRouteAndAnimate model route =
+    ( { model
+        | route = route
+        , backgroundModel =
+            model.backgroundModel
+                |> Maybe.map Background.fiddleAllPaths
+      }
+    , Nav.pushUrl
+        model.key
+        (Route.routeToString route)
+    )
+
+
 focusEmailInputCmd : Cmd FrontendMsg
 focusEmailInputCmd =
     Task.attempt (\_ -> NoOpFrontendMsg) (Browser.Dom.focus "email-input")
@@ -364,8 +319,6 @@ subscriptions model =
             RequestSent (Waiting _ _) ->
                 Sub.batch
                     [ Time.every 1500 (always CycleLoadingAnimation)
-
-                    -- , Time.every 900 FiddleRandomBackroundPath
                     , Time.every 900 FiddleRandomBackroundPath
                     ]
 
