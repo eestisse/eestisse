@@ -66,3 +66,13 @@ sunshineYellow =
 lavender : Color
 lavender =
     Element.rgb 0.7 0.6 1
+
+
+offWhite : Color
+offWhite =
+    Element.rgb 0.98 0.98 0.96
+
+
+calmTeal : Color
+calmTeal =
+    Element.rgb 0.8 0.8 1

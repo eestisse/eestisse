@@ -7,6 +7,7 @@ import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input
 import Html.Attributes
+import Responsive exposing (..)
 import Types exposing (..)
 
 
@@ -139,14 +140,17 @@ coloredEestisseText extraAttributes =
         ]
 
 
+linkAttributes : List (Attribute msg)
+linkAttributes =
+    [ Font.color Colors.mainBlue
+    , Font.underline
+    ]
+
+
 newTabLink : List (Attribute msg) -> String -> String -> Element msg
 newTabLink extraAttributes url labelText =
     Element.newTabLink
-        ([ Font.color Colors.mainBlue
-         , Font.underline
-         ]
-            ++ extraAttributes
-        )
+        (linkAttributes ++ extraAttributes)
         { url = url
         , label = Element.text labelText
         }

@@ -5,6 +5,7 @@ import Background.Types exposing (..)
 import Colors
 import Element exposing (Element)
 import Element.Background
+import Responsive exposing (..)
 import Svg exposing (Svg)
 import Svg.Attributes
 import Time
@@ -12,8 +13,8 @@ import Types exposing (..)
 import Utils
 
 
-view : Time.Posix -> Model -> Element FrontendMsg
-view time model =
+view : DisplayProfile -> Time.Posix -> Model -> Element FrontendMsg
+view dProfile time model =
     let
         millisElapsed =
             Time.posixToMillis time - Time.posixToMillis model.startTime
@@ -30,7 +31,7 @@ view time model =
                 (Svg.defs
                     []
                     [ shadowFilterSvg ]
-                    :: List.map (renderPath millisElapsed) model.pathsAcross
+                    :: List.map (renderPath dProfile millisElapsed) model.pathsAcross
                 )
 
 
@@ -53,8 +54,8 @@ useShadowSvgAttribute =
     Svg.Attributes.style "filter:url(#shadow)"
 
 
-renderPath : Int -> PathAcross -> Svg FrontendMsg
-renderPath millisElapsed path =
+renderPath : DisplayProfile -> Int -> PathAcross -> Svg FrontendMsg
+renderPath dProfile millisElapsed path =
     let
         -- xOffset =
         --     if path.color == Utils.elementColorToRgb Colors.vibrantTeal then
@@ -65,7 +66,7 @@ renderPath millisElapsed path =
             -50
 
         basePoint =
-            { x = round xOffset, y = path.yPathStart }
+            { x = round xOffset, y = path.yPathStart + Config.horizontalSpaceBeforePaths dProfile }
 
         pathStartString =
             "M " ++ pointToString basePoint

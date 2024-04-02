@@ -2,27 +2,29 @@ module Landing.View exposing (..)
 
 import Background.View
 import Colors
-import CommonView
+import CommonView exposing (..)
 import Element exposing (Attribute, Element)
 import Element.Background
 import Element.Border as Border
+import Element.Events as Events
 import Element.Font as Font
 import Element.Input as Input
+import Responsive exposing (..)
 import Route
 import Time
 import Types exposing (..)
 import Utils
 
 
-page : SignupState -> Element FrontendMsg
-page signupState =
+page : DisplayProfile -> SignupState -> Element FrontendMsg
+page dProfile signupState =
     Element.column
         [ Element.width Element.fill
         , Element.height Element.fill
         , Element.spacing 25
         ]
-        [ mainExplainer
-        , futureFeaturesAndSignupElement signupState
+        [ mainExplainer dProfile
+        , futureFeaturesAndSignupElement dProfile signupState
         ]
 
 
@@ -31,201 +33,196 @@ emphasizedText =
     Element.el [ Font.bold, Font.color Colors.darkGreen ] << Element.text
 
 
-mainExplainer : Element FrontendMsg
-mainExplainer =
-    let
-        italics s =
-            Element.el [ Font.italic ] <| Element.text s
-    in
-    Element.column
-        [ Element.width Element.fill
-        , Element.spacing 20
-        , Element.padding 10
-        , Border.width 1
-        , Element.Background.color <| Element.rgb 0.95 0.95 1
-        , Border.color <| Element.rgb 0.8 0.8 1
-        , Border.rounded 6
-        ]
-        [ CommonView.makeParagraphs
-            []
-            [ [ CommonView.coloredEestisseText []
-              , Element.text " (meaning \"into Estonia\") is a tutoring and assistance tool for anyone learning the Estonian language. "
-              ]
-            , [ emphasizedText "Deep translation"
-              , Element.text " is the central feature: Estonian is not just translated, but explained piece by piece, with the help of AI."
-              ]
-            ]
-        , Input.button
-            [ Element.paddingXY 30 8
-            , Element.centerX
-            , Element.Background.color <| Element.rgb 0 0 1
-            , Font.color <| Element.rgb 1 1 1
-            , Font.size 22
-            , Border.rounded 10
-            , CommonView.madimiFont
-            ]
-            { onPress = Just <| GotoRoute Route.Translate
-            , label = Element.text "Try out Deep Translation"
-            }
-        , CommonView.makeParagraphs
-            []
-            [ [ Element.text "As you navigate Estonia, "
-              , CommonView.coloredEestisseText []
-              , Element.text " can be your personal tutor, translating and explaining anything you see. "
-              , Element.text "Ads, bills, news articles, and Tinder messages all work well."
-              ]
-            , [ Element.text "Or if you really want to learn fast, pick up an Estonian children's book! Trust me. Just tell them it's for your child... your "
-              , italics "inner"
-              , Element.text " child."
-              ]
-
-            -- , [ Element.text "Before long you'll find you're picking up common words and getting a feel for the grammar and the case system (of which \"eestisse\" is an example, by the way!)"
-            --   ]
-            ]
-        ]
-
-
-futureFeaturesAndSignupElement : SignupState -> Element FrontendMsg
-futureFeaturesAndSignupElement signupState =
-    Element.column
-        [ Element.width Element.fill
-        , Border.width 1
-        , Element.Background.color <| Element.rgb 1 1 0.9
-        , Border.color <| Element.rgb 0.7 0.7 0
-        , Border.rounded 6
-        , Element.spacing 20
-        , Element.padding 10
-        ]
-        [ CommonView.makeParagraphs
-            []
-            [ [ Element.text "This is just the beginning of "
-              , CommonView.coloredEestisseText []
-              , Element.text "! Sign up below or "
-              , CommonView.newTabLink [ CommonView.plausibleTrackButtonClick "discord-link-clicked" ] "https://discord.gg/HQJMbBUmna" "join the Discord"
-              , Element.text " to hear about new features as they pop: English -> Estonian deep translations, creating flash cards from translations, pictures as input, and more!"
-              ]
-            ]
-        , signupElement signupState
-        ]
-
-
-signupElement : SignupState -> Element FrontendMsg
-signupElement signupState =
+primaryBox : Element.Color -> Element.Color -> List (Attribute msg) -> Element msg -> Element msg
+primaryBox borderColor backgroundColor extraAttributes innerEl =
     Element.el
-        [ Element.width <| Element.px 300
-        , Element.height <| Element.px 50
-        , Element.centerX
-        ]
+        ([ Element.padding 10
+         , Border.rounded 30
+         , Border.shadow
+            { offset = ( -5, -5 )
+            , size = 5
+            , blur = 10
+            , color = Element.rgba 0 0 0 0.3
+            }
+         , Border.color borderColor
+         , Border.width 10
+         , Element.Background.color backgroundColor
+         ]
+            ++ extraAttributes
+        )
+        innerEl
+
+
+mainExplainer : DisplayProfile -> Element FrontendMsg
+mainExplainer dProfile =
+    primaryBox
+        Colors.calmTeal
+        (Element.rgb 0.95 0.95 1)
+        [ Element.width Element.fill ]
     <|
-        case signupState of
-            Inactive ->
-                Input.button
-                    [ Element.paddingXY 20 10
-                    , Element.width Element.fill
-                    , Element.height Element.fill
-                    , Font.size 24
-                    , Element.Background.color <| Colors.blue
-                    , Border.rounded 8
-                    , Font.bold
-                    , Font.color <| Colors.white
-                    ]
-                    { onPress = Just <| StartSignup
-                    , label = Element.el [ Element.centerX, Element.centerY ] <| Element.text "Sign up for updates"
+        Element.column
+            [ Element.spacing <| responsiveVal dProfile 20 50
+            , Element.padding <| responsiveVal dProfile 5 20
+            , Element.width Element.fill
+            , Font.size <| responsiveVal dProfile 20 30
+            ]
+            [ CommonView.makeParagraphs
+                [ Font.center
+                ]
+                [ [ Element.text "With "
+                  , CommonView.coloredEestisseText []
+                  , Element.text ", every translation becomes a learning opportunity."
+                  ]
+                ]
+            , Element.column
+                [ Element.spacing 10
+                , Element.width Element.fill
+                , Font.bold
+                , Element.Background.color <| Element.rgba 0.9 0.9 1 0.8
+                , Border.shadow
+                    { offset = ( -3, 3 )
+                    , size = 1
+                    , blur = 5
+                    , color = Element.rgb 0.8 0.8 0.8
                     }
-
-            Active input ->
-                Element.row
-                    [ Element.spacing 10
-                    , Element.padding 5
-                    , Element.width Element.fill
-                    , Element.height Element.fill
-                    , Border.rounded 5
-                    , Border.width 1
-                    , Border.color <| Element.rgb 0.7 0.7 1
-                    , Element.Background.color <| Element.rgb 0.9 0.9 1
+                , Element.padding <| responsiveVal dProfile 10 20
+                , Border.rounded 10
+                , Border.width 1
+                , Border.color <| Element.rgba 0 0 0 0.1
+                ]
+                [ Element.el [ Font.size <| responsiveVal dProfile 22 30 ] <| Element.text "Try it out:"
+                , Input.text
+                    [ Border.rounded 10
+                    , Element.padding <| responsiveVal dProfile 18 20
+                    , Element.height <| Element.px <| responsiveVal dProfile 60 70
+                    , Events.onFocus GotoTranslateAndFocus
                     ]
-                    [ Input.text
-                        [ Element.width Element.fill
-                        , Border.width 0
-                        , Element.Background.color Colors.transparent
-                        , Utils.onEnter <|
-                            if Utils.isValidEmail input then
-                                SubmitSignup input
+                    { onChange = always NoOpFrontendMsg
+                    , text = ""
+                    , placeholder =
+                        Just <|
+                            Input.placeholder
+                                [ Font.italic ]
+                            <|
+                                Element.text <|
+                                    responsiveVal dProfile "Enter English or Estonian" "Enter English or Estonian text"
+                    , label = Input.labelHidden "Enter text"
+                    }
+                ]
+            , CommonView.makeParagraphs
+                [ Font.center
+                ]
+                [ [ Element.text "AI will explain each translation piece-by-piece, providing information on case, grammar, and sentence structure." ] ]
+            ]
 
-                            else
-                                NoOpFrontendMsg
-                        , CommonView.htmlId "email-input"
-                        ]
-                        { onChange = SignupTextChanged
-                        , text = input
-                        , placeholder = Just <| Input.placeholder [ Font.color <| Element.rgb 0.5 0.5 0.5 ] <| Element.text "you@somewhere.neat"
-                        , label = Input.labelHidden "email input"
-                        }
-                    , Input.button
-                        [ Element.Background.color <|
-                            if Utils.isValidEmail input then
-                                Colors.blue
 
-                            else
-                                Colors.gray
-                        , Element.width <| Element.px 32
-                        , Element.height <| Element.px 32
-                        , Border.rounded 4
-                        ]
-                        { onPress =
-                            if Utils.isValidEmail input then
-                                Just <| SubmitSignup input
-
-                            else
-                                Nothing
-                        , label =
-                            Element.image
-                                [ Element.centerX
-                                , Element.centerY
-                                , Element.width <| Element.px 26
-                                ]
-                                { src = "/enter-arrow-white.png"
-                                , description = "submit email"
+futureFeaturesAndSignupElement : DisplayProfile -> SignupState -> Element FrontendMsg
+futureFeaturesAndSignupElement dProfile signupState =
+    primaryBox Colors.calmTeal
+        (Element.rgb 0.95 0.95 1)
+        [ Element.width Element.fill ]
+    <|
+        Element.column
+            [ Font.size <| responsiveVal dProfile 20 30
+            , Element.spacing <| responsiveVal dProfile 20 30
+            , Element.padding <| responsiveVal dProfile 5 20
+            ]
+            [ CommonView.makeParagraphs
+                [ Font.center
+                ]
+                [ [ Element.text "Eestisse's goal is to make learning Estonian "
+                  , Element.el [ Font.bold ] <| Element.text "fun, easy, and effective"
+                  , Element.text ", and this is just the beginning!"
+                  ]
+                ]
+            , case signupState of
+                Inactive ->
+                    CommonView.makeParagraphs
+                        [ Font.center ]
+                        [ [ Input.button
+                                CommonView.linkAttributes
+                                { onPress = Just <| StartSignup
+                                , label = Element.text "Sign up"
                                 }
-                        }
-                    ]
+                          , Element.text " or "
+                          , CommonView.newTabLink [ CommonView.plausibleTrackButtonClick "discord-link-clicked" ] "https://discord.gg/HQJMbBUmna" "join the Discord"
+                          , Element.text " to hear about when more features drop."
+                          ]
+                        ]
 
-            Submitting ->
-                Element.el
-                    [ Element.padding 5
-                    , Element.width Element.fill
-                    , Element.height Element.fill
-                    , Border.rounded 5
-                    , Border.width 1
-                    , Border.color <| Element.rgb 0.7 0.7 1
-                    , Element.Background.color <| Element.rgb 0.9 0.9 1
-                    ]
-                <|
+                Active input ->
+                    Element.row
+                        [ Element.spacing 10
+                        , Element.padding 5
+                        , Element.width Element.fill
+                        , Element.height Element.fill
+                        , Border.rounded 5
+                        , Border.width 1
+                        , Border.color <| Element.rgb 0.7 0.7 1
+                        , Element.Background.color <| Element.rgb 0.9 0.9 1
+                        ]
+                        [ Input.text
+                            [ Element.width Element.fill
+                            , Border.width 0
+                            , Element.Background.color Colors.transparent
+                            , Utils.onEnter <|
+                                if Utils.isValidEmail input then
+                                    SubmitSignup input
+
+                                else
+                                    NoOpFrontendMsg
+                            , CommonView.htmlId "email-input"
+                            ]
+                            { onChange = SignupTextChanged
+                            , text = input
+                            , placeholder = Just <| Input.placeholder [ Font.color <| Element.rgb 0.5 0.5 0.5 ] <| Element.text "you@somewhere.neat"
+                            , label = Input.labelHidden "email input"
+                            }
+                        , Input.button
+                            [ Element.Background.color <|
+                                if Utils.isValidEmail input then
+                                    Colors.blue
+
+                                else
+                                    Colors.gray
+                            , Element.width <| Element.px 32
+                            , Element.height <| Element.px 32
+                            , Border.rounded 4
+                            ]
+                            { onPress =
+                                if Utils.isValidEmail input then
+                                    Just <| SubmitSignup input
+
+                                else
+                                    Nothing
+                            , label =
+                                Element.image
+                                    [ Element.centerX
+                                    , Element.centerY
+                                    , Element.width <| Element.px 26
+                                    ]
+                                    { src = "/enter-arrow-white.png"
+                                    , description = "submit email"
+                                    }
+                            }
+                        ]
+
+                Submitting ->
                     Element.el
                         [ Element.centerX
                         , Element.centerY
-                        , Font.bold
                         , Font.italic
-                        , Font.color <| Element.rgb 0.3 0.3 0.3
+                        , Font.color <| Element.rgb 0.5 0.5 0.5
                         ]
                     <|
                         Element.text "Submitting..."
 
-            Submitted ->
-                Element.el
-                    [ Element.width Element.fill
-                    , Element.height Element.fill
-                    , Border.rounded 5
-                    , Border.width 1
-                    , Border.color <| Element.rgb 0.2 0.8 0.2
-                    , Element.Background.color <| Element.rgb 0.9 1 0.9
-                    ]
-                <|
-                    Element.el
-                        [ Element.centerX
-                        , Element.centerY
-                        , Font.bold
-                        , Font.color <| Element.rgb 0 0.3 0
+                Submitted ->
+                    CommonView.makeParagraphs
+                        [ Font.center ]
+                        [ [ Element.text "Thanks for signing up! You can also "
+                          , CommonView.newTabLink [ CommonView.plausibleTrackButtonClick "discord-link-clicked" ] "https://discord.gg/HQJMbBUmna" "join the Discord"
+                          , Element.text " if you have questions or comments."
+                          ]
                         ]
-                    <|
-                        Element.text "Thanks! You'll hear from us soon 😊"
+            ]

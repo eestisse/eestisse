@@ -2,10 +2,11 @@ module Background.Config exposing (..)
 
 import Colors
 import Element
+import Responsive exposing (..)
 
 
-horizontalSpaceBeforePaths =
-    270
+horizontalSpaceBeforePaths dProfile =
+    responsiveVal dProfile 280 340
 
 
 horizontalSegmentXMin =
@@ -51,11 +52,11 @@ colors =
 
 
 firstSectionColor =
-    Element.rgb 0.8 0.8 1
+    Colors.calmTeal
 
 
 pathColor =
-    Element.rgb 0.98 0.98 0.96
+    Colors.offWhite
 
 
 pathThickness =

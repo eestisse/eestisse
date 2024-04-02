@@ -36,7 +36,7 @@ generatePathsAcross seed0 =
                 ( heightFilledSoFar, maybeLastColor ) =
                     case List.Extra.last existingPathsAcross of
                         Nothing ->
-                            ( Config.horizontalSpaceBeforePaths, Nothing )
+                            ( 0, Nothing )
 
                         Just pathAcross ->
                             ( pathAcross.yPathStart + (Config.pathAcrossYVariance // 2)

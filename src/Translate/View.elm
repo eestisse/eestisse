@@ -40,6 +40,7 @@ viewTranslationPageInput inputText =
             , Element.padding 10
             , Border.width 0
             , Font.size translateTextSize
+            , CommonView.htmlId "translate-input"
             ]
             { onChange = TextInputChanged
             , text = inputText

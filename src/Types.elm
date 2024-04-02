@@ -2,10 +2,12 @@ module Types exposing (..)
 
 import Background.Types as Background
 import Browser exposing (UrlRequest)
+import Browser.Dom
 import Browser.Navigation exposing (Key)
 import Dict exposing (Dict)
 import Http
 import Lamdera exposing (ClientId)
+import Responsive exposing (..)
 import Route exposing (Route)
 import Set exposing (Set)
 import Time
@@ -15,12 +17,54 @@ import Url exposing (Url)
 type alias FrontendModel =
     { key : Key
     , route : Route
+    , dProfile : Maybe DisplayProfile
     , translationPageModel : TranslationPageModel
     , signupState : SignupState
     , maybeImportantNumber : Maybe Int
     , animationTime : Time.Posix
     , backgroundModel : Maybe Background.Model
     }
+
+
+type FrontendMsg
+    = NoOpFrontendMsg
+    | UrlClicked UrlRequest
+    | UrlChanged Url
+    | GotViewport Browser.Dom.Viewport
+    | Resize Int Int
+    | TextInputChanged String
+    | SubmitText String
+    | ShowExplanation BreakdownPart
+    | CycleLoadingAnimation
+    | EditTranslation String
+    | GotoRoute Route
+    | GotoTranslateAndFocus
+    | StartSignup
+    | SubmitSignup String
+    | SignupTextChanged String
+    | FetchImportantNumber
+    | Animate Time.Posix
+
+
+type ToBackend
+    = NoOpToBackend
+    | SubmitTextForTranslation String
+    | SubmitEmail String
+    | RequestImportantNumber
+
+
+type BackendMsg
+    = NoOpBackendMsg
+    | GptResponseReceived ClientId String (Result Http.Error String)
+    | AddPublicCredits
+    | UpdateNow Time.Posix
+
+
+type ToFrontend
+    = NoOpToFrontend
+    | TranslationResult String (Result GptAssistError Translation)
+    | EmailSubmitAck
+    | ImportantNumber Int
 
 
 type SignupState
@@ -83,44 +127,6 @@ type alias BackendModel =
     , emails : Set String
     , requests : List ( Time.Posix, String, Result GptAssistError Translation )
     }
-
-
-type FrontendMsg
-    = UrlClicked UrlRequest
-    | UrlChanged Url
-    | NoOpFrontendMsg
-    | TextInputChanged String
-    | SubmitText String
-    | ShowExplanation BreakdownPart
-    | CycleLoadingAnimation
-    | EditTranslation String
-    | GotoRoute Route
-    | StartSignup
-    | SubmitSignup String
-    | SignupTextChanged String
-    | FetchImportantNumber
-    | Animate Time.Posix
-
-
-type ToBackend
-    = NoOpToBackend
-    | SubmitTextForTranslation String
-    | SubmitEmail String
-    | RequestImportantNumber
-
-
-type BackendMsg
-    = NoOpBackendMsg
-    | GptResponseReceived ClientId String (Result Http.Error String)
-    | AddPublicCredits
-    | UpdateNow Time.Posix
-
-
-type ToFrontend
-    = NoOpToFrontend
-    | TranslationResult String (Result GptAssistError Translation)
-    | EmailSubmitAck
-    | ImportantNumber Int
 
 
 type alias RGB =

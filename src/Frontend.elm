@@ -2,11 +2,12 @@ port module Frontend exposing (..)
 
 import Background.State as Background
 import Browser exposing (UrlRequest(..))
-import Browser.Dom as Dom
+import Browser.Dom
 import Browser.Events
 import Browser.Navigation as Nav
 import Dict exposing (Dict)
 import Lamdera
+import Responsive exposing (..)
 import Route exposing (Route)
 import Task
 import Testing
@@ -42,6 +43,7 @@ init url key =
       , route = route
       , translationPageModel =
             InputtingText ""
+      , dProfile = Nothing
 
       -- RequestSent <| Loading "test stuff" 1
       -- RequestSent <| RequestComplete Testing.completedRequestExample
@@ -50,13 +52,16 @@ init url key =
       , animationTime = Time.millisToPosix 0
       , backgroundModel = Nothing
       }
-    , Cmd.none
+    , getViewportCmd
     )
 
 
 update : FrontendMsg -> Model -> ( Model, Cmd FrontendMsg )
 update msg model =
     case msg of
+        NoOpFrontendMsg ->
+            ( model, Cmd.none )
+
         UrlClicked urlRequest ->
             case urlRequest of
                 Internal url ->
@@ -74,8 +79,21 @@ update msg model =
             , Cmd.none
             )
 
-        NoOpFrontendMsg ->
-            ( model, Cmd.none )
+        GotViewport viewport ->
+            ( { model
+                | dProfile =
+                    Just <| screenWidthToDisplayProfile <| floor viewport.viewport.width
+              }
+            , Cmd.none
+            )
+
+        Resize width _ ->
+            ( { model
+                | dProfile =
+                    Just <| screenWidthToDisplayProfile width
+              }
+            , Cmd.none
+            )
 
         TextInputChanged text ->
             ( { model
@@ -166,6 +184,18 @@ update msg model =
                 (Route.routeToString route)
             )
 
+        GotoTranslateAndFocus ->
+            ( { model
+                | route = Route.Translate
+              }
+            , Cmd.batch
+                [ Nav.pushUrl
+                    model.key
+                    (Route.routeToString Route.Translate)
+                , focusTranslateInputCmd
+                ]
+            )
+
         FetchImportantNumber ->
             ( model
             , Lamdera.sendToBackend RequestImportantNumber
@@ -238,12 +268,23 @@ updateFromBackend msg model =
 
 focusEmailInputCmd : Cmd FrontendMsg
 focusEmailInputCmd =
-    Task.attempt (\_ -> NoOpFrontendMsg) (Dom.focus "email-input")
+    Task.attempt (\_ -> NoOpFrontendMsg) (Browser.Dom.focus "email-input")
+
+
+focusTranslateInputCmd : Cmd FrontendMsg
+focusTranslateInputCmd =
+    Task.attempt (\_ -> NoOpFrontendMsg) (Browser.Dom.focus "translate-input")
 
 
 plausibleEventOutCmd : String -> Cmd msg
 plausibleEventOutCmd name =
     plausible_event_out name
+
+
+getViewportCmd : Cmd FrontendMsg
+getViewportCmd =
+    Browser.Dom.getViewport
+        |> Task.perform GotViewport
 
 
 subscriptions : Model -> Sub FrontendMsg
@@ -261,6 +302,7 @@ subscriptions model =
 
             _ ->
                 Sub.none
+        , Browser.Events.onResize Types.Resize
         ]
 
 
