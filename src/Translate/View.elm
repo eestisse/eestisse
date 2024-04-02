@@ -32,51 +32,52 @@ viewTranslationPageInput inputText =
         ]
     <|
         Element.column
-        [ Element.width Element.fill
-        , Element.height Element.fill
-        , Utils.onEnter
-            (if inputText /= "" then
-                SubmitText inputText
-
-             else
-                NoOpFrontendMsg
-            )
-        ]
-        [ Input.multiline
             [ Element.width Element.fill
             , Element.height Element.fill
-            , Element.padding 10
-            , Border.width 0
-            , Font.size translateTextSize
-            , CommonView.htmlId "translate-input"
+            , Utils.onEnter
+                (if inputText /= "" then
+                    SubmitText inputText
+
+                 else
+                    NoOpFrontendMsg
+                )
             ]
-            { onChange = TextInputChanged
-            , text = inputText
-            , placeholder =
-                Just <|
-                    Input.placeholder
-                        [ Font.italic
-                        ]
-                    <|
-                        Element.column
-                            [ Element.spacing 10
+            [ Input.multiline
+                [ Element.width Element.fill
+                , Element.height Element.fill
+                , Element.padding 10
+                , Border.width 0
+                , Font.size translateTextSize
+                , CommonView.htmlId "translate-input"
+                ]
+                { onChange = TextInputChanged
+                , text = inputText
+                , placeholder =
+                    Just <|
+                        Input.placeholder
+                            [ Font.italic
                             ]
-                            [ Element.text "Enter English or Estonian text here!"
-                            , Element.el [ Element.height <| Element.px 5 ] <| Element.none
-                            , Element.text "• minu nimi on Bob"
-                            , Element.text "• where can I find cooking oil?"
-                            , Element.text "• põnev!"
-                            ]
-            , label = Input.labelHidden "Enter text"
-            , spellcheck = False
-            }
-        , Element.el
-            [ Element.centerX
-            , Element.alignBottom
+                        <|
+                            Element.column
+                                [ Element.spacing 10
+                                ]
+                                [ Element.text "Enter English or Estonian text here!"
+                                , Element.el [ Element.height <| Element.px 5 ] <| Element.none
+                                , Element.text "• minu nimi on Bob"
+                                , Element.text "• where can I find cooking oil?"
+                                , Element.text "• põnev!"
+                                , Element.text "• How much wood would a woodchuck chuck if a woodchuck could chuck wood?"
+                                ]
+                , label = Input.labelHidden "Enter text"
+                , spellcheck = False
+                }
+            , Element.el
+                [ Element.centerX
+                , Element.alignBottom
+                ]
+              <|
+                translateButton (inputText /= "") inputText
             ]
-          <|
-            translateButton (inputText /= "") inputText
-        ]
 
 
 viewTranslationPageRequestState : RequestState -> Element FrontendMsg

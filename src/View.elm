@@ -63,7 +63,7 @@ view dProfile model =
             , Element.centerX
             , Element.height Element.fill
             , Font.size 16
-            , Element.spacing <| responsiveVal dProfile 25 60
+            , Element.spacing <| responsiveVal dProfile 25 40
             , Element.padding 10
             ]
             [ Element.row

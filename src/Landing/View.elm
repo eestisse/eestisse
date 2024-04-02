@@ -44,7 +44,7 @@ mainExplainer dProfile =
             [ Element.spacing <| responsiveVal dProfile 20 50
             , Element.padding <| responsiveVal dProfile 5 20
             , Element.width Element.fill
-            , Font.size <| responsiveVal dProfile 20 30
+            , Font.size <| responsiveVal dProfile 20 26
             ]
             [ CommonView.makeParagraphs
                 [ Font.center
@@ -70,12 +70,13 @@ mainExplainer dProfile =
                 , Border.width 1
                 , Border.color <| Element.rgba 0 0 0 0.1
                 ]
-                [ Element.el [ Font.size <| responsiveVal dProfile 22 30 ] <| Element.text "Try it out:"
+                [ Element.el [ Font.size <| responsiveVal dProfile 22 26 ] <| Element.text "Try it out:"
                 , Input.text
                     [ Border.rounded 10
-                    , Element.padding <| responsiveVal dProfile 18 20
-                    , Element.height <| Element.px <| responsiveVal dProfile 60 70
+                    , Element.padding <| responsiveVal dProfile 18 18
+                    , Element.height <| Element.px <| responsiveVal dProfile 60 60
                     , Events.onFocus GotoTranslateAndFocus
+                    , Font.size <| responsiveVal dProfile 22 24
                     ]
                     { onChange = always NoOpFrontendMsg
                     , text = ""
@@ -103,7 +104,7 @@ futureFeaturesAndSignupElement dProfile signupState =
         [ Element.width Element.fill ]
     <|
         Element.column
-            [ Font.size <| responsiveVal dProfile 20 30
+            [ Font.size <| responsiveVal dProfile 20 26
             , Element.spacing <| responsiveVal dProfile 20 30
             , Element.padding <| responsiveVal dProfile 5 20
             ]
