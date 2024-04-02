@@ -59,7 +59,7 @@ view dProfile model =
         ]
     <|
         Element.column
-            [ Element.width (Element.fill |> Element.maximum 700)
+            [ Element.width <| responsiveVal dProfile Element.fill (Element.fill |> Element.maximum 900)
             , Element.centerX
             , Element.height Element.fill
             , Font.size 16
