@@ -5,9 +5,9 @@ import Browser exposing (UrlRequest(..))
 import Browser.Dom
 import Browser.Events
 import Browser.Navigation as Nav
-import CommonTypes exposing (..)
 import Dict exposing (Dict)
 import Lamdera
+import Responsive exposing (..)
 import Route exposing (Route)
 import Task
 import Testing
@@ -316,12 +316,7 @@ subscriptions model =
 
             _ ->
                 Sub.none
-        , case model.route of
-            Route.Landing ->
-                Browser.Events.onAnimationFrame Animate
-
-            _ ->
-                Sub.none
+        , Browser.Events.onAnimationFrame Animate
         , Browser.Events.onResize Types.Resize
         ]
 

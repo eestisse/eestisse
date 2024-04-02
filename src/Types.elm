@@ -4,10 +4,10 @@ import Background.Types as Background
 import Browser exposing (UrlRequest)
 import Browser.Dom
 import Browser.Navigation exposing (Key)
-import CommonTypes exposing (..)
 import Dict exposing (Dict)
 import Http
 import Lamdera exposing (ClientId)
+import Responsive exposing (..)
 import Route exposing (Route)
 import Set exposing (Set)
 import Time

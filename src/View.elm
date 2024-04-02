@@ -4,7 +4,6 @@ import Admin.View
 import Background.View
 import Browser
 import Colors
-import CommonTypes exposing (..)
 import CommonView exposing (..)
 import Element exposing (Attribute, Element)
 import Element.Background
@@ -13,6 +12,7 @@ import Element.Font as Font
 import Element.Input as Input
 import Html exposing (Html)
 import Landing.View
+import Responsive exposing (..)
 import Route exposing (Route)
 import Translate.View
 import Types exposing (..)
@@ -52,34 +52,29 @@ view dProfile model =
         , Element.height Element.fill
         , case model.backgroundModel of
             Just backgroundModel ->
-                Element.behindContent <| Background.View.view model.animationTime backgroundModel
+                Element.behindContent <| Background.View.view dProfile model.animationTime backgroundModel
 
             Nothing ->
                 Element.Background.color <| Colors.vibrantTeal
         ]
     <|
         Element.column
-            [ Element.width (Element.fill |> Element.maximum 700)
+            [ Element.width <| responsiveVal dProfile Element.fill (Element.fill |> Element.maximum 900)
             , Element.centerX
             , Element.height Element.fill
             , Font.size 16
-            , Element.spacing 25
+            , Element.spacing <| responsiveVal dProfile 25 40
             , Element.padding 10
             ]
-            [ Element.column
+            [ Element.row
                 [ Element.width Element.fill
-                , Element.spacing 10
                 ]
-                [ Element.row
-                    [ Element.width Element.fill
-                    ]
-                    [ Element.el [ Element.width Element.fill ] <|
-                        Element.none
-                    , Element.el [ Element.centerX ] <|
-                        titleElement dProfile (model.route == Route.Landing)
-                    , Element.el [ Element.width Element.fill ] <|
-                        Element.none
-                    ]
+                [ Element.el [ Element.width Element.fill ] <|
+                    Element.none
+                , Element.el [ Element.centerX ] <|
+                    titleElement dProfile (model.route == Route.Landing)
+                , Element.el [ Element.width Element.fill ] <|
+                    Element.none
                 ]
             , case model.route of
                 Route.Translate ->
@@ -100,11 +95,7 @@ titleElement : DisplayProfile -> Bool -> Element FrontendMsg
 titleElement dProfile showSubtitle =
     let
         emphasizedText =
-            -- Element.el [ Font.color <| Element.rgb 0.22 0.557 0.235 ] << Element.text
             Element.el [ Font.color <| Colors.darkGreen ] << Element.text
-
-        -- Element.el [ Font.color <| Element.rgb 0.937 0.424 0 ] << Element.text
-        -- Element.el [ Font.color <| Element.rgb 0.42 0.557 0.137 ] << Element.text
     in
     Element.column
         [ Element.centerX
@@ -124,19 +115,19 @@ titleElement dProfile showSubtitle =
             ]
             { onPress = Just <| GotoRoute Route.Landing
             , label =
-                CommonView.coloredEestisseText [ Font.size 28, Font.italic ]
+                CommonView.coloredEestisseText
+                    [ Font.size <| responsiveVal dProfile 28 42
+                    , Font.italic
+                    ]
             }
         , if showSubtitle then
             Element.column
                 [ Font.color <| Element.rgb 0.2 0.2 0.2
-                , Font.size <| responsiveVal dProfile 20 26
+                , Font.size <| responsiveVal dProfile 24 36
                 ]
                 [ Element.row [ Element.centerX ]
-                    [ Element.text "A "
-                    , emphasizedText "tutoring and assitance"
-                    , Element.text " tool"
+                    [ emphasizedText "An Estonian tutor in your pocket"
                     ]
-                , Element.el [ Element.centerX ] <| Element.text "for the Estonian language"
                 ]
 
           else
