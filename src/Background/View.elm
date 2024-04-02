@@ -15,10 +15,6 @@ import Utils
 
 view : DisplayProfile -> Time.Posix -> Model -> Element FrontendMsg
 view dProfile time model =
-    let
-        millisElapsed =
-            Time.posixToMillis time - Time.posixToMillis model.startTime
-    in
     Element.el
         [ Element.width Element.fill
         , Element.height Element.fill
@@ -31,7 +27,7 @@ view dProfile time model =
                 (Svg.defs
                     []
                     [ shadowFilterSvg ]
-                    :: List.map (renderPath dProfile millisElapsed) model.pathsAcross
+                    :: List.map (renderPath dProfile time) model.pathsAcross
                 )
 
 
@@ -54,25 +50,40 @@ useShadowSvgAttribute =
     Svg.Attributes.style "filter:url(#shadow)"
 
 
-renderPath : DisplayProfile -> Int -> PathAcross -> Svg FrontendMsg
-renderPath dProfile millisElapsed path =
+renderPath : DisplayProfile -> Time.Posix -> ( PathAcross, Maybe PathAcrossAnimationState ) -> Svg FrontendMsg
+renderPath dProfile animationTime ( path, maybeAnimationState ) =
     let
-        -- xOffset =
-        --     if path.color == Utils.elementColorToRgb Colors.vibrantTeal then
-        --         -50 - (toFloat millisElapsed / 100.0)
-        --     else
-        --         -50
+        getProgressFloat startTime now =
+            let
+                timeDiffMillis =
+                    Time.posixToMillis now - Time.posixToMillis startTime
+            in
+            min
+                (toFloat timeDiffMillis / Config.pathAnimationTimeLengthMillis)
+                1
+
+        pathToRender =
+            case maybeAnimationState of
+                Just animationState ->
+                    interpolatePathsAcross
+                        (getProgressFloat animationState.animationStart animationTime)
+                        path
+                        animationState.pathAcrossTarget
+
+                Nothing ->
+                    path
+
         xOffset =
             -50
 
         basePoint =
-            { x = round xOffset, y = path.yPathStart + Config.horizontalSpaceBeforePaths dProfile }
+            { x = round xOffset, y = pathToRender.yPathStart + Config.horizontalSpaceBeforePaths dProfile }
 
         pathStartString =
             "M " ++ pointToString basePoint
 
         pathBodyString =
-            path.sections
+            pathToRender.sections
                 |> List.map (makePathStringSnippet basePoint)
                 |> String.join " "
 
@@ -89,7 +100,7 @@ renderPath dProfile millisElapsed path =
     in
     Svg.path
         [ Svg.Attributes.d dString
-        , Svg.Attributes.fill <| rgbToSvgString path.color
+        , Svg.Attributes.fill <| rgbToSvgString pathToRender.color
         , Svg.Attributes.stroke <| colorToSvgString Config.pathColor
         , Svg.Attributes.strokeWidth <| String.fromInt Config.pathThickness
         , useShadowSvgAttribute
@@ -177,3 +188,56 @@ boolToInt flag =
 
     else
         0
+
+
+interpolatePathsAcross : Float -> PathAcross -> PathAcross -> PathAcross
+interpolatePathsAcross progressFloat oldPathAcross newPathAcross =
+    -- assuming the piece types don't change
+    { oldPathAcross
+        | sections =
+            List.map2 (interpolateSection progressFloat) oldPathAcross.sections newPathAcross.sections
+    }
+
+
+interpolateSection : Float -> PathSection -> PathSection -> PathSection
+interpolateSection progressFloat oldSection newSection =
+    { piece = interpolatePiece progressFloat oldSection.piece newSection.piece
+    , startPointRelative = interpolatePoint progressFloat oldSection.startPointRelative newSection.startPointRelative
+    , endPointRelative = interpolatePoint progressFloat oldSection.endPointRelative newSection.endPointRelative
+    }
+
+
+interpolatePiece : Float -> PathPiece -> PathPiece -> PathPiece
+interpolatePiece progressFloat oldPiece newPiece =
+    case ( oldPiece, newPiece ) of
+        ( Right oldLength, Right newLength ) ->
+            Right <| interpolateInt progressFloat oldLength newLength
+
+        ( Up oldLength, Up newLength ) ->
+            Up <| interpolateInt progressFloat oldLength newLength
+
+        ( Down oldLength, Down newLength ) ->
+            Down <| interpolateInt progressFloat oldLength newLength
+
+        -- we assume the piece types don't change
+        -- and we don't do anything to pieces without length
+        ( otherOldPiece, _ ) ->
+            otherOldPiece
+
+
+interpolatePoint : Float -> Point -> Point -> Point
+interpolatePoint progressFloat oldPoint newPoint =
+    { x = interpolateInt progressFloat oldPoint.x newPoint.x
+    , y = interpolateInt progressFloat oldPoint.y newPoint.y
+    }
+
+
+interpolateInt : Float -> Int -> Int -> Int
+interpolateInt progressFloat old new =
+    interpolateFloat progressFloat (toFloat old) (toFloat new)
+        |> floor
+
+
+interpolateFloat : Float -> Float -> Float -> Float
+interpolateFloat progressFloat old new =
+    old + ((new - old) * progressFloat)

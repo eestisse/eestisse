@@ -6,9 +6,8 @@ import Time
 
 type alias Model =
     { seed : Random.Seed
-    , startTime : Time.Posix
-    , pathsAcross : List PathAcross
-    , maybeMovingToNewPaths : Maybe ( Time.Posix, List PathAcross )
+    , animationTime : Time.Posix
+    , pathsAcross : List ( PathAcross, Maybe PathAcrossAnimationState )
     }
 
 
@@ -22,6 +21,12 @@ type alias PathAcross =
     { yPathStart : Int
     , sections : List PathSection
     , color : { red : Float, green : Float, blue : Float }
+    }
+
+
+type alias PathAcrossAnimationState =
+    { pathAcrossTarget : PathAcross
+    , animationStart : Time.Posix
     }
 
 

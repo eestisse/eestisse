@@ -1,12 +1,16 @@
 port module Frontend exposing (..)
 
+import Background.Config
 import Background.State as Background
+import Background.Types as Background
 import Browser exposing (UrlRequest(..))
 import Browser.Dom
 import Browser.Events
 import Browser.Navigation as Nav
 import Dict exposing (Dict)
 import Lamdera
+import List.Extra
+import Random
 import Responsive exposing (..)
 import Route exposing (Route)
 import Task
@@ -14,6 +18,7 @@ import Testing
 import Time
 import Types exposing (..)
 import Url
+import Utils
 import View
 
 
@@ -210,27 +215,75 @@ update msg model =
                             Just <| Background.init time
 
                         Just bgModel ->
-                            Just bgModel
+                            Just <|
+                                Background.clearFinishedAnimations <|
+                                    { bgModel | animationTime = time }
               }
             , Cmd.none
             )
 
-        StartBackgroundChange time ->
+        FiddleAllBackgroundPaths time ->
+            Debug.todo ""
+
+        FiddleRandomBackroundPath time ->
             case model.backgroundModel of
                 Nothing ->
                     ( model, Cmd.none )
 
-                Just bgModel ->
-                    ( { model
-                        | backgroundModel =
-                            Just <|
-                                { bgModel
-                                    | maybeMovingToNewPaths =
-                                        Just ( time, Background.getModifiedPathTargets bgModel.pathsAcross )
-                                }
-                      }
-                    , Cmd.none
-                    )
+                Just backgroundModel ->
+                    let
+                        ( pathNum, seed1 ) =
+                            Random.step
+                                (Random.int 0 (Background.Config.numPaths - 1))
+                                (Utils.timeToRandomSeed time)
+                    in
+                    case List.Extra.getAt pathNum backgroundModel.pathsAcross of
+                        Nothing ->
+                            ( model, Cmd.none )
+
+                        Just ( _, Just _ ) ->
+                            -- if we're already animating, ignore
+                            ( model, Cmd.none )
+
+                        Just ( pathAcross, Nothing ) ->
+                            let
+                                ( newPathAcross, _ ) =
+                                    Background.tweakPathAcross ( pathAcross, seed1 )
+                            in
+                            ( { model
+                                | backgroundModel =
+                                    Just
+                                        { backgroundModel
+                                            | pathsAcross =
+                                                backgroundModel.pathsAcross
+                                                    |> List.Extra.setAt pathNum
+                                                        ( pathAcross
+                                                        , Just <|
+                                                            Background.PathAcrossAnimationState
+                                                                newPathAcross
+                                                                time
+                                                        )
+                                        }
+                              }
+                            , Cmd.none
+                            )
+
+
+
+-- case model.backgroundModel of
+--     Nothing ->
+--         ( model, Cmd.none )
+--     Just bgModel ->
+--         ( { model
+--             | backgroundModel =
+--                 Just <|
+--                     { bgModel
+--                         | maybeMovingToNewPaths =
+--                             Just ( time, Background.getModifiedPathTargets bgModel.pathsAcross )
+--                     }
+--           }
+--         , Cmd.none
+--         )
 
 
 updateFromBackend : ToFrontend -> Model -> ( Model, Cmd FrontendMsg )
@@ -311,11 +364,13 @@ subscriptions model =
             RequestSent (Waiting _ _) ->
                 Sub.batch
                     [ Time.every 1500 (always CycleLoadingAnimation)
-                    , Time.every 900 StartBackgroundChange
+
+                    -- , Time.every 900 FiddleRandomBackroundPath
                     ]
 
             _ ->
                 Sub.none
+        , Time.every 900 FiddleRandomBackroundPath
         , Browser.Events.onAnimationFrame Animate
         , Browser.Events.onResize Types.Resize
         ]

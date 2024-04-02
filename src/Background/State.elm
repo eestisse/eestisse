@@ -22,9 +22,8 @@ init now =
             generatePathsAcross (Random.initialSeed seedInt)
     in
     { seed = seed
-    , startTime = now
-    , pathsAcross = pathsAcross
-    , maybeMovingToNewPaths = Nothing
+    , animationTime = now
+    , pathsAcross = pathsAcross |> List.map (\p -> ( p, Nothing ))
     }
 
 
@@ -44,7 +43,7 @@ generatePathsAcross seed0 =
                             , Just pathAcross.color
                             )
             in
-            if heightFilledSoFar > Config.minDrawableHeightToFill then
+            if List.length existingPathsAcross >= Config.numPaths then
                 ( existingPathsAcross, seed )
 
             else
@@ -286,26 +285,38 @@ colorGenerator =
         |> Random.map Utils.elementColorToRgb
 
 
-getModifiedPathTargets : ( List PathAcross, Random.Seed ) -> ( List PathAcross, Random.Seed )
-getModifiedPathTargets ( pathsAcross, seed0 ) =
+tweakPathAcross : ( PathAcross, Random.Seed ) -> ( PathAcross, Random.Seed )
+tweakPathAcross ( pathAcross, seed ) =
     let
-        ( finalSeed, newPathsAcross ) =
-            pathsAcross
-                |> List.Extra.mapAccuml
-                    (\seed pathAcross ->
-                        let
-                            ( newSections, newSeed ) =
-                                getModifiedSectionsAcross ( pathAcross.sections, seed )
-                        in
-                        ( newSeed
-                        , { pathAcross
-                            | sections = newSections
-                          }
-                        )
-                    )
-                    seed0
+        ( newSections, newSeed ) =
+            getModifiedSectionsAcross ( pathAcross.sections, seed )
     in
-    ( newPathsAcross, finalSeed )
+    ( { pathAcross | sections = newSections }
+    , newSeed
+    )
+
+
+
+-- getModifiedPathTargets : ( List PathAcross, Random.Seed ) -> ( List PathAcross, Random.Seed )
+-- getModifiedPathTargets ( pathsAcross, seed0 ) =
+--     let
+--         ( finalSeed, newPathsAcross ) =
+--             pathsAcross
+--                 |> List.Extra.mapAccuml
+--                     (\seed pathAcross ->
+--                         let
+--                             ( newSections, newSeed ) =
+--                                 getModifiedSectionsAcross ( pathAcross.sections, seed )
+--                         in
+--                         ( newSeed
+--                         , { pathAcross
+--                             | sections = newSections
+--                           }
+--                         )
+--                     )
+--                     seed0
+--     in
+--     ( newPathsAcross, finalSeed )
 
 
 getModifiedSectionsAcross : ( List PathSection, Random.Seed ) -> ( List PathSection, Random.Seed )
@@ -322,7 +333,7 @@ getModifiedSectionsAcross ( pathSections, seed0 ) =
                             ( newPiece, newSeed ) =
                                 ( section.piece, seed ) |> tweakPiece
                         in
-                        ( ( Just newStartPoint, newSeed )
+                        ( ( Just <| addPoints newStartPoint (pieceTransformVector newPiece), newSeed )
                         , pieceToSection newStartPoint newPiece
                         )
                     )
@@ -332,5 +343,50 @@ getModifiedSectionsAcross ( pathSections, seed0 ) =
 
 
 tweakPiece : ( PathPiece, Random.Seed ) -> ( PathPiece, Random.Seed )
-tweakPiece =
-    Debug.todo ""
+tweakPiece ( pathPiece, seed0 ) =
+    case pathPiece of
+        Right _ ->
+            Random.step
+                (Random.int Config.horizontalSegmentXMin (Config.horizontalSegmentXMin + Config.horizontalSegmentXVariance))
+                seed0
+                |> Tuple.mapFirst Right
+
+        Up _ ->
+            Random.step
+                (Random.int 0 Config.verticalSegmentTweakMaxLength)
+                seed0
+                |> Tuple.mapFirst Up
+
+        Down _ ->
+            Random.step
+                (Random.int 0 Config.verticalSegmentTweakMaxLength)
+                seed0
+                |> Tuple.mapFirst Down
+
+        _ ->
+            ( pathPiece, seed0 )
+
+
+clearFinishedAnimations : Model -> Model
+clearFinishedAnimations model =
+    { model
+        | pathsAcross =
+            model.pathsAcross
+                |> List.map
+                    (\( pathAcross, maybeAnimationState ) ->
+                        case maybeAnimationState of
+                            Nothing ->
+                                ( pathAcross, Nothing )
+
+                            Just animationState ->
+                                let
+                                    animationAgeInMillis =
+                                        Time.posixToMillis model.animationTime - Time.posixToMillis animationState.animationStart
+                                in
+                                if animationAgeInMillis > Config.pathAnimationTimeLengthMillis then
+                                    ( animationState.pathAcrossTarget, Nothing )
+
+                                else
+                                    ( pathAcross, Just animationState )
+                    )
+    }
