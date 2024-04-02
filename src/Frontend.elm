@@ -5,9 +5,9 @@ import Browser exposing (UrlRequest(..))
 import Browser.Dom
 import Browser.Events
 import Browser.Navigation as Nav
-import CommonTypes exposing (..)
 import Dict exposing (Dict)
 import Lamdera
+import Responsive exposing (..)
 import Route exposing (Route)
 import Task
 import Testing

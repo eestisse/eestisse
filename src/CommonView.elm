@@ -1,13 +1,13 @@
 module CommonView exposing (..)
 
 import Colors
-import CommonTypes exposing (..)
 import Element exposing (Attribute, Element)
 import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input
 import Html.Attributes
+import Responsive exposing (..)
 import Types exposing (..)
 
 
@@ -140,14 +140,17 @@ coloredEestisseText extraAttributes =
         ]
 
 
+linkAttributes : List (Attribute msg)
+linkAttributes =
+    [ Font.color Colors.mainBlue
+    , Font.underline
+    ]
+
+
 newTabLink : List (Attribute msg) -> String -> String -> Element msg
 newTabLink extraAttributes url labelText =
     Element.newTabLink
-        ([ Font.color Colors.mainBlue
-         , Font.underline
-         ]
-            ++ extraAttributes
-        )
+        (linkAttributes ++ extraAttributes)
         { url = url
         , label = Element.text labelText
         }
@@ -156,13 +159,3 @@ newTabLink extraAttributes url labelText =
 htmlId : String -> Attribute msg
 htmlId idStr =
     Element.htmlAttribute <| Html.Attributes.id idStr
-
-
-responsiveVal : DisplayProfile -> a -> a -> a
-responsiveVal dProfile a b =
-    case dProfile of
-        Mobile ->
-            a
-
-        Desktop ->
-            b
