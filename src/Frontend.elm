@@ -296,12 +296,7 @@ subscriptions model =
 
             _ ->
                 Sub.none
-        , case model.route of
-            Route.Landing ->
-                Browser.Events.onAnimationFrame Animate
-
-            _ ->
-                Sub.none
+        , Browser.Events.onAnimationFrame Animate
         , Browser.Events.onResize Types.Resize
         ]
 

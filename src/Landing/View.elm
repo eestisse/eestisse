@@ -33,26 +33,6 @@ emphasizedText =
     Element.el [ Font.bold, Font.color Colors.darkGreen ] << Element.text
 
 
-primaryBox : Element.Color -> Element.Color -> List (Attribute msg) -> Element msg -> Element msg
-primaryBox borderColor backgroundColor extraAttributes innerEl =
-    Element.el
-        ([ Element.padding 10
-         , Border.rounded 30
-         , Border.shadow
-            { offset = ( -5, -5 )
-            , size = 5
-            , blur = 10
-            , color = Element.rgba 0 0 0 0.3
-            }
-         , Border.color borderColor
-         , Border.width 10
-         , Element.Background.color backgroundColor
-         ]
-            ++ extraAttributes
-        )
-        innerEl
-
-
 mainExplainer : DisplayProfile -> Element FrontendMsg
 mainExplainer dProfile =
     primaryBox
@@ -64,7 +44,7 @@ mainExplainer dProfile =
             [ Element.spacing <| responsiveVal dProfile 20 50
             , Element.padding <| responsiveVal dProfile 5 20
             , Element.width Element.fill
-            , Font.size <| responsiveVal dProfile 20 30
+            , Font.size <| responsiveVal dProfile 20 26
             ]
             [ CommonView.makeParagraphs
                 [ Font.center
@@ -90,12 +70,13 @@ mainExplainer dProfile =
                 , Border.width 1
                 , Border.color <| Element.rgba 0 0 0 0.1
                 ]
-                [ Element.el [ Font.size <| responsiveVal dProfile 22 30 ] <| Element.text "Try it out:"
+                [ Element.el [ Font.size <| responsiveVal dProfile 22 26 ] <| Element.text "Try it out:"
                 , Input.text
                     [ Border.rounded 10
-                    , Element.padding <| responsiveVal dProfile 18 20
-                    , Element.height <| Element.px <| responsiveVal dProfile 60 70
+                    , Element.padding <| responsiveVal dProfile 18 18
+                    , Element.height <| Element.px <| responsiveVal dProfile 60 60
                     , Events.onFocus GotoTranslateAndFocus
+                    , Font.size <| responsiveVal dProfile 22 24
                     ]
                     { onChange = always NoOpFrontendMsg
                     , text = ""
@@ -123,7 +104,7 @@ futureFeaturesAndSignupElement dProfile signupState =
         [ Element.width Element.fill ]
     <|
         Element.column
-            [ Font.size <| responsiveVal dProfile 20 30
+            [ Font.size <| responsiveVal dProfile 20 26
             , Element.spacing <| responsiveVal dProfile 20 30
             , Element.padding <| responsiveVal dProfile 5 20
             ]

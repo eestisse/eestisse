@@ -63,7 +63,7 @@ view dProfile model =
             , Element.centerX
             , Element.height Element.fill
             , Font.size 16
-            , Element.spacing <| responsiveVal dProfile 25 60
+            , Element.spacing <| responsiveVal dProfile 25 40
             , Element.padding 10
             ]
             [ Element.row
@@ -126,10 +126,8 @@ titleElement dProfile showSubtitle =
                 , Font.size <| responsiveVal dProfile 24 36
                 ]
                 [ Element.row [ Element.centerX ]
-                    [ Element.text "A "
-                    , emphasizedText "tutor in your pocket"
+                    [ emphasizedText "An Estonian tutor in your pocket"
                     ]
-                , Element.el [ Element.centerX ] <| Element.text "for the Estonian language"
                 ]
 
           else
