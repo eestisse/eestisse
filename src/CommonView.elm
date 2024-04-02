@@ -159,3 +159,23 @@ newTabLink extraAttributes url labelText =
 htmlId : String -> Attribute msg
 htmlId idStr =
     Element.htmlAttribute <| Html.Attributes.id idStr
+
+
+primaryBox : Element.Color -> Element.Color -> List (Attribute msg) -> Element msg -> Element msg
+primaryBox borderColor backgroundColor extraAttributes innerEl =
+    Element.el
+        ([ Element.padding 10
+         , Border.rounded 30
+         , Border.shadow
+            { offset = ( -5, -5 )
+            , size = 5
+            , blur = 10
+            , color = Element.rgba 0 0 0 0.3
+            }
+         , Border.color borderColor
+         , Border.width 10
+         , Background.color backgroundColor
+         ]
+            ++ extraAttributes
+        )
+        innerEl
