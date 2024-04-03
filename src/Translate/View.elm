@@ -162,7 +162,7 @@ translateTextSize =
 
 translatedTextColor : Element.Color
 translatedTextColor =
-    Element.rgb 0 0 1
+    Element.rgb 0.2 0.2 0.2
 
 
 translatedTextStyles : List (Attribute FrontendMsg)
