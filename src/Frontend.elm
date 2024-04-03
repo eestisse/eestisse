@@ -44,10 +44,10 @@ init url key =
       , route = route
       , translationPageModel =
             InputtingText ""
-      , dProfile = Nothing
 
-      -- RequestSent <| Loading "test stuff" 1
+      -- RequestSent <| Waiting "test stuff" 1
       -- RequestSent <| RequestComplete Testing.completedRequestExample
+      , dProfile = Nothing
       , signupState = Inactive
       , maybeImportantNumber = Nothing
       , animationTime = Time.millisToPosix 0
