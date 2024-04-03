@@ -14,5 +14,10 @@ anthropicApiKey =
     ""
 
 
+openaiApiKey : String
+openaiApiKey =
+    ""
+
+
 mode =
     Development
