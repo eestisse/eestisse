@@ -22,7 +22,7 @@ type Role
 
 translateFromEstonian : String -> Request
 translateFromEstonian estonianString =
-    { modelString = "claude-3-sonnet-20240229"
+    { modelString = "claude-3-opus-20240229"
     , maxTokens = 1024
     , systemMessage = """You are helping me learn Estonian, by translating between Estonian and English, and explaining the resulting translation. Here's the structure I want you to output, after I send you a piece of English or Estonian text:
 
