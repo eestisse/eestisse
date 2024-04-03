@@ -1,6 +1,5 @@
 port module Frontend exposing (..)
 
-import Background.Config
 import Background.State as Background
 import Background.Types as Background
 import Browser exposing (UrlRequest(..))
@@ -9,8 +8,6 @@ import Browser.Events
 import Browser.Navigation as Nav
 import Dict exposing (Dict)
 import Lamdera
-import List.Extra
-import Random
 import Responsive exposing (..)
 import Route exposing (Route)
 import Task
@@ -18,7 +15,6 @@ import Testing
 import Time
 import Types exposing (..)
 import Url
-import Utils
 import View
 
 

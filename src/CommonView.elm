@@ -186,3 +186,19 @@ primaryBoxCustomColors borderColor backgroundColor extraAttributes innerEl =
             ++ extraAttributes
         )
         innerEl
+
+
+scrollbarYEl : List (Attribute msg) -> Element msg -> Element msg
+scrollbarYEl attrs body =
+    Element.el [ Element.height Element.fill, Element.width Element.fill ] <|
+        Element.el
+            ([ Element.htmlAttribute <| Html.Attributes.style "position" "absolute"
+             , Element.htmlAttribute <| Html.Attributes.style "top" "0"
+             , Element.htmlAttribute <| Html.Attributes.style "right" "0"
+             , Element.htmlAttribute <| Html.Attributes.style "bottom" "0"
+             , Element.htmlAttribute <| Html.Attributes.style "left" "0"
+             , Element.scrollbarY
+             ]
+                ++ attrs
+            )
+            body
