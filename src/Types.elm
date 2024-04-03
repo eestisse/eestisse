@@ -38,7 +38,7 @@ type FrontendMsg
     | CycleLoadingAnimation
     | EditTranslation String
     | GotoRoute Route
-    | GotoTranslateAndFocus
+    | GotoTranslate_FocusAndClear
     | StartSignup
     | SubmitSignup String
     | SignupTextChanged String

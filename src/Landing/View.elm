@@ -73,7 +73,7 @@ mainExplainer dProfile =
                     [ Border.rounded 10
                     , Element.padding <| responsiveVal dProfile 18 18
                     , Element.height <| Element.px <| responsiveVal dProfile 60 60
-                    , Events.onFocus GotoTranslateAndFocus
+                    , Events.onFocus GotoTranslate_FocusAndClear
                     , Font.size <| responsiveVal dProfile 22 24
                     ]
                     { onChange = always NoOpFrontendMsg

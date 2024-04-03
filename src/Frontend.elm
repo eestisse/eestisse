@@ -179,9 +179,14 @@ update msg model =
         GotoRoute route ->
             changeRouteAndAnimate model route
 
-        GotoTranslateAndFocus ->
+        GotoTranslate_FocusAndClear ->
             changeRouteAndAnimate model Route.Translate
-                |> Tuple.mapSecond
+                |> Tuple.mapBoth
+                    (\model_ ->
+                        { model_
+                            | translationPageModel = InputtingText ""
+                        }
+                    )
                     (\cmd ->
                         Cmd.batch
                             [ cmd
