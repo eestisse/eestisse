@@ -106,7 +106,7 @@ update msg model =
         SubmitText inputText ->
             ( { model
                 | translationPageModel =
-                    RequestSent <| Waiting inputText 1
+                    RequestSent <| Waiting inputText 0
               }
             , Cmd.batch
                 [ Lamdera.sendToBackend <| SubmitTextForTranslation inputText
@@ -137,8 +137,8 @@ update msg model =
                 RequestSent (Waiting text animationCounter) ->
                     let
                         newAnimationCounter =
-                            if animationCounter == 4 then
-                                1
+                            if animationCounter == 3 then
+                                0
 
                             else
                                 animationCounter + 1

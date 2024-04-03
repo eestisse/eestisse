@@ -242,12 +242,12 @@ loadingTranslationElement : Int -> Element FrontendMsg
 loadingTranslationElement animationCounter =
     let
         emojiRow =
-            "🤔🤔🤔🧐"
+            "🤔🧐😤💭"
                 |> String.toList
                 |> List.map String.fromChar
-                |> List.Extra.cycle animationCounter
-                |> List.map Element.text
-                |> Element.row [ Element.spacing 10 ]
+                |> List.Extra.getAt animationCounter
+                |> Maybe.map Element.text
+                |> Maybe.withDefault Element.none
     in
     Element.column
         [ Font.size 18
