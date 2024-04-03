@@ -358,10 +358,10 @@ gptAssistErrorToString gptAssistError =
             "There was an issue with the AI service provider: " ++ Utils.httpErrorToString otherHttpError
 
         GptDecodeError decodeError ->
-            "ChatGPT did not respond with the expected structure: " ++ decodeError
+            "The AI did not respond with the expected structure: " ++ decodeError
 
         GptExpressedError gptsDamnProblemString ->
-            "ChatGPT refuses to process the request: \"" ++ gptsDamnProblemString ++ "\""
+            "The AI refuses to process the request: \"" ++ gptsDamnProblemString ++ "\""
 
 
 translateButton : Bool -> String -> Element FrontendMsg
