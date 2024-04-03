@@ -4,6 +4,15 @@ module Env exposing (..)
 -- See https://dashboard.lamdera.app/docs/environment for more info.
 
 
-openaiApiKey : String
-openaiApiKey =
+type Mode
+    = Development
+    | Production
+
+
+anthropicApiKey : String
+anthropicApiKey =
     ""
+
+
+mode =
+    Development
