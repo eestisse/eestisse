@@ -8,23 +8,24 @@ import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input
 import List.Extra
+import Responsive exposing (..)
 import Types exposing (..)
 import Utils
 
 
-page : TranslationPageModel -> Element FrontendMsg
-page translationPageModel =
+page : DisplayProfile -> TranslationPageModel -> Element FrontendMsg
+page dProfile translationPageModel =
     case translationPageModel of
         InputtingText inputText ->
             viewTranslationPageInput inputText
 
         RequestSent requestState ->
-            viewTranslationPageRequestState requestState
+            viewTranslationPageRequestState dProfile requestState
 
 
 viewTranslationPageInput : String -> Element FrontendMsg
 viewTranslationPageInput inputText =
-    CommonView.primaryBox
+    CommonView.primaryBoxCustomColors
         Colors.calmTeal
         Colors.white
         [ Element.width Element.fill
@@ -80,66 +81,77 @@ viewTranslationPageInput inputText =
             ]
 
 
-viewTranslationPageRequestState : RequestState -> Element FrontendMsg
-viewTranslationPageRequestState requestState =
-    Element.column
-        [ Element.spacing 5
-        , Element.width Element.fill
-        , Element.height Element.fill
-        ]
+viewTranslationPageRequestState : DisplayProfile -> RequestState -> Element FrontendMsg
+viewTranslationPageRequestState dProfile requestState =
+    primaryBox
+        [ Element.width Element.fill ]
     <|
-        case requestState of
-            Waiting inputText animationCounter ->
-                [ translationInputTextElement inputText
-                , hbreakElement
-                , loadingTranslationElement animationCounter
-                ]
+        Element.column
+            [ Element.spacing 15
+            , Element.padding 10
+            , Element.width Element.fill
+            , Element.height Element.fill
+            , Font.size <| responsiveVal dProfile 18 24
+            ]
+        <|
+            case requestState of
+                Waiting inputText animationCounter ->
+                    [ Element.el [ Element.centerX ] <| translationInputTextElement inputText
+                    , hbreakElement
+                    , loadingTranslationElement animationCounter
+                    ]
 
-            RequestComplete completedRequest ->
-                let
-                    editOrNewButtonsRow =
-                        Element.row
-                            [ Element.alignBottom
-                            , Element.width Element.fill
-                            , Element.spacing 20
-                            , Element.paddingEach
-                                { top = 0
-                                , right = 15
-                                , left = 15
-                                , bottom = 15
-                                }
+                RequestComplete completedRequest ->
+                    let
+                        editOrNewButtonsRow =
+                            Element.row
+                                [ Element.alignBottom
+                                , Element.width Element.fill
+                                , Element.spacing 20
+                                ]
+                                [ Element.el [ Element.alignLeft ] <| modifyTextButton completedRequest.inputText
+                                , Element.el [ Element.alignRight ] <| newTranslationButton
+                                ]
+                    in
+                    case completedRequest.translationResult of
+                        Err gptAssistError ->
+                            [ translationInputTextElement completedRequest.inputText
+                            , hbreakElement
+                            , viewGptAssistError gptAssistError
+                            , editOrNewButtonsRow
                             ]
-                            [ Element.el [ Element.alignLeft ] <| modifyTextButton completedRequest.inputText
-                            , Element.el [ Element.alignRight ] <| newTranslationButton
+
+                        Ok translation ->
+                            [ translationInputButtonsElement translation.breakdown completedRequest.maybeSelectedBreakdownPart
+                            , hbreakElement
+                            , englishTextElement <|
+                                case translation.translatedTo of
+                                    English ->
+                                        translation.translation
+
+                                    Estonian ->
+                                        completedRequest.inputText
+                            , Element.el [ Element.height <| Element.px 8 ] <| Element.none
+                            , Element.el [ Element.width Element.fill ] <|
+                                -- wrapping in an extra el due to elm-ui bug https://github.com/mdgriffith/elm-ui/issues/270
+                                Element.el
+                                    [ Element.width Element.fill
+                                    , Element.height (Element.shrink |> Element.minimum 200)
+                                    ]
+                                <|
+                                    Element.el
+                                        [ Element.centerY
+                                        , Element.centerX
+                                        ]
+                                    <|
+                                        case completedRequest.maybeSelectedBreakdownPart of
+                                            Just selectedBreakdownPart ->
+                                                selectedExplanationElement dProfile selectedBreakdownPart
+
+                                            Nothing ->
+                                                clickOnPartsHint dProfile
+                            , editOrNewButtonsRow
                             ]
-                in
-                case completedRequest.translationResult of
-                    Err gptAssistError ->
-                        [ translationInputTextElement completedRequest.inputText
-                        , hbreakElement
-                        , viewGptAssistError gptAssistError
-                        , editOrNewButtonsRow
-                        ]
-
-                    Ok translation ->
-                        [ translationInputButtonsElement translation.breakdown completedRequest.maybeSelectedBreakdownPart
-                        , hbreakElement
-                        , englishTextElement <|
-                            case translation.translatedTo of
-                                English ->
-                                    translation.translation
-
-                                Estonian ->
-                                    completedRequest.inputText
-                        , Element.el [ Element.height <| Element.px 8 ] <| Element.none
-                        , case completedRequest.maybeSelectedBreakdownPart of
-                            Just selectedBreakdownPart ->
-                                selectedExplanationElement selectedBreakdownPart
-
-                            Nothing ->
-                                clickOnPartsHint
-                        , editOrNewButtonsRow
-                        ]
 
 
 translateTextSize : Int
@@ -243,13 +255,14 @@ loadingTranslationElement animationCounter =
         , Element.spacing 10
         ]
         [ Element.el [ Font.size 24, Element.centerX ] emojiRow
-        , Element.el [ Font.italic ] <| Element.text "The robot is thinking carefully..."
+
+        -- , Element.el [ Font.italic ] <| Element.text "The robot is thinking carefully..."
         ]
 
 
-clickOnPartsHint : Element FrontendMsg
-clickOnPartsHint =
-    Element.el
+clickOnPartsHint : DisplayProfile -> Element FrontendMsg
+clickOnPartsHint dProfile =
+    Element.paragraph
         [ Element.padding 5
         , Border.width 1
         , Border.rounded 4
@@ -258,13 +271,14 @@ clickOnPartsHint =
         , Element.centerX
         , Font.color <| Element.rgb 0.3 0.3 0.3
         , Font.italic
+        , Font.center
+        , Font.size <| responsiveVal dProfile 20 26
         ]
-    <|
-        Element.text "Tap parts of the Estonian text to learn more"
+        [ Element.text "Tap parts of the Estonian text to learn more" ]
 
 
-selectedExplanationElement : BreakdownPart -> Element FrontendMsg
-selectedExplanationElement breakdownPart =
+selectedExplanationElement : DisplayProfile -> BreakdownPart -> Element FrontendMsg
+selectedExplanationElement dProfile breakdownPart =
     Element.column
         [ Element.spacing 5
         , Element.padding 5
@@ -286,7 +300,7 @@ selectedExplanationElement breakdownPart =
                     [ Element.alignRight
                     , Element.width Element.shrink
                     , Font.bold
-                    , Font.size 18
+                    , Font.size <| responsiveVal dProfile 20 26
                     ]
                     [ Element.text breakdownPart.estonian ]
             , vbreakElement
@@ -298,7 +312,7 @@ selectedExplanationElement breakdownPart =
                     [ Element.alignLeft
                     , Font.italic
                     , Font.color translatedTextColor
-                    , Font.size 18
+                    , Font.size <| responsiveVal dProfile 20 26
                     ]
                     [ Element.text breakdownPart.englishTranslation ]
             ]
@@ -306,7 +320,7 @@ selectedExplanationElement breakdownPart =
             |> Maybe.map
                 (\explanationText ->
                     Element.paragraph
-                        [ Font.size 14
+                        [ Font.size <| responsiveVal dProfile 16 20
                         , Font.italic
                         , Font.color <| Element.rgb 0.2 0.2 0.2
                         , Element.paddingEach
@@ -337,8 +351,11 @@ gptAssistErrorToString gptAssistError =
         OutOfCredits ->
             "Out of credits! D:"
 
-        ApiProtocolError httpError ->
-            "There was an issue with OpenAI's protocol: " ++ Utils.httpErrorToString httpError
+        ApiProtocolError RateLimited ->
+            "OpenAI has rate-limted the app. Sorry about that - please try again later."
+
+        ApiProtocolError (HttpError otherHttpError) ->
+            "There was an issue with OpenAI's protocol: " ++ Utils.httpErrorToString otherHttpError
 
         GptDecodeError decodeError ->
             "ChatGPT did not respond with the expected structure: " ++ decodeError

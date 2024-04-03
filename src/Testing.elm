@@ -23,7 +23,7 @@ completedRequestExample =
                   }
                 , { estonian = "Logan"
                   , englishTranslation = "is"
-                  , maybeExplanation = Just "some explanation here some explanation here some explanation here some explanation here some explanation here some explanation here "
+                  , maybeExplanation = Just "some explanation here some explanation here some explanation here some explanation here some explanation here some explanation here some explanation here some explanation here some explanation here some explanation here some explanation here some explanation here some explanation here some explanation here some explanation here some explanation here some explanation here some explanation here some explanation here some explanation here some explanation here some explanation here some explanation here some explanation here "
                   }
                 ]
             , translation = "my name is Logan"

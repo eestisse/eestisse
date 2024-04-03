@@ -272,7 +272,12 @@ processGptResponse : Result Http.Error String -> Result GptAssistError Translati
 processGptResponse fetchResult =
     case fetchResult of
         Err httpErr ->
-            Err <| ApiProtocolError httpErr
+            case httpErr of
+                Http.BadStatus 429 ->
+                    Err <| ApiProtocolError <| RateLimited
+
+                otherHttpErr ->
+                    Err <| ApiProtocolError <| HttpError otherHttpErr
 
         Ok gptResponse ->
             case Json.Decode.decodeString gptResponseDecoder gptResponse of

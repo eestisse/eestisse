@@ -78,7 +78,7 @@ view dProfile model =
                 ]
             , case model.route of
                 Route.Translate ->
-                    Translate.View.page model.translationPageModel
+                    Translate.View.page dProfile model.translationPageModel
 
                 Route.Landing ->
                     Landing.View.page dProfile model.signupState

@@ -27,8 +27,8 @@ httpErrorToString error =
         Http.BadStatus 400 ->
             "Verify your information and try again"
 
-        Http.BadStatus _ ->
-            "Unknown error"
+        Http.BadStatus num ->
+            "Unknown error: " ++ String.fromInt num
 
         Http.BadBody errorMessage ->
             errorMessage

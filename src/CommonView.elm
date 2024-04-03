@@ -161,8 +161,15 @@ htmlId idStr =
     Element.htmlAttribute <| Html.Attributes.id idStr
 
 
-primaryBox : Element.Color -> Element.Color -> List (Attribute msg) -> Element msg -> Element msg
-primaryBox borderColor backgroundColor extraAttributes innerEl =
+primaryBox : List (Attribute msg) -> Element msg -> Element msg
+primaryBox =
+    primaryBoxCustomColors
+        Colors.calmTeal
+        (Element.rgb 0.95 0.95 1)
+
+
+primaryBoxCustomColors : Element.Color -> Element.Color -> List (Attribute msg) -> Element msg -> Element msg
+primaryBoxCustomColors borderColor backgroundColor extraAttributes innerEl =
     Element.el
         ([ Element.padding 10
          , Border.rounded 30
