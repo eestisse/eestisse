@@ -17,6 +17,12 @@ madimiFont =
         [ Font.typeface "madimi" ]
 
 
+robotoFont : Attribute msg
+robotoFont =
+    Font.family
+        [ Font.typeface "roboto" ]
+
+
 plausibleTrackButtonClick : String -> Attribute FrontendMsg
 plausibleTrackButtonClick nameForPlausible =
     let

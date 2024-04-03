@@ -33,6 +33,7 @@ root model =
             }
             [ Element.width Element.fill
             , Element.height Element.fill
+            , robotoFont
             ]
           <|
             case model.dProfile of
