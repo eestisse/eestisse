@@ -36,8 +36,6 @@ emphasizedText =
 mainExplainer : DisplayProfile -> Element FrontendMsg
 mainExplainer dProfile =
     primaryBox
-        Colors.calmTeal
-        (Element.rgb 0.95 0.95 1)
         [ Element.width Element.fill ]
     <|
         Element.column
@@ -99,8 +97,7 @@ mainExplainer dProfile =
 
 futureFeaturesAndSignupElement : DisplayProfile -> SignupState -> Element FrontendMsg
 futureFeaturesAndSignupElement dProfile signupState =
-    primaryBox Colors.calmTeal
-        (Element.rgb 0.95 0.95 1)
+    primaryBox
         [ Element.width Element.fill ]
     <|
         Element.column

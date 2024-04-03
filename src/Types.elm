@@ -94,9 +94,14 @@ type alias CompletedRequest =
 
 type GptAssistError
     = OutOfCredits
-    | ApiProtocolError Http.Error
+    | ApiProtocolError ProtocolError
     | GptDecodeError String
     | GptExpressedError String
+
+
+type ProtocolError
+    = RateLimited
+    | HttpError Http.Error
 
 
 type alias Translation =
