@@ -355,7 +355,7 @@ gptAssistErrorToString gptAssistError =
             "OpenAI has rate-limted the app. Sorry about that - please try again later."
 
         ApiProtocolError (HttpError otherHttpError) ->
-            "There was an issue with OpenAI's protocol: " ++ Utils.httpErrorToString otherHttpError
+            "There was an issue with the AI service provider: " ++ Utils.httpErrorToString otherHttpError
 
         GptDecodeError decodeError ->
             "ChatGPT did not respond with the expected structure: " ++ decodeError

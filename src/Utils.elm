@@ -13,25 +13,19 @@ httpErrorToString : Http.Error -> String
 httpErrorToString error =
     case error of
         Http.BadUrl url ->
-            "The URL " ++ url ++ " was invalid"
+            "The URL " ++ url ++ " was invalid."
 
         Http.Timeout ->
-            "Unable to reach the server, try again"
+            "Connection timed out. Try again."
 
         Http.NetworkError ->
-            "Unable to reach the server, check your network connection"
-
-        Http.BadStatus 500 ->
-            "The server had a problem, try again later"
-
-        Http.BadStatus 400 ->
-            "Verify your information and try again"
+            "Unable to reach the server. Check your network connection and try again."
 
         Http.BadStatus num ->
-            "Unknown error: " ++ String.fromInt num
+            "HTTP \"BadStatus\": " ++ String.fromInt num
 
         Http.BadBody errorMessage ->
-            errorMessage
+            "HTTP \"BadBody\": " ++ errorMessage
 
 
 decodeTuple : Json.Decode.Decoder a -> Json.Decode.Decoder b -> Json.Decode.Decoder ( a, b )

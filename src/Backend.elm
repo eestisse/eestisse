@@ -1,8 +1,8 @@
 module Backend exposing (..)
 
+import ClaudeRequests
 import Config
 import Env
-import GPTRequests
 import Http
 import Json.Decode
 import Lamdera exposing (ClientId, SessionId)
@@ -44,7 +44,7 @@ update msg model =
         GptResponseReceived clientId input fetchResult ->
             let
                 gptResult =
-                    GPTRequests.processGptResponse fetchResult
+                    ClaudeRequests.processChatResponse fetchResult
 
                 modelWithResult =
                     { model
@@ -85,7 +85,7 @@ updateFromFrontend sessionId clientId msg model =
 
         SubmitTextForTranslation text ->
             if model.publicCredits > 0 then
-                ( model, requestTranslationCmd clientId text )
+                ( model, requestClaudeTranslationCmd clientId text )
 
             else
                 ( model
@@ -107,17 +107,34 @@ updateFromFrontend sessionId clientId msg model =
             )
 
 
-requestTranslationCmd : ClientId -> String -> Cmd BackendMsg
-requestTranslationCmd clientId inputText =
+requestClaudeTranslationCmd : ClientId -> String -> Cmd BackendMsg
+requestClaudeTranslationCmd clientId inputText =
     Http.request
         { method = "POST"
-        , headers = [ Http.header "Authorization" ("Bearer " ++ Env.openaiApiKey) ]
-        , url = "https://api.openai.com/v1/chat/completions"
-        , body = Http.jsonBody <| GPTRequests.encode <| GPTRequests.translateFromEstonian inputText
-        , expect = Http.expectJson (GptResponseReceived clientId inputText) GPTRequests.apiResponseDecoder
+        , headers =
+            [ Http.header "x-api-key" Env.anthropicApiKey
+            , Http.header "anthropic-version" "2023-06-01"
+            ]
+        , url = "https://api.anthropic.com/v1/messages"
+        , body = Http.jsonBody <| ClaudeRequests.encode <| ClaudeRequests.translateFromEstonian inputText
+        , expect = Http.expectJson (GptResponseReceived clientId inputText) ClaudeRequests.apiResponseDecoder
         , timeout = Nothing
         , tracker = Nothing
         }
+
+
+
+-- requestGptTranslationCmd : ClientId -> String -> Cmd BackendMsg
+-- requestGptTranslationCmd clientId inputText =
+--     Http.request
+--         { method = "POST"
+--         , headers = [ Http.header "Authorization" ("Bearer " ++ Env.openaiApiKey) ]
+--         , url = "https://api.openai.com/v1/chat/completions"
+--         , body = Http.jsonBody <| GPTRequests.encode <| GPTRequests.translateFromEstonian inputText
+--         , expect = Http.expectJson (GptResponseReceived clientId inputText) GPTRequests.apiResponseDecoder
+--         , timeout = Nothing
+--         , tracker = Nothing
+--         }
 
 
 deductOneCredit : BackendModel -> BackendModel
