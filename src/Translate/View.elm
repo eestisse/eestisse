@@ -221,7 +221,7 @@ selectPartButton partIsSelected breakdownPart =
                     ]
 
                 else
-                    [ Element.Background.color <| Element.rgb 0.95 0.95 1 ]
+                    [ Element.Background.color <| Element.rgb 0.9 0.95 1 ]
                )
         )
         { onPress = Just <| ShowExplanation breakdownPart
@@ -262,30 +262,39 @@ loadingTranslationElement animationCounter =
 
 clickOnPartsHint : DisplayProfile -> Element FrontendMsg
 clickOnPartsHint dProfile =
-    Element.paragraph
-        [ Element.padding 5
+    Element.row
+        [ Element.spacing 10
+        , Element.Background.color <| Element.rgb 0.8 1 0.8
         , Border.width 1
-        , Border.rounded 4
-        , Border.color <| Element.rgb 0.8 0.8 0
-        , Element.Background.color <| Element.rgb 1 1 0.7
-        , Element.centerX
-        , Font.color <| Element.rgb 0.3 0.3 0.3
-        , Font.italic
-        , Font.center
-        , Font.size <| responsiveVal dProfile 20 26
+        , Border.rounded 10
+        , Border.color <| Element.rgb 0.6 0.8 0.6
+        , Element.padding 8
         ]
-        [ Element.text "Tap parts of the Estonian text to learn more" ]
+        [ Element.image
+            [ Element.width <| Element.px <| responsiveVal dProfile 26 32
+            ]
+            { src = "/info-icon.png"
+            , description = "submit email"
+            }
+        , Element.paragraph
+            [ Font.center
+            , Element.centerY
+            , Font.size <| responsiveVal dProfile 20 26
+            , Font.bold
+            ]
+            [ Element.text "Tap parts of the Estonian text to learn more!" ]
+        ]
 
 
 selectedExplanationElement : DisplayProfile -> BreakdownPart -> Element FrontendMsg
 selectedExplanationElement dProfile breakdownPart =
     Element.column
         [ Element.spacing 5
-        , Element.padding 5
+        , Element.Background.color <| Element.rgb 0.8 1 0.8
         , Border.width 1
-        , Border.rounded 4
-        , Border.color <| Element.rgb 0.8 0.8 0
-        , Element.Background.color <| Element.rgb 1 1 0.7
+        , Border.rounded 10
+        , Border.color <| Element.rgb 0.6 0.8 0.6
+        , Element.padding 8
         , Element.centerX
         ]
         [ Element.row

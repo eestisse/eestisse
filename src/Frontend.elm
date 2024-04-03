@@ -214,7 +214,7 @@ update msg model =
             , Cmd.none
             )
 
-        FiddleRandomBackroundPath time ->
+        FiddleRandomBackroundPath _ ->
             case model.backgroundModel of
                 Nothing ->
                     ( model, Cmd.none )
@@ -318,7 +318,7 @@ subscriptions model =
         [ case model.translationPageModel of
             RequestSent (Waiting _ _) ->
                 Sub.batch
-                    [ Time.every 1500 (always CycleLoadingAnimation)
+                    [ Time.every 900 (always CycleLoadingAnimation)
                     , Time.every 900 FiddleRandomBackroundPath
                     ]
 
