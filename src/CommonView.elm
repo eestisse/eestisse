@@ -54,7 +54,7 @@ minorActionButton labelText maybeMsg =
         [ Element.paddingXY 15 8
         , Border.width 1
         , Border.color <| Element.rgb 0.5 0.5 1
-        , Background.color <| Element.rgb 0.9 0.9 1
+        , Background.color Colors.lightBlue
         , Font.size 24
         , Font.color <| Element.rgb 0 0 0.5
         , Border.rounded 10

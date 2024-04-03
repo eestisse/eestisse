@@ -137,7 +137,7 @@ futureFeaturesAndSignupElement dProfile signupState =
                         , Border.rounded 5
                         , Border.width 1
                         , Border.color <| Element.rgb 0.7 0.7 1
-                        , Element.Background.color <| Element.rgb 0.9 0.9 1
+                        , Element.Background.color Colors.lightBlue
                         ]
                         [ Input.text
                             [ Element.width Element.fill

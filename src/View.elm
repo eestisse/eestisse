@@ -70,7 +70,24 @@ view dProfile model =
                 [ Element.width Element.fill
                 ]
                 [ Element.el [ Element.width Element.fill ] <|
-                    Element.none
+                    if model.route == Route.Translate then
+                        Input.button
+                            [ Element.padding 10
+                            , Border.rounded 10
+                            , Element.Background.color <| Colors.lightBlue
+                            ]
+                            { onPress = Just <| GotoRoute Route.Landing
+                            , label =
+                                Element.image
+                                    [ Element.height <| Element.px <| responsiveVal dProfile 20 30
+                                    ]
+                                    { src = "left-arrow-black.png"
+                                    , description = "back"
+                                    }
+                            }
+
+                    else
+                        Element.none
                 , Element.el [ Element.centerX ] <|
                     titleElement dProfile (model.route == Route.Landing)
                 , Element.el [ Element.width Element.fill ] <|
@@ -111,7 +128,7 @@ titleElement dProfile showSubtitle =
                 , topRight = 3
                 , bottomLeft = 3
                 }
-            , Element.Background.color <| Element.rgb 0.9 0.9 1
+            , Element.Background.color Colors.lightBlue
             ]
             { onPress = Just <| GotoRoute Route.Landing
             , label =

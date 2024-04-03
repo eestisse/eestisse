@@ -76,3 +76,8 @@ offWhite =
 calmTeal : Color
 calmTeal =
     Element.rgb 0.8 0.8 1
+
+
+lightBlue : Color
+lightBlue =
+    Element.rgb 0.9 0.9 1
