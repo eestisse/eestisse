@@ -18,9 +18,9 @@ publicUsageConfig =
 
 newFeaturesConsentWording : String
 newFeaturesConsentWording =
-    "hear about major new features for Eestisse when they come out"
+    "hearing about major new features for Eestisse when they come out"
 
 
 userInterviewsConsentWording : String
 userInterviewsConsentWording =
-    "receive a request for a user interview (to ensure Eestisse is the best verison it can be!)"
+    "participating in a 30-minute user interview in exhange for free credit"

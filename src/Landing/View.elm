@@ -159,7 +159,7 @@ viewSignupForm dProfile formModel =
         , CommonView.basicShadow
         ]
         [ Input.text
-            [ Element.width (Element.fill |> Element.maximum 400)
+            [ Element.width Element.fill
             , Element.padding 10
             , Border.rounded 5
             , Border.width 1
@@ -212,10 +212,10 @@ viewSignupForm dProfile formModel =
 consentOptions : DisplayProfile -> SignupFormModel -> Element FrontendMsg
 consentOptions dProfile formModel =
     Element.column
-        [ Element.spacing 8
+        [ Element.spacing 10
         ]
         [ Element.el [ Font.size <| responsiveVal dProfile 18 20 ] <|
-            Element.text "I consent to..."
+            Element.text "I am interested in..."
         , consentCheckbox dProfile Config.newFeaturesConsentWording formModel.newFeaturesConsentChecked (\b -> { formModel | newFeaturesConsentChecked = b })
         , consentCheckbox dProfile Config.userInterviewsConsentWording formModel.userInterviewsConsentChecked (\b -> { formModel | userInterviewsConsentChecked = b })
         ]
@@ -228,7 +228,19 @@ consentCheckbox dProfile text checked formUpdater =
         { onChange = formUpdater >> SignupFormChanged
         , icon = Input.defaultCheckbox
         , checked = checked
-        , label = Input.labelRight [ Font.size <| responsiveVal dProfile 16 18 ] <| Element.text text
+        , label =
+            Input.labelRight
+                [ Element.paddingEach
+                    { left = 8
+                    , right = 0
+                    , bottom = 0
+                    , top = 0
+                    }
+                , Font.size <| responsiveVal dProfile 16 18
+                , Element.width Element.fill
+                ]
+            <|
+                Element.paragraph [ Element.spacing 2 ] [ Element.text text ]
         }
 
 
