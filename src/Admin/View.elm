@@ -10,15 +10,15 @@ import Element.Input as Input
 import Types exposing (..)
 
 
-page : Maybe Int -> Element FrontendMsg
-page maybeHowMany =
+page : Maybe (List ( String, Int )) -> Element FrontendMsg
+page maybeNumbers =
     Element.el
         [ Element.centerX
         , Element.centerY
         , CommonView.madimiFont
         ]
     <|
-        case maybeHowMany of
+        case maybeNumbers of
             Nothing ->
                 Input.button
                     [ Element.Background.color Colors.blue
@@ -32,10 +32,13 @@ page maybeHowMany =
                     , label = Element.text "KUI PALJU"
                     }
 
-            Just howMany ->
-                Element.el
-                    [ Font.size 80
-                    ]
-                <|
-                    Element.text <|
-                        String.fromInt howMany
+            Just labeledNumbers ->
+                labeledNumbers
+                    |> List.map
+                        (\( label, number ) ->
+                            Element.row [ Element.width Element.fill, Element.spacing 20 ]
+                                [ Element.text label
+                                , Element.el [ Element.alignRight ] <| Element.text <| String.fromInt number
+                                ]
+                        )
+                    |> Element.column [ Element.spacing 20 ]

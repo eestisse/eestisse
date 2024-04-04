@@ -1,8 +1,8 @@
 module Landing.View exposing (..)
 
-import Background.View
 import Colors
 import CommonView exposing (..)
+import Config
 import Element exposing (Attribute, Element)
 import Element.Background
 import Element.Border as Border
@@ -10,8 +10,6 @@ import Element.Events as Events
 import Element.Font as Font
 import Element.Input as Input
 import Responsive exposing (..)
-import Route
-import Time
 import Types exposing (..)
 import Utils
 
@@ -57,12 +55,7 @@ mainExplainer dProfile =
                 , Element.width Element.fill
                 , Font.bold
                 , Element.Background.color <| Element.rgba 0.9 0.9 1 0.8
-                , Border.shadow
-                    { offset = ( -3, 3 )
-                    , size = 1
-                    , blur = 5
-                    , color = Element.rgb 0.8 0.8 0.8
-                    }
+                , CommonView.basicShadow
                 , Element.padding <| responsiveVal dProfile 10 20
                 , Border.rounded 10
                 , Border.width 1
@@ -128,62 +121,8 @@ futureFeaturesAndSignupElement dProfile signupState =
                           ]
                         ]
 
-                Active input ->
-                    Element.row
-                        [ Element.spacing 10
-                        , Element.padding 5
-                        , Element.width Element.fill
-                        , Element.height Element.fill
-                        , Border.rounded 5
-                        , Border.width 1
-                        , Border.color <| Element.rgb 0.7 0.7 1
-                        , Element.Background.color Colors.lightBlue
-                        ]
-                        [ Input.text
-                            [ Element.width Element.fill
-                            , Border.width 0
-                            , Element.Background.color Colors.transparent
-                            , Utils.onEnter <|
-                                if Utils.isValidEmail input then
-                                    SubmitSignup input
-
-                                else
-                                    NoOpFrontendMsg
-                            , CommonView.htmlId "email-input"
-                            ]
-                            { onChange = SignupTextChanged
-                            , text = input
-                            , placeholder = Just <| Input.placeholder [ Font.color <| Element.rgb 0.5 0.5 0.5 ] <| Element.text "you@somewhere.neat"
-                            , label = Input.labelHidden "email input"
-                            }
-                        , Input.button
-                            [ Element.Background.color <|
-                                if Utils.isValidEmail input then
-                                    Colors.blue
-
-                                else
-                                    Colors.gray
-                            , Element.width <| Element.px 32
-                            , Element.height <| Element.px 32
-                            , Border.rounded 4
-                            ]
-                            { onPress =
-                                if Utils.isValidEmail input then
-                                    Just <| SubmitSignup input
-
-                                else
-                                    Nothing
-                            , label =
-                                Element.image
-                                    [ Element.centerX
-                                    , Element.centerY
-                                    , Element.width <| Element.px 26
-                                    ]
-                                    { src = "/enter-arrow-white.png"
-                                    , description = "submit email"
-                                    }
-                            }
-                        ]
+                Active signupForm ->
+                    viewSignupForm dProfile signupForm
 
                 Submitting ->
                     Element.el
@@ -204,3 +143,96 @@ futureFeaturesAndSignupElement dProfile signupState =
                           ]
                         ]
             ]
+
+
+viewSignupForm : DisplayProfile -> SignupFormModel -> Element FrontendMsg
+viewSignupForm dProfile formModel =
+    Element.column
+        [ Element.height Element.fill
+        , Element.padding 10
+        , Element.centerX
+        , Border.width 1
+        , Border.color <| Element.rgba 0 0 0 0.1
+        , Border.rounded 5
+        , Element.Background.color Colors.lightBlue
+        , Element.spacing 10
+        , CommonView.basicShadow
+        ]
+        [ Input.text
+            [ Element.width (Element.fill |> Element.maximum 400)
+            , Element.padding 10
+            , Border.rounded 5
+            , Border.width 1
+            , Border.color <| Element.rgb 0.7 0.7 1
+            , Element.Background.color <| Element.rgb 0.98 0.98 1
+            , Utils.onEnter <|
+                if isSignupFormReadyToSubmit formModel then
+                    SubmitSignupClicked formModel
+
+                else
+                    NoOpFrontendMsg
+            , CommonView.htmlId "email-input"
+            ]
+            { onChange = \text -> SignupFormChanged <| { formModel | emailInput = text }
+            , text = formModel.emailInput
+            , placeholder = Just <| Input.placeholder [ Font.color <| Element.rgb 0.5 0.5 0.5 ] <| Element.text "you@somewhere.neat"
+            , label = Input.labelHidden "email input"
+            }
+        , consentOptions dProfile formModel
+        , Input.button
+            [ Element.Background.color <|
+                if isSignupFormReadyToSubmit formModel then
+                    Colors.blue
+
+                else
+                    Colors.gray
+            , Element.width <| Element.px 32
+            , Element.height <| Element.px 32
+            , Border.rounded 4
+            ]
+            { onPress =
+                if isSignupFormReadyToSubmit formModel then
+                    Just <| SubmitSignupClicked formModel
+
+                else
+                    Nothing
+            , label =
+                Element.image
+                    [ Element.centerX
+                    , Element.centerY
+                    , Element.width <| Element.px 26
+                    ]
+                    { src = "/enter-arrow-white.png"
+                    , description = "submit email"
+                    }
+            }
+        ]
+
+
+consentOptions : DisplayProfile -> SignupFormModel -> Element FrontendMsg
+consentOptions dProfile formModel =
+    Element.column
+        [ Element.spacing 8
+        ]
+        [ Element.el [ Font.size <| responsiveVal dProfile 18 20 ] <|
+            Element.text "I consent to..."
+        , consentCheckbox dProfile Config.newFeaturesConsentWording formModel.newFeaturesConsentChecked (\b -> { formModel | newFeaturesConsentChecked = b })
+        , consentCheckbox dProfile Config.userInterviewsConsentWording formModel.userInterviewsConsentChecked (\b -> { formModel | userInterviewsConsentChecked = b })
+        ]
+
+
+consentCheckbox : DisplayProfile -> String -> Bool -> (Bool -> SignupFormModel) -> Element FrontendMsg
+consentCheckbox dProfile text checked formUpdater =
+    Input.checkbox
+        []
+        { onChange = formUpdater >> SignupFormChanged
+        , icon = Input.defaultCheckbox
+        , checked = checked
+        , label = Input.labelRight [ Font.size <| responsiveVal dProfile 16 18 ] <| Element.text text
+        }
+
+
+isSignupFormReadyToSubmit : SignupFormModel -> Bool
+isSignupFormReadyToSubmit signupForm =
+    Utils.isValidEmail signupForm.emailInput
+        && (signupForm.newFeaturesConsentChecked || signupForm.userInterviewsConsentChecked)

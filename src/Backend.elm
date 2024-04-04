@@ -8,6 +8,7 @@ import GPTRequests
 import Http
 import Json.Decode
 import Lamdera exposing (ClientId, SessionId)
+import List.Extra
 import Set
 import Time
 import Types exposing (..)
@@ -30,7 +31,8 @@ init : ( Model, Cmd BackendMsg )
 init =
     ( { nowish = Time.millisToPosix 0
       , publicCredits = 20
-      , emails = Set.empty
+      , emails_backup = Set.empty
+      , emailsWithConsents = []
       , requests = []
       }
     , Cmd.none
@@ -94,19 +96,44 @@ updateFromFrontend sessionId clientId msg model =
                 , Lamdera.sendToFrontend clientId <| TranslationResult text (Err OutOfCredits)
                 )
 
-        SubmitEmail emailString ->
+        SubmitSignup signupForm ->
             ( { model
-                | emails =
-                    model.emails
-                        |> Set.insert emailString
+                | emailsWithConsents =
+                    model.emailsWithConsents
+                        |> List.append [ signupFormToEmailAndConsets signupForm ]
               }
             , Lamdera.sendToFrontend clientId EmailSubmitAck
             )
 
         RequestImportantNumber ->
             ( model
-            , Lamdera.sendToFrontend clientId <| ImportantNumber (model.emails |> Set.size)
+            , Lamdera.sendToFrontend clientId <|
+                ImportantNumbers <|
+                    (model.emailsWithConsents
+                        |> List.map .consentsGiven
+                        |> List.concat
+                        |> List.Extra.frequencies
+                    )
             )
+
+
+signupFormToEmailAndConsets : SignupFormModel -> EmailAndConsents
+signupFormToEmailAndConsets signupForm =
+    { email = signupForm.emailInput
+    , consentsGiven =
+        List.concat
+            [ if signupForm.newFeaturesConsentChecked then
+                [ Config.newFeaturesConsentWording ]
+
+              else
+                []
+            , if signupForm.userInterviewsConsentChecked then
+                [ Config.userInterviewsConsentWording ]
+
+              else
+                []
+            ]
+    }
 
 
 

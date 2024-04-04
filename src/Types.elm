@@ -20,7 +20,7 @@ type alias FrontendModel =
     , dProfile : Maybe DisplayProfile
     , translationPageModel : TranslationPageModel
     , signupState : SignupState
-    , maybeImportantNumber : Maybe Int
+    , maybeImportantNumbers : Maybe (List ( String, Int ))
     , animationTime : Time.Posix
     , backgroundModel : Maybe Background.Model
     }
@@ -40,18 +40,26 @@ type FrontendMsg
     | GotoRoute Route
     | GotoTranslate_FocusAndClear
     | StartSignup
-    | SubmitSignup String
-    | SignupTextChanged String
+    | SubmitSignupClicked SignupFormModel
+    | SignupFormChanged SignupFormModel
     | FetchImportantNumber
     | Animate Time.Posix
     | FiddleRandomBackroundPath Time.Posix
 
 
-type ToBackend
-    = NoOpToBackend
-    | SubmitTextForTranslation String
-    | SubmitEmail String
-    | RequestImportantNumber
+type alias BackendModel =
+    { nowish : Time.Posix
+    , publicCredits : Int
+    , emails_backup : Set String
+    , emailsWithConsents : List EmailAndConsents
+    , requests : List ( Time.Posix, String, Result GptAssistError Translation )
+    }
+
+
+type alias EmailAndConsents =
+    { email : String
+    , consentsGiven : List String
+    }
 
 
 type BackendMsg
@@ -61,18 +69,40 @@ type BackendMsg
     | UpdateNow Time.Posix
 
 
+type ToBackend
+    = NoOpToBackend
+    | SubmitTextForTranslation String
+    | SubmitSignup SignupFormModel
+    | RequestImportantNumber
+
+
 type ToFrontend
     = NoOpToFrontend
     | TranslationResult String (Result GptAssistError Translation)
     | EmailSubmitAck
-    | ImportantNumber Int
+    | ImportantNumbers (List ( String, Int ))
 
 
 type SignupState
     = Inactive
-    | Active String
+    | Active SignupFormModel
     | Submitting
     | Submitted
+
+
+type alias SignupFormModel =
+    { emailInput : String
+    , newFeaturesConsentChecked : Bool
+    , userInterviewsConsentChecked : Bool
+    }
+
+
+blankSignupForm : SignupFormModel
+blankSignupForm =
+    SignupFormModel
+        ""
+        False
+        False
 
 
 type TranslationPageModel
@@ -124,14 +154,6 @@ type alias BreakdownPart =
     { estonian : String
     , englishTranslation : String
     , maybeExplanation : Maybe String
-    }
-
-
-type alias BackendModel =
-    { nowish : Time.Posix
-    , publicCredits : Int
-    , emails : Set String
-    , requests : List ( Time.Posix, String, Result GptAssistError Translation )
     }
 
 

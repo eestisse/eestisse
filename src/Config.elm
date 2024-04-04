@@ -14,3 +14,13 @@ publicUsageConfig =
     , addCreditAmount = 5
     , maxCapacity = 100
     }
+
+
+newFeaturesConsentWording : String
+newFeaturesConsentWording =
+    "hear about major new features for Eestisse when they come out"
+
+
+userInterviewsConsentWording : String
+userInterviewsConsentWording =
+    "receive requests for user interviews (to ensure Eestisse is the best verison it can be!)"

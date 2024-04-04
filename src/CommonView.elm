@@ -208,3 +208,13 @@ scrollbarYEl attrs body =
                 ++ attrs
             )
             body
+
+
+basicShadow : Attribute msg
+basicShadow =
+    Border.shadow
+        { offset = ( -3, 3 )
+        , size = 1
+        , blur = 5
+        , color = Element.rgb 0.8 0.8 0.8
+        }

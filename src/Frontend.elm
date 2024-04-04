@@ -18,10 +18,6 @@ import Url
 import View
 
 
-type alias Model =
-    FrontendModel
-
-
 app =
     Lamdera.frontend
         { init = init
@@ -34,7 +30,7 @@ app =
         }
 
 
-init : Url.Url -> Nav.Key -> ( Model, Cmd FrontendMsg )
+init : Url.Url -> Nav.Key -> ( FrontendModel, Cmd FrontendMsg )
 init url key =
     let
         route =
@@ -48,8 +44,8 @@ init url key =
       -- RequestSent <| Waiting "test stuff" 1
       -- RequestSent <| RequestComplete Testing.completedRequestExample
       , dProfile = Nothing
-      , signupState = Inactive
-      , maybeImportantNumber = Nothing
+      , signupState = Active blankSignupForm
+      , maybeImportantNumbers = Nothing
       , animationTime = Time.millisToPosix 0
       , backgroundModel = Nothing
       }
@@ -57,7 +53,7 @@ init url key =
     )
 
 
-update : FrontendMsg -> Model -> ( Model, Cmd FrontendMsg )
+update : FrontendMsg -> FrontendModel -> ( FrontendModel, Cmd FrontendMsg )
 update msg model =
     case msg of
         NoOpFrontendMsg ->
@@ -162,17 +158,21 @@ update msg model =
             )
 
         StartSignup ->
-            ( { model | signupState = Active "" }
+            ( { model | signupState = Active blankSignupForm }
             , focusEmailInputCmd
             )
 
-        SubmitSignup emailString ->
+        SubmitSignupClicked signupForm ->
             ( { model | signupState = Submitting }
-            , Lamdera.sendToBackend <| SubmitEmail emailString
+            , Lamdera.sendToBackend <| SubmitSignup signupForm
             )
 
-        SignupTextChanged text ->
-            ( { model | signupState = Active text }
+        SignupFormChanged newForm ->
+            ( { model
+                | signupState =
+                    Active <|
+                        newForm
+              }
             , Cmd.none
             )
 
@@ -228,7 +228,7 @@ update msg model =
                     )
 
 
-updateFromBackend : ToFrontend -> Model -> ( Model, Cmd FrontendMsg )
+updateFromBackend : ToFrontend -> FrontendModel -> ( FrontendModel, Cmd FrontendMsg )
 updateFromBackend msg model =
     case msg of
         NoOpToFrontend ->
@@ -270,15 +270,15 @@ updateFromBackend msg model =
             , plausibleEventOutCmd "email-signup"
             )
 
-        ImportantNumber number ->
+        ImportantNumbers numbers ->
             ( { model
-                | maybeImportantNumber = Just number
+                | maybeImportantNumbers = Just numbers
               }
             , Cmd.none
             )
 
 
-changeRouteAndAnimate : Model -> Route -> ( Model, Cmd FrontendMsg )
+changeRouteAndAnimate : FrontendModel -> Route -> ( FrontendModel, Cmd FrontendMsg )
 changeRouteAndAnimate model route =
     ( { model
         | route = route
@@ -313,7 +313,7 @@ getViewportCmd =
         |> Task.perform GotViewport
 
 
-subscriptions : Model -> Sub FrontendMsg
+subscriptions : FrontendModel -> Sub FrontendMsg
 subscriptions model =
     Sub.batch
         [ case model.translationPageModel of
