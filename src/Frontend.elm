@@ -44,7 +44,7 @@ init url key =
       -- RequestSent <| Waiting "test stuff" 1
       -- RequestSent <| RequestComplete Testing.completedRequestExample
       , dProfile = Nothing
-      , signupState = Active blankSignupForm
+      , signupState = Inactive
       , maybeImportantNumbers = Nothing
       , animationTime = Time.millisToPosix 0
       , backgroundModel = Nothing
