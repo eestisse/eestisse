@@ -155,58 +155,37 @@ viewSignupForm dProfile formModel =
         , Border.color <| Element.rgba 0 0 0 0.1
         , Border.rounded 5
         , Element.Background.color Colors.lightBlue
-        , Element.spacing 10
+        , Element.spacing 15
         , CommonView.basicShadow
         ]
-        [ Input.text
-            [ Element.width Element.fill
-            , Element.padding 10
-            , Border.rounded 5
-            , Border.width 1
-            , Border.color <| Element.rgb 0.7 0.7 1
-            , Element.Background.color <| Element.rgb 0.98 0.98 1
-            , Utils.onEnter <|
-                if isSignupFormReadyToSubmit formModel then
-                    SubmitSignupClicked formModel
-
-                else
-                    NoOpFrontendMsg
-            , CommonView.htmlId "email-input"
-            ]
-            { onChange = \text -> SignupFormChanged <| { formModel | emailInput = text }
-            , text = formModel.emailInput
-            , placeholder = Just <| Input.placeholder [ Font.color <| Element.rgb 0.5 0.5 0.5 ] <| Element.text "you@somewhere.neat"
-            , label = Input.labelHidden "email input"
-            }
+        [ viewEmailInput dProfile formModel
         , consentOptions dProfile formModel
-        , Input.button
-            [ Element.Background.color <|
-                if isSignupFormReadyToSubmit formModel then
-                    Colors.blue
-
-                else
-                    Colors.gray
-            , Element.width <| Element.px 32
-            , Element.height <| Element.px 32
-            , Border.rounded 4
-            ]
-            { onPress =
-                if isSignupFormReadyToSubmit formModel then
-                    Just <| SubmitSignupClicked formModel
-
-                else
-                    Nothing
-            , label =
-                Element.image
-                    [ Element.centerX
-                    , Element.centerY
-                    , Element.width <| Element.px 26
-                    ]
-                    { src = "/enter-arrow-white.png"
-                    , description = "submit email"
-                    }
-            }
+        , Element.el [ Element.centerX ] <| signupButton dProfile formModel
         ]
+
+
+viewEmailInput : DisplayProfile -> SignupFormModel -> Element FrontendMsg
+viewEmailInput dProfile formModel =
+    Input.text
+        [ Element.width Element.fill
+        , Element.padding 10
+        , Border.rounded 5
+        , Border.width 1
+        , Border.color <| Element.rgb 0.7 0.7 1
+        , Element.Background.color <| Element.rgb 0.98 0.98 1
+        , Utils.onEnter <|
+            if isSignupFormReadyToSubmit formModel then
+                SubmitSignupClicked formModel
+
+            else
+                NoOpFrontendMsg
+        , CommonView.htmlId "email-input"
+        ]
+        { onChange = \text -> SignupFormChanged <| { formModel | emailInput = text }
+        , text = formModel.emailInput
+        , placeholder = Just <| Input.placeholder [ Font.color <| Element.rgb 0.5 0.5 0.5 ] <| Element.text "you@somewhere.neat"
+        , label = Input.labelHidden "email input"
+        }
 
 
 consentOptions : DisplayProfile -> SignupFormModel -> Element FrontendMsg
@@ -242,6 +221,18 @@ consentCheckbox dProfile text checked formUpdater =
             <|
                 Element.paragraph [ Element.spacing 2 ] [ Element.text text ]
         }
+
+
+signupButton : DisplayProfile -> SignupFormModel -> Element FrontendMsg
+signupButton dProfile formModel =
+    mainActionButton
+        "Sign up"
+        (if isSignupFormReadyToSubmit formModel then
+            Just <| SubmitSignupClicked formModel
+
+         else
+            Nothing
+        )
 
 
 isSignupFormReadyToSubmit : SignupFormModel -> Bool

@@ -49,7 +49,14 @@ init url key =
       , animationTime = Time.millisToPosix 0
       , backgroundModel = Nothing
       }
-    , getViewportCmd
+    , Cmd.batch
+        [ getViewportCmd
+        , if route == Route.Admin then
+            Lamdera.sendToBackend RequestImportantNumber
+
+          else
+            Cmd.none
+        ]
     )
 
 

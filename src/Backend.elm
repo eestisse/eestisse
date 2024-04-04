@@ -110,8 +110,14 @@ updateFromFrontend sessionId clientId msg model =
             , Lamdera.sendToFrontend clientId <|
                 ImportantNumbers <|
                     (model.emailsWithConsents
-                        |> List.map .consentsGiven
+                        |> List.map
+                            (\emailWithConsents ->
+                                emailWithConsents.consentsGiven
+                                    |> List.map (\consent -> ( emailWithConsents.email, consent ))
+                            )
                         |> List.concat
+                        |> List.Extra.unique
+                        |> List.map Tuple.second
                         |> List.Extra.frequencies
                     )
             )

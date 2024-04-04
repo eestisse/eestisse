@@ -12,7 +12,7 @@ import Types exposing (..)
 
 page : Maybe (List ( String, Int )) -> Element FrontendMsg
 page maybeNumbers =
-    Element.el
+    CommonView.primaryBox
         [ Element.centerX
         , Element.centerY
         , CommonView.madimiFont
@@ -20,25 +20,31 @@ page maybeNumbers =
     <|
         case maybeNumbers of
             Nothing ->
-                Input.button
-                    [ Element.Background.color Colors.blue
-                    , Border.rounded 5
-                    , Font.color Colors.white
-                    , Font.bold
-                    , Font.size 36
-                    , Element.paddingXY 40 20
-                    ]
-                    { onPress = Just <| FetchImportantNumber
-                    , label = Element.text "KUI PALJU"
-                    }
+                Element.el [ Font.size 30 ] <| Element.text "The SUSPENSE....."
 
             Just labeledNumbers ->
                 labeledNumbers
                     |> List.map
                         (\( label, number ) ->
-                            Element.row [ Element.width Element.fill, Element.spacing 20 ]
-                                [ Element.text label
-                                , Element.el [ Element.alignRight ] <| Element.text <| String.fromInt number
+                            Element.row
+                                [ Element.width Element.fill
+                                , Element.spacing 40
+                                , Font.size 20
+                                , Element.padding 3
+                                ]
+                                [ Element.el
+                                    [ Element.alignRight
+                                    , Font.color <| Colors.blue
+                                    , Font.size 40
+                                    ]
+                                  <|
+                                    Element.text <|
+                                        (String.fromInt number ++ " ")
+                                , Element.paragraph
+                                    []
+                                    [ Element.text label ]
                                 ]
                         )
-                    |> Element.column [ Element.spacing 20 ]
+                    |> Element.column
+                        [ Element.spacing 40
+                        ]
