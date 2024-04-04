@@ -23,4 +23,4 @@ newFeaturesConsentWording =
 
 userInterviewsConsentWording : String
 userInterviewsConsentWording =
-    "receive requests for user interviews (to ensure Eestisse is the best verison it can be!)"
+    "receive a request for a user interview (to ensure Eestisse is the best verison it can be!)"
