@@ -44,10 +44,11 @@ mainExplainer dProfile =
             ]
             [ CommonView.makeParagraphs
                 [ Font.center
+                , Element.centerX
                 ]
                 [ [ Element.text "With "
                   , CommonView.coloredEestisseText []
-                  , Element.text ", every translation becomes a learning opportunity."
+                  , Element.text ", every translation is a chance to learn."
                   ]
                 ]
             , Element.column
