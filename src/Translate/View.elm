@@ -98,8 +98,13 @@ viewTranslationPageRequestState dProfile requestState =
             case requestState of
                 Waiting inputText animationCounter ->
                     [ Element.el [ Element.centerX ] <| translationInputTextElement inputText
-                    , hbreakElement
-                    , loadingTranslationElement animationCounter
+                    , Element.row
+                        [ Element.width Element.fill ]
+                        [ hbreakElement
+                        , loadingEmojiAnimation animationCounter
+                        , hbreakElement
+                        ]
+                    , abortButton inputText
                     ]
 
                 RequestComplete completedRequest ->
@@ -153,6 +158,11 @@ viewTranslationPageRequestState dProfile requestState =
                                                 clickOnPartsHint dProfile
                             , editOrNewButtonsRow
                             ]
+
+
+abortButton : String -> Element FrontendMsg
+abortButton inputText =
+    minorActionButton "Abort and Edit" (Just <| EditTranslation inputText)
 
 
 translateTextSize : Int
@@ -238,8 +248,8 @@ englishTextElement translatedText =
             [ Element.text translatedText ]
 
 
-loadingTranslationElement : Int -> Element FrontendMsg
-loadingTranslationElement animationCounter =
+loadingEmojiAnimation : Int -> Element FrontendMsg
+loadingEmojiAnimation animationCounter =
     let
         emojiRow =
             "🤔🧐😤💭"
@@ -249,16 +259,12 @@ loadingTranslationElement animationCounter =
                 |> Maybe.map Element.text
                 |> Maybe.withDefault Element.none
     in
-    Element.column
-        [ Font.size 18
+    Element.el
+        [ Font.size 24
         , Font.color <| Element.rgb 0.5 0.5 0.5
         , Element.centerX
-        , Element.spacing 10
         ]
-        [ Element.el [ Font.size 24, Element.centerX ] emojiRow
-
-        -- , Element.el [ Font.italic ] <| Element.text "The robot is thinking carefully..."
-        ]
+        emojiRow
 
 
 clickOnPartsHint : DisplayProfile -> Element FrontendMsg
