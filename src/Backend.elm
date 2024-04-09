@@ -54,25 +54,39 @@ update msg model =
                     { model
                         | requests = model.requests |> List.append [ ( model.nowish, input, gptResult ) ]
                     }
-            in
-            ( case fetchResult of
-                Ok _ ->
-                    modelWithResult |> deductOneCredit
 
-                Err _ ->
-                    modelWithResult
-            , Lamdera.sendToFrontend clientId
-                (TranslationResult input <| gptResult)
+                ( newModel, bcastCmd ) =
+                    case fetchResult of
+                        Ok _ ->
+                            ( modelWithResult, Cmd.none )
+
+                        Err _ ->
+                            modelWithResult |> refundOneCreditAndBroadcast
+            in
+            ( newModel
+            , Cmd.batch
+                [ Lamdera.sendToFrontend clientId
+                    (TranslationResult input <| gptResult)
+                , bcastCmd
+                ]
             )
 
         AddPublicCredits ->
-            ( { model
-                | publicCredits =
+            let
+                newPublicCredits =
                     min
                         Config.publicUsageConfig.maxCapacity
                         (model.publicCredits + Config.publicUsageConfig.addCreditAmount)
+            in
+            ( { model
+                | publicCredits =
+                    newPublicCredits
               }
-            , Cmd.none
+            , if newPublicCredits /= model.publicCredits then
+                Lamdera.broadcast <| CreditsUpdated newPublicCredits
+
+              else
+                Cmd.none
             )
 
         UpdateNow time ->
@@ -89,7 +103,12 @@ updateFromFrontend sessionId clientId msg model =
 
         SubmitTextForTranslation text ->
             if model.publicCredits > 0 then
-                ( model, requestGptTranslationCmd clientId text )
+                model
+                    |> deductOneCreditAndBroadcast
+                    |> Tuple.mapSecond
+                        (\bcastCmd ->
+                            Cmd.batch [ bcastCmd, requestGptTranslationCmd clientId text ]
+                        )
 
             else
                 ( model
@@ -179,11 +198,23 @@ requestGptTranslationCmd clientId inputText =
         }
 
 
-deductOneCredit : BackendModel -> BackendModel
-deductOneCredit model =
-    { model
-        | publicCredits = model.publicCredits - 1
-    }
+deductOneCreditAndBroadcast : BackendModel -> ( BackendModel, Cmd BackendMsg )
+deductOneCreditAndBroadcast model =
+    modifyCreditBalanceAndBroadcast (model.publicCredits - 1) model
+
+
+refundOneCreditAndBroadcast : BackendModel -> ( BackendModel, Cmd BackendMsg )
+refundOneCreditAndBroadcast model =
+    modifyCreditBalanceAndBroadcast (model.publicCredits + 1) model
+
+
+modifyCreditBalanceAndBroadcast : Int -> BackendModel -> ( BackendModel, Cmd BackendMsg )
+modifyCreditBalanceAndBroadcast newCredits model =
+    ( { model
+        | publicCredits = newCredits
+      }
+    , Lamdera.broadcast <| CreditsUpdated newCredits
+    )
 
 
 subscriptions : BackendModel -> Sub BackendMsg

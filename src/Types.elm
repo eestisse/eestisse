@@ -80,6 +80,7 @@ type ToFrontend
     | EmailSubmitAck
     | ImportantNumbers (List ( String, Int ))
     | GeneralDataMsg GeneralData
+    | CreditsUpdated Int
 
 
 type alias GeneralData =

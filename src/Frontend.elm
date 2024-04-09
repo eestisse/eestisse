@@ -297,6 +297,11 @@ updateFromBackend msg model =
             , Cmd.none
             )
 
+        CreditsUpdated newCredits ->
+            ( { model | publicCredits = Just newCredits }
+            , Cmd.none
+            )
+
 
 changeRouteAndAnimate : FrontendModel -> Route -> ( FrontendModel, Cmd FrontendMsg )
 changeRouteAndAnimate model route =
