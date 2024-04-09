@@ -122,6 +122,13 @@ updateFromFrontend sessionId clientId msg model =
                     )
             )
 
+        RequestGeneralData ->
+            ( model
+            , Lamdera.sendToFrontend clientId <|
+                GeneralDataMsg <|
+                    GeneralData model.publicCredits
+            )
+
 
 signupFormToEmailAndConsets : SignupFormModel -> EmailAndConsents
 signupFormToEmailAndConsets signupForm =

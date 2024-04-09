@@ -48,6 +48,7 @@ init url key =
       , maybeImportantNumbers = Nothing
       , animationTime = Time.millisToPosix 0
       , backgroundModel = Nothing
+      , publicCredits = Nothing
       }
     , Cmd.batch
         [ getViewportCmd
@@ -56,6 +57,7 @@ init url key =
 
           else
             Cmd.none
+        , Lamdera.sendToBackend RequestGeneralData
         ]
     )
 
@@ -281,6 +283,11 @@ updateFromBackend msg model =
             ( { model
                 | maybeImportantNumbers = Just numbers
               }
+            , Cmd.none
+            )
+
+        GeneralDataMsg generalData ->
+            ( { model | publicCredits = Just generalData.publicCredits }
             , Cmd.none
             )
 

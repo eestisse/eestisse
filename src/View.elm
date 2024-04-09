@@ -92,7 +92,12 @@ view dProfile model =
                 , Element.el [ Element.centerX ] <|
                     titleElement dProfile (model.route == Route.Landing)
                 , Element.el [ Element.width Element.fill ] <|
-                    Element.none
+                    if model.route == Route.Translate then
+                        Maybe.map (viewPublicCredits dProfile) model.publicCredits
+                            |> Maybe.withDefault Element.none
+
+                    else
+                        Element.none
                 ]
             , case model.route of
                 Route.Translate ->
@@ -107,6 +112,24 @@ view dProfile model =
                 Route.BadRoute ->
                     viewBadRoute
             ]
+
+
+viewPublicCredits : DisplayProfile -> Int -> Element FrontendMsg
+viewPublicCredits dProfile credits =
+    Element.column
+        [ Element.alignRight
+        , Font.color <| Element.rgb 0 0.2 1
+        , Font.size <| responsiveVal dProfile 24 28
+        , madimiFont
+        , Element.padding <| responsiveVal dProfile 7 10
+        , Element.centerY
+        , Border.rounded 8
+        , Border.width 1
+        , Border.color <| Element.rgba 0 0 0 0.2
+        , Element.Background.color <| Element.rgba 1 1 1 0.2
+        ]
+        [ Element.text <| String.fromInt credits
+        ]
 
 
 titleElement : DisplayProfile -> Bool -> Element FrontendMsg

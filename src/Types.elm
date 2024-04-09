@@ -23,6 +23,7 @@ type alias FrontendModel =
     , maybeImportantNumbers : Maybe (List ( String, Int ))
     , animationTime : Time.Posix
     , backgroundModel : Maybe Background.Model
+    , publicCredits : Maybe Int
     }
 
 
@@ -56,12 +57,6 @@ type alias BackendModel =
     }
 
 
-type alias EmailAndConsents =
-    { email : String
-    , consentsGiven : List String
-    }
-
-
 type BackendMsg
     = NoOpBackendMsg
     | GptResponseReceived ClientId String (Result Http.Error String)
@@ -74,6 +69,7 @@ type ToBackend
     | SubmitTextForTranslation String
     | SubmitSignup SignupFormModel
     | RequestImportantNumber
+    | RequestGeneralData
 
 
 type ToFrontend
@@ -81,6 +77,17 @@ type ToFrontend
     | TranslationResult String (Result GptAssistError Translation)
     | EmailSubmitAck
     | ImportantNumbers (List ( String, Int ))
+    | GeneralDataMsg GeneralData
+
+
+type alias GeneralData =
+    { publicCredits : Int }
+
+
+type alias EmailAndConsents =
+    { email : String
+    , consentsGiven : List String
+    }
 
 
 type SignupState
