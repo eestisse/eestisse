@@ -218,7 +218,7 @@ modifyCreditBalanceAndBroadcast newCredits model =
 
 
 subscriptions : BackendModel -> Sub BackendMsg
-subscriptions model =
+subscriptions _ =
     Sub.batch
         [ Time.every Config.publicUsageConfig.addCreditIntervalMillis (always AddPublicCredits)
         , Time.every 1000 UpdateNow
