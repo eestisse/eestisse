@@ -1,5 +1,8 @@
 port module Frontend exposing (..)
 
+import Auth
+import Auth.Common
+import Auth.Flow
 import Background.State as Background
 import Background.Types as Background
 import Browser exposing (UrlRequest(..))
@@ -35,33 +38,53 @@ init url key =
     let
         route =
             Route.parseUrl url
+
+        model : FrontendModel
+        model =
+            { key = key
+            , route = route
+            , translationPageModel =
+                InputtingText ""
+
+            -- RequestSent <| Waiting "test stuff" 1
+            -- RequestSent <| RequestComplete Testing.completedRequestExample
+            , dProfile = Nothing
+            , signupState = Inactive
+            , maybeAdminData = Nothing
+            , animationTime = Time.millisToPosix 0
+            , backgroundModel = Nothing
+            , publicCredits = Nothing
+            , showCreditCounterTooltip = False
+            , creditsCounterAnimationState = Nothing
+            , authFlow = Auth.Common.Idle
+            , authRedirectBaseUrl = { url | query = Nothing, fragment = Nothing }
+            }
     in
-    ( { key = key
-      , route = route
-      , translationPageModel =
-            InputtingText ""
+    (case route of
+        Route.Auth methodId ->
+            Auth.Flow.init
+                model
+                methodId
+                url
+                key
+                (\msg -> Lamdera.sendToBackend (AuthToBackend msg))
 
-      -- RequestSent <| Waiting "test stuff" 1
-      -- RequestSent <| RequestComplete Testing.completedRequestExample
-      , dProfile = Nothing
-      , signupState = Inactive
-      , maybeAdminData = Nothing
-      , animationTime = Time.millisToPosix 0
-      , backgroundModel = Nothing
-      , publicCredits = Nothing
-      , showCreditCounterTooltip = False
-      , creditsCounterAnimationState = Nothing
-      }
-    , Cmd.batch
-        [ getViewportCmd
-        , if route == Route.Admin then
-            Lamdera.sendToBackend RequestImportantNumber
-
-          else
-            Cmd.none
-        , Lamdera.sendToBackend RequestGeneralData
-        ]
+        _ ->
+            ( model, Cmd.none )
     )
+        |> Tuple.mapSecond
+            (\maybeAuthCmd ->
+                Cmd.batch
+                    [ getViewportCmd
+                    , if route == Route.Admin then
+                        Lamdera.sendToBackend RequestImportantNumber
+
+                      else
+                        Cmd.none
+                    , Lamdera.sendToBackend RequestGeneralData
+                    , maybeAuthCmd
+                    ]
+            )
 
 
 update : FrontendMsg -> FrontendModel -> ( FrontendModel, Cmd FrontendMsg )
@@ -69,6 +92,10 @@ update msg model =
     case msg of
         NoOpFrontendMsg ->
             ( model, Cmd.none )
+
+        AuthSigninRequested { methodId, username } ->
+            Auth.Flow.signInRequested methodId model username
+                |> Tuple.mapSecond (AuthToBackend >> Lamdera.sendToBackend)
 
         UrlClicked urlRequest ->
             case urlRequest of
@@ -248,6 +275,16 @@ updateFromBackend : ToFrontend -> FrontendModel -> ( FrontendModel, Cmd Frontend
 updateFromBackend msg model =
     case msg of
         NoOpToFrontend ->
+            ( model, Cmd.none )
+
+        AuthToFrontend authToFrontendMsg ->
+            Auth.updateFromBackend authToFrontendMsg model
+
+        AuthSuccess authUserInfo ->
+            let
+                _ =
+                    Debug.log "logged in" authUserInfo
+            in
             ( model, Cmd.none )
 
         TranslationResult inputText translationResult ->

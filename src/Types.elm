@@ -1,5 +1,6 @@
 module Types exposing (..)
 
+import Auth.Common
 import Background.Types as Background
 import Browser exposing (UrlRequest)
 import Browser.Dom
@@ -17,6 +18,8 @@ import Url exposing (Url)
 type alias FrontendModel =
     { key : Key
     , route : Route
+    , authFlow : Auth.Common.Flow
+    , authRedirectBaseUrl : Url
     , dProfile : Maybe DisplayProfile
     , translationPageModel : TranslationPageModel
     , signupState : SignupState
@@ -29,8 +32,20 @@ type alias FrontendModel =
     }
 
 
+type alias BackendModel =
+    { nowish : Time.Posix
+    , publicCredits : Int
+    , emails_backup : Set String
+    , emailsWithConsents : List EmailAndConsents
+    , requests : List ( Time.Posix, String, Result GptAssistError Translation )
+    , pendingAuths : Dict Lamdera.SessionId Auth.Common.PendingAuth
+    , sessions : Dict Lamdera.SessionId UserInfo
+    }
+
+
 type FrontendMsg
     = NoOpFrontendMsg
+    | AuthSigninRequested { methodId : Auth.Common.MethodId, username : Maybe String }
     | UrlClicked UrlRequest
     | UrlChanged Url
     | GotViewport Browser.Dom.Viewport
@@ -51,17 +66,9 @@ type FrontendMsg
     | ShowCreditCounterTooltip Bool
 
 
-type alias BackendModel =
-    { nowish : Time.Posix
-    , publicCredits : Int
-    , emails_backup : Set String
-    , emailsWithConsents : List EmailAndConsents
-    , requests : List ( Time.Posix, String, Result GptAssistError Translation )
-    }
-
-
 type BackendMsg
     = NoOpBackendMsg
+    | AuthBackendMsg Auth.Common.BackendMsg
     | GptResponseReceived ClientId String (Result Http.Error String)
     | AddPublicCredits
     | UpdateNow Time.Posix
@@ -69,6 +76,7 @@ type BackendMsg
 
 type ToBackend
     = NoOpToBackend
+    | AuthToBackend Auth.Common.ToBackend
     | SubmitTextForTranslation String
     | SubmitSignup SignupFormModel
     | RequestImportantNumber
@@ -77,11 +85,17 @@ type ToBackend
 
 type ToFrontend
     = NoOpToFrontend
+    | AuthToFrontend Auth.Common.ToFrontend
+    | AuthSuccess Auth.Common.UserInfo
     | TranslationResult String (Result GptAssistError Translation)
     | EmailSubmitAck
     | AdminDataMsg AdminData
     | GeneralDataMsg GeneralData
     | CreditsUpdated Int
+
+
+type alias UserInfo =
+    { email : String }
 
 
 type alias AdminData =

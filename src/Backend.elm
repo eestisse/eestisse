@@ -1,6 +1,9 @@
 module Backend exposing (..)
 
+import Auth
+import Auth.Flow
 import Config
+import Dict exposing (Dict)
 import Env
 import GPTRequests
 import Http
@@ -13,10 +16,6 @@ import Time
 import Types exposing (..)
 
 
-type alias Model =
-    BackendModel
-
-
 app =
     Lamdera.backend
         { init = init
@@ -26,23 +25,28 @@ app =
         }
 
 
-init : ( Model, Cmd BackendMsg )
+init : ( BackendModel, Cmd BackendMsg )
 init =
     ( { nowish = Time.millisToPosix 0
       , publicCredits = 20
       , emails_backup = Set.empty
       , emailsWithConsents = []
       , requests = []
+      , sessions = Dict.empty
+      , pendingAuths = Dict.empty
       }
     , Cmd.none
     )
 
 
-update : BackendMsg -> Model -> ( Model, Cmd BackendMsg )
+update : BackendMsg -> BackendModel -> ( BackendModel, Cmd BackendMsg )
 update msg model =
     case msg of
         NoOpBackendMsg ->
             ( model, Cmd.none )
+
+        AuthBackendMsg authMsg ->
+            Auth.Flow.backendUpdate (Auth.backendConfig model) authMsg
 
         GptResponseReceived clientId input fetchResult ->
             let
@@ -94,11 +98,14 @@ update msg model =
             )
 
 
-updateFromFrontend : SessionId -> ClientId -> ToBackend -> Model -> ( Model, Cmd BackendMsg )
+updateFromFrontend : SessionId -> ClientId -> ToBackend -> BackendModel -> ( BackendModel, Cmd BackendMsg )
 updateFromFrontend sessionId clientId msg model =
     case msg of
         NoOpToBackend ->
             ( model, Cmd.none )
+
+        AuthToBackend authToBackend ->
+            Auth.Flow.updateFromFrontend (Auth.backendConfig model) clientId sessionId authToBackend model
 
         SubmitTextForTranslation text ->
             if model.publicCredits > 0 then
