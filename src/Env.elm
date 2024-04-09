@@ -19,5 +19,15 @@ openaiApiKey =
     ""
 
 
+googleAppClientId : String
+googleAppClientId =
+    ""
+
+
+googleAppClientSecret : String
+googleAppClientSecret =
+    ""
+
+
 mode =
     Development
