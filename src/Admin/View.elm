@@ -34,7 +34,6 @@ page maybeNumbers =
                                 Element.row
                                     [ Element.width Element.fill
                                     , Element.spacing 40
-                                    , Font.size 20
                                     , Element.padding 3
                                     ]
                                     [ Element.el
@@ -45,7 +44,7 @@ page maybeNumbers =
                                         Element.text <|
                                             (String.fromInt number ++ " ")
                                     , Element.paragraph
-                                        []
+                                        [ Font.size 20 ]
                                         [ Element.text label ]
                                     ]
                             )
