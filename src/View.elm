@@ -8,6 +8,7 @@ import CommonView exposing (..)
 import Element exposing (Attribute, Element)
 import Element.Background
 import Element.Border as Border
+import Element.Events as Events
 import Element.Font as Font
 import Element.Input as Input
 import Html exposing (Html)
@@ -93,7 +94,7 @@ view dProfile model =
                     titleElement dProfile (model.route == Route.Landing)
                 , Element.el [ Element.width Element.fill ] <|
                     if model.route == Route.Translate then
-                        Maybe.map (viewPublicCredits dProfile) model.publicCredits
+                        Maybe.map (viewPublicCredits dProfile model.showCreditCounterTooltip) model.publicCredits
                             |> Maybe.withDefault Element.none
 
                     else
@@ -114,11 +115,11 @@ view dProfile model =
             ]
 
 
-viewPublicCredits : DisplayProfile -> Int -> Element FrontendMsg
-viewPublicCredits dProfile credits =
+viewPublicCredits : DisplayProfile -> Bool -> Int -> Element FrontendMsg
+viewPublicCredits dProfile showCreditCounterTooltip credits =
     Element.column
         [ Element.alignRight
-        , Font.color <| Element.rgb 0 0.2 1
+        , Font.color Colors.darkBlue
         , Font.size <| responsiveVal dProfile 24 28
         , madimiFont
         , Element.padding <| responsiveVal dProfile 7 10
@@ -127,8 +128,52 @@ viewPublicCredits dProfile credits =
         , Border.width 1
         , Border.color <| Element.rgba 0 0 0 0.2
         , Element.Background.color <| Element.rgba 1 1 1 0.2
+        , Element.pointer
+        , Events.onClick <| ShowCreditCounterTooltip <| not showCreditCounterTooltip
+        , Element.below <|
+            if showCreditCounterTooltip then
+                creditCounterTooltip dProfile credits
+
+            else
+                Element.none
         ]
-        [ Element.text <| String.fromInt credits
+        [ Element.text <| String.fromInt credits ]
+
+
+creditCounterTooltip : DisplayProfile -> Int -> Element FrontendMsg
+creditCounterTooltip dProfile credits =
+    Element.column
+        [ Element.alignRight
+        , Element.width <| Element.px <| responsiveVal dProfile 280 400
+        ]
+        [ Element.el [ Element.height <| Element.px 10 ] Element.none
+        , Element.column
+            [ Element.width Element.fill
+            , Element.padding 10
+            , Font.size <| responsiveVal dProfile 20 28
+            , Border.width 1
+            , Border.rounded 10
+            , Border.color <| Element.rgba 0 0 0 0.2
+            , Element.Background.color <| Element.rgba 1 1 1 0.8
+            , Font.color Colors.black
+            , robotoFont
+            , Element.spacing <| responsiveVal dProfile 15 25
+            ]
+            [ Element.paragraph
+                [ Element.width Element.fill
+                ]
+                [ Element.text "There are "
+                , Element.el [ madimiFont, Font.color Colors.darkBlue ] <|
+                    Element.text <|
+                        String.fromInt credits
+                , Element.el [ Font.color Colors.darkBlue, Font.bold ] <| Element.text " credits"
+                , Element.text " left for public use. More credits are added every 5 minutes."
+                ]
+            , Element.paragraph
+                [ Element.width Element.fill
+                ]
+                [ Element.text "Paid user accounts coming soon, with drastically increased usage caps." ]
+            ]
         ]
 
 

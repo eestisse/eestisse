@@ -81,3 +81,8 @@ calmTeal =
 lightBlue : Color
 lightBlue =
     Element.rgb 0.9 0.9 1
+
+
+darkBlue : Color
+darkBlue =
+    Element.rgb 0 0.2 1

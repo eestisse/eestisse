@@ -24,6 +24,7 @@ type alias FrontendModel =
     , animationTime : Time.Posix
     , backgroundModel : Maybe Background.Model
     , publicCredits : Maybe Int
+    , showCreditCounterTooltip : Bool
     }
 
 
@@ -46,6 +47,7 @@ type FrontendMsg
     | FetchImportantNumber
     | Animate Time.Posix
     | FiddleRandomBackroundPath Time.Posix
+    | ShowCreditCounterTooltip Bool
 
 
 type alias BackendModel =

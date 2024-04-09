@@ -49,6 +49,7 @@ init url key =
       , animationTime = Time.millisToPosix 0
       , backgroundModel = Nothing
       , publicCredits = Nothing
+      , showCreditCounterTooltip = False
       }
     , Cmd.batch
         [ getViewportCmd
@@ -235,6 +236,11 @@ update msg model =
                       }
                     , Cmd.none
                     )
+
+        ShowCreditCounterTooltip flag ->
+            ( { model | showCreditCounterTooltip = flag }
+            , Cmd.none
+            )
 
 
 updateFromBackend : ToFrontend -> FrontendModel -> ( FrontendModel, Cmd FrontendMsg )
