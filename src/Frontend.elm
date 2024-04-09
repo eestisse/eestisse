@@ -58,6 +58,7 @@ init url key =
             , creditsCounterAnimationState = Nothing
             , authFlow = Auth.Common.Idle
             , authRedirectBaseUrl = { url | query = Nothing, fragment = Nothing }
+            , debug = "nothing yet..."
             }
     in
     (case route of
@@ -281,11 +282,7 @@ updateFromBackend msg model =
             Auth.updateFromBackend authToFrontendMsg model
 
         AuthSuccess authUserInfo ->
-            let
-                _ =
-                    Debug.log "logged in" authUserInfo
-            in
-            ( model, Cmd.none )
+            ( { model | debug = authUserInfo.email }, Cmd.none )
 
         TranslationResult inputText translationResult ->
             case model.translationPageModel of

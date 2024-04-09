@@ -29,6 +29,7 @@ type alias FrontendModel =
     , publicCredits : Maybe Int
     , showCreditCounterTooltip : Bool
     , creditsCounterAnimationState : Maybe CreditsCounterAnimationState
+    , debug : String
     }
 
 
