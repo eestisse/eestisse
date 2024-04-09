@@ -197,7 +197,7 @@ creditCounterTooltip dProfile credits =
         , Element.column
             [ Element.width Element.fill
             , Element.padding 10
-            , Font.size <| responsiveVal dProfile 20 28
+            , Font.size <| responsiveVal dProfile 20 24
             , Border.width 1
             , Border.rounded 10
             , Border.color <| Element.rgba 0 0 0 0.2
