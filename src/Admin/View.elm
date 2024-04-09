@@ -10,7 +10,7 @@ import Element.Input as Input
 import Types exposing (..)
 
 
-page : Maybe (List ( String, Int )) -> Element FrontendMsg
+page : Maybe AdminData -> Element FrontendMsg
 page maybeNumbers =
     CommonView.primaryBox
         [ Element.centerX
@@ -22,29 +22,38 @@ page maybeNumbers =
             Nothing ->
                 Element.el [ Font.size 30 ] <| Element.text "The SUSPENSE....."
 
-            Just labeledNumbers ->
-                labeledNumbers
-                    |> List.map
-                        (\( label, number ) ->
-                            Element.row
-                                [ Element.width Element.fill
-                                , Element.spacing 40
-                                , Font.size 20
-                                , Element.padding 3
-                                ]
-                                [ Element.el
-                                    [ Element.alignRight
-                                    , Font.color <| Colors.blue
-                                    , Font.size 40
+            Just adminData ->
+                Element.column
+                    [ Element.width Element.fill
+                    , Element.spacing 40
+                    , Font.size 40
+                    ]
+                    [ adminData.emailsAndConsents
+                        |> List.map
+                            (\( label, number ) ->
+                                Element.row
+                                    [ Element.width Element.fill
+                                    , Element.spacing 40
+                                    , Font.size 20
+                                    , Element.padding 3
                                     ]
-                                  <|
-                                    Element.text <|
-                                        (String.fromInt number ++ " ")
-                                , Element.paragraph
-                                    []
-                                    [ Element.text label ]
-                                ]
-                        )
-                    |> Element.column
-                        [ Element.spacing 40
+                                    [ Element.el
+                                        [ Element.alignRight
+                                        , Font.color <| Colors.blue
+                                        ]
+                                      <|
+                                        Element.text <|
+                                            (String.fromInt number ++ " ")
+                                    , Element.paragraph
+                                        []
+                                        [ Element.text label ]
+                                    ]
+                            )
+                        |> Element.column
+                            [ Element.spacing 40
+                            ]
+                    , Element.column []
+                        [ Element.text <| "Successful translations: " ++ String.fromInt adminData.translationSuccesses
+                        , Element.text <| "translations errors: " ++ String.fromInt adminData.translationErrors
                         ]
+                    ]

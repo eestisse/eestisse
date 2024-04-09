@@ -123,7 +123,7 @@ view dProfile model =
                     Landing.View.page dProfile model.signupState
 
                 Route.Admin ->
-                    Admin.View.page model.maybeImportantNumbers
+                    Admin.View.page model.maybeAdminData
 
                 Route.BadRoute ->
                     viewBadRoute

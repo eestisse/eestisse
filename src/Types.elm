@@ -20,7 +20,7 @@ type alias FrontendModel =
     , dProfile : Maybe DisplayProfile
     , translationPageModel : TranslationPageModel
     , signupState : SignupState
-    , maybeImportantNumbers : Maybe (List ( String, Int ))
+    , maybeAdminData : Maybe AdminData
     , animationTime : Time.Posix
     , backgroundModel : Maybe Background.Model
     , publicCredits : Maybe Int
@@ -79,9 +79,16 @@ type ToFrontend
     = NoOpToFrontend
     | TranslationResult String (Result GptAssistError Translation)
     | EmailSubmitAck
-    | ImportantNumbers (List ( String, Int ))
+    | AdminDataMsg AdminData
     | GeneralDataMsg GeneralData
     | CreditsUpdated Int
+
+
+type alias AdminData =
+    { emailsAndConsents : List ( String, Int )
+    , translationSuccesses : Int
+    , translationErrors : Int
+    }
 
 
 type alias CreditsCounterAnimationState =

@@ -45,7 +45,7 @@ init url key =
       -- RequestSent <| RequestComplete Testing.completedRequestExample
       , dProfile = Nothing
       , signupState = Inactive
-      , maybeImportantNumbers = Nothing
+      , maybeAdminData = Nothing
       , animationTime = Time.millisToPosix 0
       , backgroundModel = Nothing
       , publicCredits = Nothing
@@ -286,9 +286,9 @@ updateFromBackend msg model =
             , plausibleEventOutCmd "email-signup"
             )
 
-        ImportantNumbers numbers ->
+        AdminDataMsg adminData ->
             ( { model
-                | maybeImportantNumbers = Just numbers
+                | maybeAdminData = Just adminData
               }
             , Cmd.none
             )

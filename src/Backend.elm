@@ -1,7 +1,5 @@
 module Backend exposing (..)
 
--- import ClaudeRequests
-
 import Config
 import Env
 import GPTRequests
@@ -9,6 +7,7 @@ import Http
 import Json.Decode
 import Lamdera exposing (ClientId, SessionId)
 import List.Extra
+import Result.Extra
 import Set
 import Time
 import Types exposing (..)
@@ -127,18 +126,31 @@ updateFromFrontend sessionId clientId msg model =
         RequestImportantNumber ->
             ( model
             , Lamdera.sendToFrontend clientId <|
-                ImportantNumbers <|
-                    (model.emailsWithConsents
-                        |> List.map
-                            (\emailWithConsents ->
-                                emailWithConsents.consentsGiven
-                                    |> List.map (\consent -> ( emailWithConsents.email, consent ))
-                            )
-                        |> List.concat
-                        |> List.Extra.unique
-                        |> List.map Tuple.second
-                        |> List.Extra.frequencies
-                    )
+                AdminDataMsg <|
+                    { emailsAndConsents =
+                        model.emailsWithConsents
+                            |> List.map
+                                (\emailWithConsents ->
+                                    emailWithConsents.consentsGiven
+                                        |> List.map (\consent -> ( emailWithConsents.email, consent ))
+                                )
+                            |> List.concat
+                            |> List.Extra.unique
+                            |> List.map Tuple.second
+                            |> List.Extra.frequencies
+                    , translationSuccesses =
+                        model.requests
+                            |> List.Extra.count
+                                (\( _, _, result ) ->
+                                    Result.Extra.isOk result
+                                )
+                    , translationErrors =
+                        model.requests
+                            |> List.Extra.count
+                                (\( _, _, result ) ->
+                                    Result.Extra.isErr result
+                                )
+                    }
             )
 
         RequestGeneralData ->
