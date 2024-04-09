@@ -102,3 +102,25 @@ elementColorToRgb elColor =
 timeToRandomSeed : Time.Posix -> Random.Seed
 timeToRandomSeed =
     Time.posixToMillis >> Random.initialSeed
+
+
+interpolateColors : Float -> Element.Color -> Element.Color -> Element.Color
+interpolateColors i color1 color2 =
+    let
+        rgba1 =
+            Element.toRgb color1
+
+        rgba2 =
+            Element.toRgb color2
+    in
+    { red = interpolateFloats i rgba1.red rgba2.red
+    , green = interpolateFloats i rgba1.green rgba2.green
+    , blue = interpolateFloats i rgba1.blue rgba2.blue
+    , alpha = interpolateFloats i rgba1.alpha rgba2.alpha
+    }
+        |> Element.fromRgb
+
+
+interpolateFloats : Float -> Float -> Float -> Float
+interpolateFloats progressFloat old new =
+    old + ((new - old) * progressFloat)

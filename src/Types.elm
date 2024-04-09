@@ -25,6 +25,7 @@ type alias FrontendModel =
     , backgroundModel : Maybe Background.Model
     , publicCredits : Maybe Int
     , showCreditCounterTooltip : Bool
+    , creditsCounterAnimationState : Maybe CreditsCounterAnimationState
     }
 
 
@@ -81,6 +82,12 @@ type ToFrontend
     | ImportantNumbers (List ( String, Int ))
     | GeneralDataMsg GeneralData
     | CreditsUpdated Int
+
+
+type alias CreditsCounterAnimationState =
+    { goingUp : Bool
+    , startTime : Time.Posix
+    }
 
 
 type alias GeneralData =

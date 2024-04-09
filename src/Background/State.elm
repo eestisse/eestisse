@@ -5,6 +5,7 @@ import Background.Types exposing (..)
 import Colors
 import Element
 import List.Extra
+import Point exposing (Point)
 import Random
 import Random.Extra
 import Time
@@ -269,7 +270,7 @@ pieceTransformVector piece =
 pieceToSection : Point -> PathPiece -> PathSection
 pieceToSection startPoint piece =
     { piece = piece
-    , endPointRelative = addPoints startPoint (pieceTransformVector piece)
+    , endPointRelative = Point.add startPoint (pieceTransformVector piece)
     , startPointRelative = startPoint
     }
 
@@ -310,7 +311,7 @@ getModifiedSectionsAcross ( pathSections, seed0 ) =
                             ( newPiece, newSeed ) =
                                 ( section.piece, seed ) |> tweakPiece
                         in
-                        ( ( Just <| addPoints newStartPoint (pieceTransformVector newPiece), newSeed )
+                        ( ( Just <| Point.add newStartPoint (pieceTransformVector newPiece), newSeed )
                         , pieceToSection newStartPoint newPiece
                         )
                     )
@@ -433,3 +434,75 @@ fiddleAllPaths model =
         | pathsAcross = newPathsAcross
         , seed = newSeed
     }
+
+
+interpolatePathsAcross : Float -> PathAcross -> PathAcross -> PathAcross
+interpolatePathsAcross progressFloat oldPathAcross newPathAcross =
+    -- assuming the piece types don't change
+    { oldPathAcross
+        | sections =
+            List.map2 (interpolateSection progressFloat) oldPathAcross.sections newPathAcross.sections
+    }
+
+
+interpolateSection : Float -> PathSection -> PathSection -> PathSection
+interpolateSection progressFloat oldSection newSection =
+    { piece = interpolatePiece progressFloat oldSection.piece newSection.piece
+    , startPointRelative = interpolatePoint progressFloat oldSection.startPointRelative newSection.startPointRelative
+    , endPointRelative = interpolatePoint progressFloat oldSection.endPointRelative newSection.endPointRelative
+    }
+
+
+interpolatePiece : Float -> PathPiece -> PathPiece -> PathPiece
+interpolatePiece progressFloat oldPiece newPiece =
+    case ( oldPiece, newPiece ) of
+        ( Right oldLength, Right newLength ) ->
+            Right <| interpolateInt progressFloat oldLength newLength
+
+        ( Up oldLength, Up newLength ) ->
+            Up <| interpolateInt progressFloat oldLength newLength
+
+        ( Down oldLength, Down newLength ) ->
+            Down <| interpolateInt progressFloat oldLength newLength
+
+        -- we assume the piece types don't change
+        -- and we don't do anything to pieces without length
+        ( otherOldPiece, _ ) ->
+            otherOldPiece
+
+
+interpolatePoint : Float -> Point -> Point -> Point
+interpolatePoint progressFloat oldPoint newPoint =
+    { x = interpolateInt progressFloat oldPoint.x newPoint.x
+    , y = interpolateInt progressFloat oldPoint.y newPoint.y
+    }
+
+
+interpolateInt : Float -> Int -> Int -> Int
+interpolateInt progressFloat old new =
+    Utils.interpolateFloats progressFloat (toFloat old) (toFloat new)
+        |> round
+
+
+getRenderablePath : Time.Posix -> ( PathAcross, Maybe PathAcrossAnimationState ) -> PathAcross
+getRenderablePath animationTime ( path, maybeAnimationState ) =
+    let
+        getProgressFloat startTime now =
+            let
+                timeDiffMillis =
+                    Time.posixToMillis now - Time.posixToMillis startTime
+            in
+            min
+                (toFloat timeDiffMillis / Config.pathAnimationTimeLengthMillis)
+                1.0
+                |> Config.easingFunction
+    in
+    case maybeAnimationState of
+        Just animationState ->
+            interpolatePathsAcross
+                (getProgressFloat animationState.animationStart animationTime)
+                path
+                animationState.pathAcrossTarget
+
+        Nothing ->
+            path

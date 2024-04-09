@@ -1,10 +1,12 @@
 module Background.View exposing (..)
 
 import Background.Config as Config
+import Background.State as State
 import Background.Types exposing (..)
 import Colors
 import Element exposing (Element)
 import Element.Background
+import Point exposing (Point)
 import Responsive exposing (..)
 import Svg exposing (Svg)
 import Svg.Attributes
@@ -54,7 +56,7 @@ renderPath : DisplayProfile -> Time.Posix -> ( PathAcross, Maybe PathAcrossAnima
 renderPath dProfile animationTime ( path, maybeAnimationState ) =
     let
         pathToRender =
-            getRenderablePath animationTime ( path, maybeAnimationState )
+            State.getRenderablePath animationTime ( path, maybeAnimationState )
 
         xOffset =
             -50
@@ -71,8 +73,8 @@ renderPath dProfile animationTime ( path, maybeAnimationState ) =
                 |> String.join " "
 
         pathEndString =
-            [ "L " ++ (pointToString <| addPoints basePoint { x = Config.minTotalWidth, y = Config.drawableShapeBottomY })
-            , "L " ++ (pointToString <| addPoints basePoint { x = 0, y = Config.drawableShapeBottomY })
+            [ "L " ++ (pointToString <| Point.add basePoint { x = Config.minTotalWidth, y = Config.drawableShapeBottomY })
+            , "L " ++ (pointToString <| Point.add basePoint { x = 0, y = Config.drawableShapeBottomY })
             , "Z"
             ]
                 |> String.join " "
@@ -95,7 +97,7 @@ makePathStringSnippet : Point -> PathSection -> String
 makePathStringSnippet basePoint section =
     let
         realEndPoint =
-            addPoints basePoint section.endPointRelative
+            Point.add basePoint section.endPointRelative
 
         lineStr =
             "L " ++ pointToString realEndPoint

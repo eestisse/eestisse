@@ -5,6 +5,7 @@ import Background.View
 import Browser
 import Colors
 import CommonView exposing (..)
+import Config
 import Element exposing (Attribute, Element)
 import Element.Background
 import Element.Border as Border
@@ -15,8 +16,10 @@ import Html exposing (Html)
 import Landing.View
 import Responsive exposing (..)
 import Route exposing (Route)
+import Time
 import Translate.View
 import Types exposing (..)
+import Utils
 
 
 root : FrontendModel -> Browser.Document FrontendMsg
@@ -94,8 +97,20 @@ view dProfile model =
                     titleElement dProfile (model.route == Route.Landing)
                 , Element.el [ Element.width Element.fill ] <|
                     if model.route == Route.Translate then
-                        Maybe.map (viewPublicCredits dProfile model.showCreditCounterTooltip) model.publicCredits
-                            |> Maybe.withDefault Element.none
+                        case model.publicCredits of
+                            Nothing ->
+                                Element.none
+
+                            Just publicCredits ->
+                                let
+                                    maybeCounterAnimationStateAndTime =
+                                        model.creditsCounterAnimationState
+                                            |> Maybe.map
+                                                (\state ->
+                                                    ( state, model.animationTime )
+                                                )
+                                in
+                                viewPublicCredits dProfile model.showCreditCounterTooltip publicCredits maybeCounterAnimationStateAndTime
 
                     else
                         Element.none
@@ -115,8 +130,40 @@ view dProfile model =
             ]
 
 
-viewPublicCredits : DisplayProfile -> Bool -> Int -> Element FrontendMsg
-viewPublicCredits dProfile showCreditCounterTooltip credits =
+viewPublicCredits : DisplayProfile -> Bool -> Int -> Maybe ( CreditsCounterAnimationState, Time.Posix ) -> Element FrontendMsg
+viewPublicCredits dProfile showCreditCounterTooltip credits maybeCounterAnimationStateAndTime =
+    let
+        backgroundColor =
+            let
+                baseColor =
+                    Element.rgba 1 1 1 0.2
+            in
+            case maybeCounterAnimationStateAndTime of
+                Nothing ->
+                    baseColor
+
+                Just ( animationState, now ) ->
+                    let
+                        startColor =
+                            if animationState.goingUp then
+                                Element.rgba 0 1 0 0.2
+
+                            else
+                                Element.rgba 1 0 0 0.2
+
+                        progressFloat =
+                            toFloat
+                                (Time.posixToMillis now
+                                    - Time.posixToMillis animationState.startTime
+                                )
+                                / Config.counterUpdateAnimationIntervalMillis
+                                |> min Config.counterUpdateAnimationIntervalMillis
+                    in
+                    Utils.interpolateColors
+                        progressFloat
+                        startColor
+                        baseColor
+    in
     Element.column
         [ Element.alignRight
         , Font.color Colors.darkBlue
@@ -127,7 +174,7 @@ viewPublicCredits dProfile showCreditCounterTooltip credits =
         , Border.rounded 8
         , Border.width 1
         , Border.color <| Element.rgba 0 0 0 0.2
-        , Element.Background.color <| Element.rgba 1 1 1 0.2
+        , Element.Background.color backgroundColor
         , Element.pointer
         , Events.onClick <| ShowCreditCounterTooltip <| not showCreditCounterTooltip
         , Element.below <|

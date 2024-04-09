@@ -8,6 +8,11 @@ type alias PublicUsageConfig =
     }
 
 
+counterUpdateAnimationIntervalMillis : Float
+counterUpdateAnimationIntervalMillis =
+    500
+
+
 publicUsageConfig : PublicUsageConfig
 publicUsageConfig =
     { addCreditIntervalMillis = 1000 * 60 * 5 -- 5 min

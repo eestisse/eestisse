@@ -50,6 +50,7 @@ init url key =
       , backgroundModel = Nothing
       , publicCredits = Nothing
       , showCreditCounterTooltip = False
+      , creditsCounterAnimationState = Nothing
       }
     , Cmd.batch
         [ getViewportCmd
@@ -299,8 +300,20 @@ updateFromBackend msg model =
 
         CreditsUpdated newCredits ->
             ( { model | publicCredits = Just newCredits }
+                |> startCreditCounterAnimation (newCredits >= (model.publicCredits |> Maybe.withDefault 0)) model.animationTime
             , Cmd.none
             )
+
+
+startCreditCounterAnimation : Bool -> Time.Posix -> FrontendModel -> FrontendModel
+startCreditCounterAnimation goingUp now model =
+    { model
+        | creditsCounterAnimationState =
+            Just <|
+                { goingUp = goingUp
+                , startTime = now
+                }
+    }
 
 
 changeRouteAndAnimate : FrontendModel -> Route -> ( FrontendModel, Cmd FrontendMsg )
