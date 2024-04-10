@@ -28,4 +28,4 @@ newFeaturesConsentWording =
 
 userInterviewsConsentWording : String
 userInterviewsConsentWording =
-    "participating in a 30-minute user interview in exhange for free credit"
+    "an offer of free credit in exchange for a 30-minute user interview"
