@@ -113,23 +113,30 @@ view dProfile model =
                                 viewPublicCredits dProfile model.showCreditCounterTooltip publicCredits maybeCounterAnimationStateAndTime
 
                     else
-                        Element.none
+                        case model.userInfo of
+                            Just userInfo ->
+                                Element.text userInfo.email
+
+                            Nothing ->
+                                Element.none
                 ]
             , case model.route of
                 Route.Translate ->
                     Translate.View.page dProfile model.translationPageModel
 
                 Route.Landing ->
-                    -- Landing.View.page dProfile model.signupState
-                    mainActionButton "login with google oauth" <|
-                        Just <|
-                            AuthSigninRequested { methodId = "OAuthGoogle", username = Nothing }
+                    Landing.View.page dProfile model.signupState
 
                 Route.Admin ->
                     Admin.View.page model.maybeAdminData
 
-                Route.Auth methodId ->
-                    Element.text <| "auth with " ++ methodId ++ " and " ++ model.debug
+                Route.AuthCallback _ ->
+                    Element.el [ Element.centerX ] <| Element.text "User authenticated. Redirecting..."
+
+                Route.Login ->
+                    mainActionButton "login with google oauth" <|
+                        Just <|
+                            AuthSigninRequested { methodId = "OAuthGoogle", username = Nothing }
 
                 Route.BadRoute ->
                     viewBadRoute

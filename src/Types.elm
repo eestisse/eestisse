@@ -7,7 +7,7 @@ import Browser.Dom
 import Browser.Navigation exposing (Key)
 import Dict exposing (Dict)
 import Http
-import Lamdera exposing (ClientId)
+import Lamdera exposing (ClientId, SessionId)
 import Responsive exposing (..)
 import Route exposing (Route)
 import Set exposing (Set)
@@ -20,6 +20,7 @@ type alias FrontendModel =
     , route : Route
     , authFlow : Auth.Common.Flow
     , authRedirectBaseUrl : Url
+    , userInfo : Maybe UserInfo
     , dProfile : Maybe DisplayProfile
     , translationPageModel : TranslationPageModel
     , signupState : SignupState
@@ -29,7 +30,6 @@ type alias FrontendModel =
     , publicCredits : Maybe Int
     , showCreditCounterTooltip : Bool
     , creditsCounterAnimationState : Maybe CreditsCounterAnimationState
-    , debug : String
     }
 
 
@@ -40,7 +40,7 @@ type alias BackendModel =
     , emailsWithConsents : List EmailAndConsents
     , requests : List ( Time.Posix, String, Result GptAssistError Translation )
     , pendingAuths : Dict Lamdera.SessionId Auth.Common.PendingAuth
-    , sessions : Dict Lamdera.SessionId UserInfo
+    , authedSessions : Dict Lamdera.SessionId UserInfo
     }
 
 
@@ -73,6 +73,7 @@ type BackendMsg
     | GptResponseReceived ClientId String (Result Http.Error String)
     | AddPublicCredits
     | UpdateNow Time.Posix
+    | OnConnect SessionId ClientId
 
 
 type ToBackend
@@ -87,7 +88,7 @@ type ToBackend
 type ToFrontend
     = NoOpToFrontend
     | AuthToFrontend Auth.Common.ToFrontend
-    | AuthSuccess Auth.Common.UserInfo
+    | AuthSuccess UserInfo
     | TranslationResult String (Result GptAssistError Translation)
     | EmailSubmitAck
     | AdminDataMsg AdminData

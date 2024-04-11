@@ -18,6 +18,7 @@ import Testing
 import Time
 import Types exposing (..)
 import Url
+import Utils
 import View
 
 
@@ -58,11 +59,11 @@ init url key =
             , creditsCounterAnimationState = Nothing
             , authFlow = Auth.Common.Idle
             , authRedirectBaseUrl = { url | query = Nothing, fragment = Nothing }
-            , debug = "nothing yet..."
+            , userInfo = Nothing
             }
     in
     (case route of
-        Route.Auth methodId ->
+        Route.AuthCallback methodId ->
             Auth.Flow.init
                 model
                 methodId
@@ -282,7 +283,9 @@ updateFromBackend msg model =
             Auth.updateFromBackend authToFrontendMsg model
 
         AuthSuccess authUserInfo ->
-            ( { model | debug = authUserInfo.email }, Cmd.none )
+            ( { model | userInfo = Just authUserInfo }
+            , Cmd.none
+            )
 
         TranslationResult inputText translationResult ->
             case model.translationPageModel of

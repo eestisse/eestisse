@@ -32,7 +32,7 @@ init =
       , emails_backup = Set.empty
       , emailsWithConsents = []
       , requests = []
-      , sessions = Dict.empty
+      , authedSessions = Dict.empty
       , pendingAuths = Dict.empty
       }
     , Cmd.none
@@ -44,6 +44,16 @@ update msg model =
     case msg of
         NoOpBackendMsg ->
             ( model, Cmd.none )
+
+        OnConnect sessionId clientId ->
+            case Dict.get sessionId model.authedSessions of
+                Just userInfo ->
+                    ( model
+                    , Lamdera.sendToFrontend clientId <| AuthSuccess userInfo
+                    )
+
+                Nothing ->
+                    ( model, Cmd.none )
 
         AuthBackendMsg authMsg ->
             Auth.Flow.backendUpdate (Auth.backendConfig model) authMsg
@@ -241,4 +251,5 @@ subscriptions _ =
     Sub.batch
         [ Time.every Config.publicUsageConfig.addCreditIntervalMillis (always AddPublicCredits)
         , Time.every 1000 UpdateNow
+        , Lamdera.onConnect OnConnect
         ]

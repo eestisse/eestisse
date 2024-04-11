@@ -9,7 +9,8 @@ type Route
     = Translate
     | Landing
     | Admin
-    | Auth String
+    | AuthCallback String
+    | Login
     | BadRoute
 
 
@@ -29,7 +30,8 @@ matchRoute =
         [ Parser.map Landing Parser.top
         , Parser.map Translate (Parser.s "translate")
         , Parser.map Admin (Parser.s "admin")
-        , Parser.map Auth (Parser.s "login" </> Parser.string </> Parser.s "callback")
+        , Parser.map AuthCallback (Parser.s "login" </> Parser.string </> Parser.s "callback")
+        , Parser.map Login (Parser.s "login")
         ]
 
 
@@ -46,8 +48,11 @@ routeToString route =
             Admin ->
                 [ "admin" ]
 
-            Auth methodId ->
-                [ "login", methodId ]
+            AuthCallback methodId ->
+                [ "login", methodId, "callback" ]
+
+            Login ->
+                [ "login" ]
 
             BadRoute ->
                 [ "badroute" ]

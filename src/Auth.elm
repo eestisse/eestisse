@@ -11,6 +11,7 @@ import Env
 import Lamdera
 import Time
 import Types exposing (..)
+import Utils
 
 
 config : Auth.Common.Config FrontendMsg ToBackend BackendMsg ToFrontend FrontendModel BackendModel
@@ -60,15 +61,15 @@ handleAuthSuccess backendModel sessionId clientId userInfo _ _ _ =
     let
         sessionsWithoutThisOne : Dict Lamdera.SessionId UserInfo
         sessionsWithoutThisOne =
-            Dict.Extra.removeWhen (\_ { email } -> email == userInfo.email) backendModel.sessions
+            Dict.Extra.removeWhen (\_ { email } -> email == userInfo.email) backendModel.authedSessions
 
         newSessions =
             Dict.insert sessionId { email = userInfo.email } sessionsWithoutThisOne
 
         response =
-            AuthSuccess userInfo
+            AuthSuccess <| Utils.authUserInfoToUserInfo userInfo
     in
-    ( { backendModel | sessions = newSessions }
+    ( { backendModel | authedSessions = newSessions }
     , Cmd.batch
         [ -- renewSession_ user_.id sessionId clientId
           Lamdera.sendToFrontend clientId response
@@ -78,7 +79,7 @@ handleAuthSuccess backendModel sessionId clientId userInfo _ _ _ =
 
 logout : Lamdera.SessionId -> Lamdera.ClientId -> BackendModel -> ( BackendModel, Cmd msg )
 logout sessionId _ model =
-    ( { model | sessions = model.sessions |> Dict.remove sessionId }, Cmd.none )
+    ( { model | authedSessions = model.authedSessions |> Dict.remove sessionId }, Cmd.none )
 
 
 updateFromBackend authToFrontendMsg model =
