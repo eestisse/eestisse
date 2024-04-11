@@ -9,6 +9,7 @@ import Browser exposing (UrlRequest(..))
 import Browser.Dom
 import Browser.Events
 import Browser.Navigation as Nav
+import Config
 import Dict exposing (Dict)
 import Lamdera
 import Responsive exposing (..)
@@ -271,6 +272,13 @@ update msg model =
             ( { model | showCreditCounterTooltip = flag }
             , Cmd.none
             )
+
+        TriggerStripePayment emailString ->
+            let
+                targetLink =
+                    Config.stripePaymentLinkBase ++ "?client_reference_id=" ++ emailString
+            in
+            ( model, Nav.load targetLink )
 
 
 updateFromBackend : ToFrontend -> FrontendModel -> ( FrontendModel, Cmd FrontendMsg )

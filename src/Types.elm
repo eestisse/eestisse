@@ -65,6 +65,7 @@ type FrontendMsg
     | Animate Time.Posix
     | FiddleRandomBackroundPath Time.Posix
     | ShowCreditCounterTooltip Bool
+    | TriggerStripePayment String
 
 
 type BackendMsg

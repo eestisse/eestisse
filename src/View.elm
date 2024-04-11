@@ -115,7 +115,11 @@ view dProfile model =
                     else
                         case model.userInfo of
                             Just userInfo ->
-                                Element.text userInfo.email
+                                Element.row
+                                    []
+                                    [ Element.text userInfo.email
+                                    , mainActionButton "take my money" <| Just <| TriggerStripePayment userInfo.email
+                                    ]
 
                             Nothing ->
                                 Element.none
