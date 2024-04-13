@@ -60,7 +60,7 @@ init url key =
             , creditsCounterAnimationState = Nothing
             , authFlow = Auth.Common.Idle
             , authRedirectBaseUrl = { url | query = Nothing, fragment = Nothing }
-            , userInfo = Nothing
+            , authedUserEmail = Nothing
             }
     in
     (case route of
@@ -290,8 +290,8 @@ updateFromBackend msg model =
         AuthToFrontend authToFrontendMsg ->
             Auth.updateFromBackend authToFrontendMsg model
 
-        AuthSuccess authUserInfo ->
-            ( { model | userInfo = Just authUserInfo }
+        AuthSuccess authUserEmail ->
+            ( { model | authedUserEmail = Just authUserEmail }
             , Cmd.none
             )
 

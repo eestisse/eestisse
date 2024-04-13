@@ -1,69 +1,55 @@
 module RPC exposing (..)
 
+import Backend
+import Dict
 import Env
 import Http
 import Json.Decode
 import Json.Encode
 import Lamdera exposing (SessionId)
+import Lamdera.Json
 import LamderaRPC exposing (RPC(..))
 import Stripe
 import Types exposing (..)
 
 
 lamdera_handleEndpoints :
-    LamderaRPC.RPCArgs
+    Lamdera.Json.Value
+    -> LamderaRPC.HttpRequest
     -> BackendModel
     -> ( LamderaRPC.RPCResult, BackendModel, Cmd BackendMsg )
-lamdera_handleEndpoints args model =
-    case args.endpoint of
+lamdera_handleEndpoints _ req model =
+    case req.endpoint of
         "stripe" ->
-            LamderaRPC.handleEndpointJson purchaseCompletedEndpoint args model
+            LamderaRPC.handleEndpointJson stripeWebhookHandler req model
 
         _ ->
-            ( LamderaRPC.ResultFailure <| Http.BadBody <| "Unknown endpoint " ++ args.endpoint, model, Cmd.none )
+            ( LamderaRPC.resultWith LamderaRPC.StatusNotFound [] <| LamderaRPC.BodyString <| "Unknown endpoint " ++ req.endpoint, model, Cmd.none )
 
 
-purchaseCompletedEndpoint :
+stripeWebhookHandler :
     SessionId
     -> BackendModel
-    -> Json.Decode.Value
+    -> LamderaRPC.Headers
+    -> Lamdera.Json.Value
     -> ( Result Http.Error Json.Decode.Value, BackendModel, Cmd BackendMsg )
-purchaseCompletedEndpoint _ model request =
-    let
-        response =
-            case Env.mode of
-                Env.Development ->
-                    Ok (Json.Encode.string "prod")
+stripeWebhookHandler _ model headers json =
+    case ( Json.Decode.decodeValue Stripe.decodeWebhook json, checkStripeHeaderSignature headers ) of
+        ( _, False ) ->
+            ( Err (Http.BadBody "invalid stripe signature"), model, Backend.notifyAdminOfError "invalid stripe signature" )
 
-                Env.Production ->
-                    Ok (Json.Encode.string "dev")
-    in
-    case Json.Decode.decodeValue Stripe.decodeWebhook request of
-        Ok webhook ->
-            case webhook of
-                Stripe.StripeSessionCompleted stripeSessionData ->
-                    let
-                        userEmail =
-                            stripeSessionData.clientReferenceId
-
-                        newModel =
-                            wut
-
-                        -- initiate paidUser acct (or reactivate archived)
-                        cmd =
-                            wut
-
-                        -- send to clients (found by session) of this user a msg for successful payment
-                    in
-                    ( response
-                    , newModel
-                    , cmd
-                    )
-
-        Err error ->
+        ( Err error, _ ) ->
             let
                 errorText =
                     "Failed to decode webhook: "
                         ++ Json.Decode.errorToString error
             in
-            ( Err (Http.BadBody errorText), model, Backend.errorEmail errorText )
+            ( Err (Http.BadBody errorText), model, Cmd.none )
+
+        ( Ok webhook, True ) ->
+            Backend.handleStripeWebhook webhook model
+
+
+checkStripeHeaderSignature : LamderaRPC.Headers -> Bool
+checkStripeHeaderSignature args =
+    Debug.todo ""

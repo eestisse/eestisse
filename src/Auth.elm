@@ -59,15 +59,15 @@ handleAuthSuccess :
 handleAuthSuccess backendModel sessionId clientId userInfo _ _ _ =
     -- TODO handle renewing sessions if that is something you need
     let
-        sessionsWithoutThisOne : Dict Lamdera.SessionId UserInfo
+        sessionsWithoutThisOne : Dict Lamdera.SessionId String
         sessionsWithoutThisOne =
-            Dict.Extra.removeWhen (\_ { email } -> email == userInfo.email) backendModel.authedSessions
+            Dict.Extra.removeWhen (\_ email -> email == userInfo.email) backendModel.authedSessions
 
         newSessions =
-            Dict.insert sessionId { email = userInfo.email } sessionsWithoutThisOne
+            Dict.insert sessionId userInfo.email sessionsWithoutThisOne
 
         response =
-            AuthSuccess <| Utils.authUserInfoToUserInfo userInfo
+            AuthSuccess <| userInfo.email
     in
     ( { backendModel | authedSessions = newSessions }
     , Cmd.batch

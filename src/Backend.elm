@@ -8,10 +8,12 @@ import Env
 import GPTRequests
 import Http
 import Json.Decode
+import Json.Encode
 import Lamdera exposing (ClientId, SessionId)
 import List.Extra
 import Result.Extra
 import Set
+import Stripe
 import Time
 import Types exposing (..)
 
@@ -32,8 +34,9 @@ init =
       , emails_backup = Set.empty
       , emailsWithConsents = []
       , requests = []
-      , authedSessions = Dict.empty
       , pendingAuths = Dict.empty
+      , authedSessions = Dict.empty
+      , users = Dict.empty
       }
     , Cmd.none
     )
@@ -107,6 +110,13 @@ update msg model =
             , Cmd.none
             )
 
+        UpdateUserDelinquencyStates time ->
+            --> check for users paidUntil values against `time`
+            --> if not overdue, set subscriptionState = Active
+            --> if < 2 days overdue, set subscriptionState = Warning
+            --> if > 2 days overdue, set subscriptionState = Delinquent
+            Debug.todo ""
+
 
 updateFromFrontend : SessionId -> ClientId -> ToBackend -> BackendModel -> ( BackendModel, Cmd BackendMsg )
 updateFromFrontend sessionId clientId msg model =
@@ -178,6 +188,66 @@ updateFromFrontend sessionId clientId msg model =
             )
 
 
+handleStripeWebhook : Stripe.Webhook -> BackendModel -> ( Result Http.Error Json.Decode.Value, BackendModel, Cmd BackendMsg )
+handleStripeWebhook webhook model =
+    let
+        okResponse =
+            case Env.mode of
+                Env.Development ->
+                    Ok (Json.Encode.string "prod")
+
+                Env.Production ->
+                    Ok (Json.Encode.string "dev")
+    in
+    case webhook of
+        Stripe.CheckoutSessionCompleted stripeSessionData ->
+            case stripeSessionData.clientReferenceId of
+                Nothing ->
+                    ( okResponse, model, notifyAdminOfError <| "no clientReferenceId in StripeSessionCompleted. Session ID: " ++ stripeSessionData.id )
+
+                Just userEmail ->
+                    let
+                        stripeInfo =
+                            { customerId = stripeSessionData.customerId
+                            , subscriptionId = stripeSessionData.subscriptionId
+                            , paidUntil = Nothing
+                            }
+
+                        newUser : UserInfo
+                        newUser =
+                            case Dict.get userEmail model.users of
+                                Just alreadyExistingUser ->
+                                    { alreadyExistingUser
+                                        | stripeInfo = stripeInfo
+                                    }
+
+                                Nothing ->
+                                    { email = userEmail
+                                    , stripeInfo = stripeInfo
+                                    }
+
+                        -- todo
+                        --> search for matching invoice in hangingInvoices, if found, remove hangingInvoice and store full paid user profile
+                        --> save in users
+                        ( newModel, cmd ) =
+                            Debug.todo ""
+                    in
+                    ( okResponse
+                    , newModel
+                    , cmd
+                    )
+
+        Stripe.InvoicePaid invoiceData ->
+            -- todo
+            --> extract subscription id, customer id
+            --> get subscription
+            --> extract current_period_end
+            --> create paidInvoice (customer id, subscription id, paid until)
+            --> search for matching user in `users`, if found, update user record
+            --> .. if NOT found, add to hangingInvoices
+            Debug.todo ""
+
+
 signupFormToEmailAndConsets : SignupFormModel -> EmailAndConsents
 signupFormToEmailAndConsets signupForm =
     { email = signupForm.emailInput
@@ -246,10 +316,16 @@ modifyCreditBalanceAndBroadcast newCredits model =
     )
 
 
+notifyAdminOfError : String -> Cmd BackendMsg
+notifyAdminOfError s =
+    Debug.todo ""
+
+
 subscriptions : BackendModel -> Sub BackendMsg
 subscriptions _ =
     Sub.batch
         [ Time.every Config.publicUsageConfig.addCreditIntervalMillis (always AddPublicCredits)
+        , Time.every (1000 * 60 * 60 * 24) UpdateUserDelinquencyStates
         , Time.every 1000 UpdateNow
         , Lamdera.onConnect OnConnect
         ]

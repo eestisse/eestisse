@@ -113,12 +113,12 @@ view dProfile model =
                                 viewPublicCredits dProfile model.showCreditCounterTooltip publicCredits maybeCounterAnimationStateAndTime
 
                     else
-                        case model.userInfo of
-                            Just userInfo ->
+                        case model.authedUserEmail of
+                            Just userEmail ->
                                 Element.row
                                     []
-                                    [ Element.text userInfo.email
-                                    , mainActionButton "take my money" <| Just <| TriggerStripePayment userInfo.email
+                                    [ Element.text userEmail
+                                    , mainActionButton "take my money" <| Just <| TriggerStripePayment userEmail
                                     ]
 
                             Nothing ->

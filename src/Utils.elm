@@ -125,8 +125,3 @@ interpolateColors i color1 color2 =
 interpolateFloats : Float -> Float -> Float -> Float
 interpolateFloats progressFloat old new =
     old + ((new - old) * progressFloat)
-
-
-authUserInfoToUserInfo : Auth.Common.UserInfo -> UserInfo
-authUserInfoToUserInfo u =
-    { email = u.email }

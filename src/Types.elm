@@ -20,7 +20,7 @@ type alias FrontendModel =
     , route : Route
     , authFlow : Auth.Common.Flow
     , authRedirectBaseUrl : Url
-    , userInfo : Maybe UserInfo
+    , authedUserEmail : Maybe String
     , dProfile : Maybe DisplayProfile
     , translationPageModel : TranslationPageModel
     , signupState : SignupState
@@ -40,7 +40,8 @@ type alias BackendModel =
     , emailsWithConsents : List EmailAndConsents
     , requests : List ( Time.Posix, String, Result GptAssistError Translation )
     , pendingAuths : Dict Lamdera.SessionId Auth.Common.PendingAuth
-    , authedSessions : Dict Lamdera.SessionId UserInfo
+    , authedSessions : Dict Lamdera.SessionId String
+    , users : Dict String UserInfo
     }
 
 
@@ -75,6 +76,7 @@ type BackendMsg
     | AddPublicCredits
     | UpdateNow Time.Posix
     | OnConnect SessionId ClientId
+    | UpdateUserDelinquencyStates Time.Posix
 
 
 type ToBackend
@@ -89,7 +91,7 @@ type ToBackend
 type ToFrontend
     = NoOpToFrontend
     | AuthToFrontend Auth.Common.ToFrontend
-    | AuthSuccess UserInfo
+    | AuthSuccess String
     | TranslationResult String (Result GptAssistError Translation)
     | EmailSubmitAck
     | AdminDataMsg AdminData
@@ -98,7 +100,16 @@ type ToFrontend
 
 
 type alias UserInfo =
-    { email : String }
+    { email : String
+    , stripeInfo : StripeInfo
+    }
+
+
+type alias StripeInfo =
+    { customerId : String
+    , subscriptionId : String
+    , paidUntil : Maybe Time.Posix
+    }
 
 
 type alias AdminData =
