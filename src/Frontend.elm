@@ -44,7 +44,10 @@ init url key =
             { key = key
             , route = route
             , translationPageModel =
-                InputtingText ""
+                InputtingText <|
+                    TranslationInputModel
+                        ""
+                        False
 
             -- RequestSent <| Waiting "test stuff" 1
             -- RequestSent <| RequestComplete Testing.completedRequestExample
@@ -131,20 +134,20 @@ update msg model =
             , Cmd.none
             )
 
-        TextInputChanged text ->
+        TranslationInputModelChanged newModel ->
             ( { model
-                | translationPageModel = InputtingText text
+                | translationPageModel = InputtingText newModel
               }
             , Cmd.none
             )
 
-        SubmitText inputText ->
+        SubmitText publicConsentChecked inputText ->
             ( { model
                 | translationPageModel =
                     RequestSent <| Waiting inputText 0
               }
             , Cmd.batch
-                [ Lamdera.sendToBackend <| SubmitTextForTranslation inputText
+                [ Lamdera.sendToBackend <| SubmitTextForTranslation publicConsentChecked inputText
                 , plausibleEventOutCmd "translation-requested"
                 ]
             )
@@ -191,7 +194,7 @@ update msg model =
         EditTranslation inputText ->
             ( { model
                 | translationPageModel =
-                    InputtingText inputText
+                    InputtingText { input = inputText, publicConsentChecked = False }
               }
             , Cmd.none
             )
@@ -223,7 +226,7 @@ update msg model =
                 |> Tuple.mapBoth
                     (\model_ ->
                         { model_
-                            | translationPageModel = InputtingText ""
+                            | translationPageModel = InputtingText { input = "", publicConsentChecked = False }
                         }
                     )
                     (\cmd ->

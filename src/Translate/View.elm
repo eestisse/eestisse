@@ -16,15 +16,23 @@ import Utils
 page : DisplayProfile -> TranslationPageModel -> Element FrontendMsg
 page dProfile translationPageModel =
     case translationPageModel of
-        InputtingText inputText ->
-            viewTranslationPageInput inputText
+        InputtingText translationInputModel ->
+            viewTranslationPageInput dProfile translationInputModel
 
         RequestSent requestState ->
             viewTranslationPageRequestState dProfile requestState
 
 
-viewTranslationPageInput : String -> Element FrontendMsg
-viewTranslationPageInput inputText =
+viewTranslationPageInput : DisplayProfile -> TranslationInputModel -> Element FrontendMsg
+viewTranslationPageInput dProfile translationInputModel =
+    let
+        submitMsgIfEnabled =
+            if translationInputModel.input /= "" && translationInputModel.publicConsentChecked then
+                Just <| SubmitText translationInputModel.publicConsentChecked translationInputModel.input
+
+            else
+                Nothing
+    in
     CommonView.primaryBoxCustomColors
         Colors.calmTeal
         Colors.white
@@ -36,11 +44,8 @@ viewTranslationPageInput inputText =
             [ Element.width Element.fill
             , Element.height Element.fill
             , Utils.onEnter
-                (if inputText /= "" then
-                    SubmitText inputText
-
-                 else
-                    NoOpFrontendMsg
+                (submitMsgIfEnabled
+                    |> Maybe.withDefault NoOpFrontendMsg
                 )
             ]
             [ CommonView.scrollbarYEl [] <|
@@ -52,8 +57,8 @@ viewTranslationPageInput inputText =
                     , Font.size translateTextSize
                     , CommonView.htmlId "translate-input"
                     ]
-                    { onChange = TextInputChanged
-                    , text = inputText
+                    { onChange = \t -> TranslationInputModelChanged { translationInputModel | input = t }
+                    , text = translationInputModel.input
                     , placeholder =
                         Just <|
                             Input.placeholder
@@ -73,12 +78,30 @@ viewTranslationPageInput inputText =
                     , label = Input.labelHidden "Enter text"
                     , spellcheck = False
                     }
-            , Element.el
-                [ Element.centerX
+            , Element.column
+                [ Element.width Element.fill
                 , Element.alignBottom
+                , Element.spacing 10
                 ]
-              <|
-                translateButton (inputText /= "") inputText
+                [ Input.checkbox
+                    []
+                    { onChange = \f -> TranslationInputModelChanged { translationInputModel | publicConsentChecked = f }
+                    , icon = Input.defaultCheckbox
+                    , checked = translationInputModel.publicConsentChecked
+                    , label =
+                        Input.labelRight
+                            [ Font.size <| responsiveVal dProfile 18 20
+                            , Element.width Element.fill
+                            ]
+                        <|
+                            Element.paragraph
+                                [ Element.spacing 2
+                                , Font.color <| Element.rgb 0.3 0.3 0.3
+                                ]
+                                [ Element.text "I understand that this translation will be publicly viewable by other Eestisse users." ]
+                    }
+                , Element.el [ Element.centerX ] <| translateButton submitMsgIfEnabled
+                ]
             ]
 
 
@@ -380,16 +403,11 @@ gptAssistErrorToString gptAssistError =
             "The AI refuses to process the request: \"" ++ gptsDamnProblemString ++ "\""
 
 
-translateButton : Bool -> String -> Element FrontendMsg
-translateButton enabled inputText =
+translateButton : Maybe FrontendMsg -> Element FrontendMsg
+translateButton maybeSubmitMsg =
     mainActionButton
         "Translate"
-        (if enabled then
-            Just <| SubmitText inputText
-
-         else
-            Nothing
-        )
+        maybeSubmitMsg
 
 
 modifyTextButton : String -> Element FrontendMsg
