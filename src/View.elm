@@ -120,10 +120,7 @@ view dProfile model =
                     Translate.View.page dProfile model.translationPageModel
 
                 Route.Landing ->
-                    -- Landing.View.page dProfile model.signupState
-                    mainActionButton "login with google oauth" <|
-                        Just <|
-                            AuthSigninRequested { methodId = "OAuthGoogle", username = Nothing }
+                    Landing.View.page dProfile model.signupState
 
                 Route.Admin ->
                     Admin.View.page model.maybeAdminData
