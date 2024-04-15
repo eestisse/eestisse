@@ -35,23 +35,29 @@ viewTranslationPageInput dProfile translationInputModel =
     in
     CommonView.primaryBoxCustomColors
         Colors.calmTeal
-        Colors.white
+        Colors.calmTeal
         [ Element.width Element.fill
         , Element.height Element.fill
+        , Element.padding 0
         ]
     <|
         Element.column
             [ Element.width Element.fill
             , Element.height Element.fill
-            , Utils.onEnter
-                (submitMsgIfEnabled
-                    |> Maybe.withDefault NoOpFrontendMsg
-                )
+            , Element.spacing 20
             ]
             [ CommonView.scrollbarYEl [] <|
                 Input.multiline
                     [ Element.width Element.fill
                     , Element.height Element.fill
+                    , Border.rounded 20
+
+                    -- , Border.roundEach
+                    --     { topLeft = 20
+                    --     , topRight = 20
+                    --     , bottomLeft = 0
+                    --     , bottomRight = 0
+                    --     }
                     , Element.padding 10
                     , Border.width 0
                     , Font.size translateTextSize
@@ -81,7 +87,7 @@ viewTranslationPageInput dProfile translationInputModel =
             , Element.column
                 [ Element.width Element.fill
                 , Element.alignBottom
-                , Element.spacing 10
+                , Element.spacing 20
                 ]
                 [ Input.checkbox
                     []
