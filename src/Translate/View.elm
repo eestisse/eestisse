@@ -51,13 +51,6 @@ viewTranslationPageInput dProfile translationInputModel =
                     [ Element.width Element.fill
                     , Element.height Element.fill
                     , Border.rounded 20
-
-                    -- , Border.roundEach
-                    --     { topLeft = 20
-                    --     , topRight = 20
-                    --     , bottomLeft = 0
-                    --     , bottomRight = 0
-                    --     }
                     , Element.padding 10
                     , Border.width 0
                     , Font.size translateTextSize
