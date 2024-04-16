@@ -41,6 +41,9 @@ stripeWebhookHandler _ model headers bodyString =
 
         ( Err error, _ ) ->
             let
+                _ =
+                    Debug.log "awwwW" error
+
                 errorText =
                     "Failed to decode webhook: "
                         ++ Json.Decode.errorToString error

@@ -11,15 +11,15 @@ import Utils
 
 
 type Webhook
-    = CheckoutSessionCompleted Session
+    = CheckoutSessionCompleted CheckoutSession
     | InvoicePaid Invoice
 
 
-type alias Session =
+type alias CheckoutSession =
     { id : String
     , clientReferenceId : Maybe String
-    , customerId : String
-    , subscriptionId : String
+    , customerId : Maybe String
+    , subscriptionId : Maybe String
     }
 
 
@@ -38,21 +38,20 @@ decodeWebhook =
                     "checkout.session.completed" ->
                         D.map
                             CheckoutSessionCompleted
-                            (D.succeed Session
+                            (D.succeed CheckoutSession
                                 |> required "data" (D.field "object" (D.field "id" D.string))
-                                |> required "data" (D.field "object" (D.nullable <| D.field "client_reference_id" D.string))
-                                |> required "data" (D.field "object" (D.field "customer" D.string))
-                                |> required "data" (D.field "object" (D.field "subscription" D.string))
+                                |> required "data" (D.field "object" (D.field "client_reference_id" <| D.nullable D.string))
+                                |> required "data" (D.field "object" (D.field "customer" <| D.nullable D.string))
+                                |> required "data" (D.field "object" (D.field "subscription" <| D.nullable D.string))
                             )
 
-                    "invoice.paid" ->
-                        D.map
-                            InvoicePaid
-                            (D.succeed Invoice
-                                |> required "data" (D.field "object" (D.field "id" D.string))
-                                |> required "data" (D.field "object" (D.field "subscription" D.string))
-                            )
-
+                    -- "invoice.paid" ->
+                    --     D.map
+                    --         InvoicePaid
+                    --         (D.succeed Invoice
+                    --             |> required "data" (D.field "object" (D.field "id" D.string))
+                    --             |> required "data" (D.field "object" (D.field "subscription" D.string))
+                    --         )
                     _ ->
                         D.fail ("Unhandled stripe webhook event: " ++ eventType)
             )

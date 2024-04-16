@@ -31,6 +31,11 @@ userInterviewsConsentWording =
     "an offer of free credit in exchange for a 30-minute user interview"
 
 
-stripePaymentLinkBase : String
-stripePaymentLinkBase =
-    "https://buy.stripe.com/9AQ03s2Pse595u8dQS"
+stripePaymentLinkBaseUrl : String
+stripePaymentLinkBaseUrl =
+    "https://buy.stripe.com"
+
+
+stripePaymentLinkId : String
+stripePaymentLinkId =
+    "9AQ03s2Pse595u8dQS"

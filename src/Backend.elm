@@ -201,15 +201,24 @@ handleStripeWebhook webhook model =
     in
     case webhook of
         Stripe.CheckoutSessionCompleted stripeSessionData ->
-            case stripeSessionData.clientReferenceId of
-                Nothing ->
+            case ( stripeSessionData.clientReferenceId, stripeSessionData.subscriptionId, stripeSessionData.customerId ) of
+                ( Nothing, _, _ ) ->
                     ( okResponse, model, notifyAdminOfError <| "no clientReferenceId in StripeSessionCompleted. Session ID: " ++ stripeSessionData.id )
 
-                Just userEmail ->
+                ( _, Nothing, _ ) ->
+                    ( okResponse, model, notifyAdminOfError <| "no subscriptionId in StripeSessionCompleted. Session ID: " ++ stripeSessionData.id )
+
+                ( _, _, Nothing ) ->
+                    ( okResponse, model, notifyAdminOfError <| "no customerId in StripeSessionCompleted. Session ID: " ++ stripeSessionData.id )
+
+                ( Just userEmail, Just subscriptionId, Just customerId ) ->
                     let
+                        _ =
+                            Debug.log "got here! with newUser " newUser
+
                         stripeInfo =
-                            { customerId = stripeSessionData.customerId
-                            , subscriptionId = stripeSessionData.subscriptionId
+                            { customerId = customerId
+                            , subscriptionId = subscriptionId
                             , paidUntil = Nothing
                             }
 

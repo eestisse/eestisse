@@ -19,6 +19,7 @@ import Testing
 import Time
 import Types exposing (..)
 import Url
+import Url.Builder
 import Utils
 import View
 
@@ -279,7 +280,9 @@ update msg model =
         TriggerStripePayment emailString ->
             let
                 targetLink =
-                    Config.stripePaymentLinkBase ++ "?client_reference_id=" ++ emailString
+                    Url.Builder.crossOrigin Config.stripePaymentLinkBaseUrl
+                        [ Config.stripePaymentLinkId ]
+                        [ Url.Builder.string "client_reference_id" emailString ]
             in
             ( model, Nav.load targetLink )
 
