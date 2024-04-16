@@ -1,3 +1,0 @@
-[submodule "auth-src"]
-	path = auth-src
-	url = https://github.com/lamdera/auth
