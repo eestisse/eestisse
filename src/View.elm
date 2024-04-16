@@ -126,7 +126,7 @@ view dProfile model =
                     Admin.View.page model.maybeAdminData
 
                 Route.Auth methodId ->
-                    Element.text <| "auth with " ++ methodId ++ " and " ++ model.debug
+                    Element.none
 
                 Route.BadRoute ->
                     viewBadRoute
