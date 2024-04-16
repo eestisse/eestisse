@@ -1,10 +1,10 @@
 module Utils exposing (..)
 
-import Auth.Common
 import Element
 import Html.Events
 import Http
 import Json.Decode
+import List.Extra
 import Random
 import Time
 import Types exposing (..)
@@ -125,3 +125,13 @@ interpolateColors i color1 color2 =
 interpolateFloats : Float -> Float -> Float -> Float
 interpolateFloats progressFloat old new =
     old + ((new - old) * progressFloat)
+
+
+list2ToTuple : List a -> Maybe ( a, a )
+list2ToTuple l =
+    case ( List.Extra.getAt 0 l, List.Extra.getAt 1 l ) of
+        ( Just a, Just b ) ->
+            Just ( a, b )
+
+        _ ->
+            Nothing

@@ -188,16 +188,16 @@ updateFromFrontend sessionId clientId msg model =
             )
 
 
-handleStripeWebhook : Stripe.Webhook -> BackendModel -> ( Result Http.Error Json.Decode.Value, BackendModel, Cmd BackendMsg )
+handleStripeWebhook : Stripe.Webhook -> BackendModel -> ( Result Http.Error String, BackendModel, Cmd BackendMsg )
 handleStripeWebhook webhook model =
     let
         okResponse =
             case Env.mode of
                 Env.Development ->
-                    Ok (Json.Encode.string "prod")
+                    Ok "prod"
 
                 Env.Production ->
-                    Ok (Json.Encode.string "dev")
+                    Ok "dev"
     in
     case webhook of
         Stripe.CheckoutSessionCompleted stripeSessionData ->

@@ -29,5 +29,10 @@ googleAppClientSecret =
     ""
 
 
+stripeWebhookSecret : String
+stripeWebhookSecret =
+    ""
+
+
 mode =
     Development
