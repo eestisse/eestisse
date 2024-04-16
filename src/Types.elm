@@ -38,7 +38,7 @@ type alias BackendModel =
     , publicCredits : Int
     , emails_backup : Set String
     , emailsWithConsents : List EmailAndConsents
-    , requests : List ( Time.Posix, String, Result GptAssistError Translation )
+    , requests : List ( Time.Posix, ( String, Bool ), Result GptAssistError Translation )
     , pendingAuths : Dict Lamdera.SessionId Auth.Common.PendingAuth
     , authedSessions : Dict Lamdera.SessionId String
     , users : Dict String UserInfo
@@ -52,8 +52,8 @@ type FrontendMsg
     | UrlChanged Url
     | GotViewport Browser.Dom.Viewport
     | Resize Int Int
-    | TextInputChanged String
-    | SubmitText String
+    | TranslationInputModelChanged TranslationInputModel
+    | SubmitText Bool String
     | ShowExplanation BreakdownPart
     | CycleLoadingAnimation
     | EditTranslation String
@@ -72,7 +72,7 @@ type FrontendMsg
 type BackendMsg
     = NoOpBackendMsg
     | AuthBackendMsg Auth.Common.BackendMsg
-    | GptResponseReceived ClientId String (Result Http.Error String)
+    | GptResponseReceived ClientId Bool String (Result Http.Error String)
     | AddPublicCredits
     | UpdateNow Time.Posix
     | OnConnect SessionId ClientId
@@ -82,7 +82,7 @@ type BackendMsg
 type ToBackend
     = NoOpToBackend
     | AuthToBackend Auth.Common.ToBackend
-    | SubmitTextForTranslation String
+    | SubmitTextForTranslation Bool String
     | SubmitSignup SignupFormModel
     | RequestImportantNumber
     | RequestGeneralData
@@ -158,8 +158,14 @@ blankSignupForm =
 
 
 type TranslationPageModel
-    = InputtingText String
+    = InputtingText TranslationInputModel
     | RequestSent RequestState
+
+
+type alias TranslationInputModel =
+    { input : String
+    , publicConsentChecked : Bool
+    }
 
 
 type RequestState

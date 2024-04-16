@@ -61,14 +61,14 @@ update msg model =
         AuthBackendMsg authMsg ->
             Auth.Flow.backendUpdate (Auth.backendConfig model) authMsg
 
-        GptResponseReceived clientId input fetchResult ->
+        GptResponseReceived clientId publicConsentChecked input fetchResult ->
             let
                 gptResult =
                     GPTRequests.processGptResponse fetchResult
 
                 modelWithResult =
                     { model
-                        | requests = model.requests |> List.append [ ( model.nowish, input, gptResult ) ]
+                        | requests = model.requests |> List.append [ ( model.nowish, ( input, publicConsentChecked ), gptResult ) ]
                     }
 
                 ( newModel, bcastCmd ) =
@@ -127,18 +127,18 @@ updateFromFrontend sessionId clientId msg model =
         AuthToBackend authToBackend ->
             Auth.Flow.updateFromFrontend (Auth.backendConfig model) clientId sessionId authToBackend model
 
-        SubmitTextForTranslation text ->
+        SubmitTextForTranslation publicConsentChecked input ->
             if model.publicCredits > 0 then
                 model
                     |> deductOneCreditAndBroadcast
                     |> Tuple.mapSecond
                         (\bcastCmd ->
-                            Cmd.batch [ bcastCmd, requestGptTranslationCmd clientId text ]
+                            Cmd.batch [ bcastCmd, requestGptTranslationCmd clientId publicConsentChecked input ]
                         )
 
             else
                 ( model
-                , Lamdera.sendToFrontend clientId <| TranslationResult text (Err OutOfCredits)
+                , Lamdera.sendToFrontend clientId <| TranslationResult input (Err OutOfCredits)
                 )
 
         SubmitSignup signupForm ->
@@ -284,14 +284,14 @@ signupFormToEmailAndConsets signupForm =
 --         }
 
 
-requestGptTranslationCmd : ClientId -> String -> Cmd BackendMsg
-requestGptTranslationCmd clientId inputText =
+requestGptTranslationCmd : ClientId -> Bool -> String -> Cmd BackendMsg
+requestGptTranslationCmd clientId publicConsentChecked inputText =
     Http.request
         { method = "POST"
         , headers = [ Http.header "Authorization" ("Bearer " ++ Env.openaiApiKey) ]
         , url = "https://api.openai.com/v1/chat/completions"
         , body = Http.jsonBody <| GPTRequests.encode <| GPTRequests.translateFromEstonian inputText
-        , expect = Http.expectJson (GptResponseReceived clientId inputText) GPTRequests.apiResponseDecoder
+        , expect = Http.expectJson (GptResponseReceived clientId publicConsentChecked inputText) GPTRequests.apiResponseDecoder
         , timeout = Nothing
         , tracker = Nothing
         }
