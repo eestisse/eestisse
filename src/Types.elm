@@ -13,6 +13,7 @@ import Route exposing (Route)
 import Set exposing (Set)
 import Stripe.Types as Stripe
 import Time
+import Time.Extra
 import Url exposing (Url)
 
 
@@ -31,6 +32,7 @@ type alias FrontendModel =
     , publicCredits : Maybe Int
     , showCreditCounterTooltip : Bool
     , creditsCounterAnimationState : Maybe CreditsCounterAnimationState
+    , backendModelAffection : Maybe String
     }
 
 
@@ -50,6 +52,7 @@ type alias BackendModel =
 type FrontendMsg
     = NoOpFrontendMsg
     | AuthSigninRequested { methodId : Auth.Common.MethodId, username : Maybe String }
+    | Logout
     | UrlClicked UrlRequest
     | UrlChanged Url
     | GotViewport Browser.Dom.Viewport
@@ -69,6 +72,7 @@ type FrontendMsg
     | FiddleRandomBackroundPath Time.Posix
     | ShowCreditCounterTooltip Bool
     | TriggerStripePayment String
+    | AskHowMuchYouLikeMe
 
 
 type BackendMsg
@@ -79,7 +83,6 @@ type BackendMsg
     | UpdateNow Time.Posix
     | OnConnect SessionId ClientId
     | SubscriptionDataReceived (Result Http.Error Stripe.SubscriptionData)
-    | UpdateUserDelinquencyStates Time.Posix
 
 
 type ToBackend
@@ -89,6 +92,8 @@ type ToBackend
     | SubmitSignup SignupFormModel
     | RequestImportantNumber
     | RequestGeneralData
+    | HowMuchDoYouLikeMe
+    | DoLogout
 
 
 type ToFrontend
@@ -100,6 +105,7 @@ type ToFrontend
     | AdminDataMsg AdminData
     | GeneralDataMsg GeneralData
     | CreditsUpdated Int
+    | HeresHowMuchILikeYou String
 
 
 type alias PaidInvoice =
@@ -243,3 +249,27 @@ updateUserPaidUntil paidUntil userInfo =
                 | paidUntil = Just paidUntil
             }
     }
+
+
+type MembershipStatus
+    = NotStarted
+    | MembershipActive
+    | MembershipAlmostExpired
+    | MembershipExpired
+
+
+userMembershipStatus : Time.Posix -> UserInfo -> MembershipStatus
+userMembershipStatus nowish user =
+    case user.stripeInfo.paidUntil of
+        Nothing ->
+            NotStarted
+
+        Just paidUntil ->
+            if Time.Extra.compare paidUntil nowish == GT then
+                MembershipActive
+
+            else if Time.Extra.diff Time.Extra.Day Time.utc nowish paidUntil <= 2 then
+                MembershipAlmostExpired
+
+            else
+                MembershipExpired

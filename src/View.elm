@@ -1,5 +1,6 @@
 module View exposing (..)
 
+import Account.View
 import Admin.View
 import Background.View
 import Browser
@@ -113,16 +114,7 @@ view dProfile model =
                                 viewPublicCredits dProfile model.showCreditCounterTooltip publicCredits maybeCounterAnimationStateAndTime
 
                     else
-                        case model.authedUserEmail of
-                            Just userEmail ->
-                                Element.row
-                                    []
-                                    [ Element.text userEmail
-                                    , mainActionButton "take my money" <| Just <| TriggerStripePayment userEmail
-                                    ]
-
-                            Nothing ->
-                                Element.none
+                        Element.none
                 ]
             , case model.route of
                 Route.Translate ->
@@ -137,10 +129,8 @@ view dProfile model =
                 Route.AuthCallback _ ->
                     Element.el [ Element.centerX ] <| Element.text "User authenticated. Redirecting..."
 
-                Route.Login ->
-                    mainActionButton "login with google oauth" <|
-                        Just <|
-                            AuthSigninRequested { methodId = "OAuthGoogle", username = Nothing }
+                Route.Account ->
+                    Account.View.page dProfile model
 
                 Route.BadRoute ->
                     viewBadRoute

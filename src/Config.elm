@@ -38,4 +38,4 @@ stripePaymentLinkBaseUrl =
 
 stripePaymentLinkId : String
 stripePaymentLinkId =
-    "9AQ03s2Pse595u8dQS"
+    "test_dR66sbe114VB69G7st"

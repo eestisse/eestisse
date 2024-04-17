@@ -65,6 +65,7 @@ init url key =
             , authFlow = Auth.Common.Idle
             , authRedirectBaseUrl = { url | query = Nothing, fragment = Nothing }
             , authedUserEmail = Nothing
+            , backendModelAffection = Nothing
             }
     in
     (case route of
@@ -286,6 +287,16 @@ update msg model =
             in
             ( model, Nav.load targetLink )
 
+        AskHowMuchYouLikeMe ->
+            ( model
+            , Lamdera.sendToBackend HowMuchDoYouLikeMe
+            )
+
+        Logout ->
+            ( model
+            , Lamdera.sendToBackend DoLogout
+            )
+
 
 updateFromBackend : ToFrontend -> FrontendModel -> ( FrontendModel, Cmd FrontendMsg )
 updateFromBackend msg model =
@@ -352,6 +363,11 @@ updateFromBackend msg model =
         CreditsUpdated newCredits ->
             ( { model | publicCredits = Just newCredits }
                 |> startCreditCounterAnimation (newCredits >= (model.publicCredits |> Maybe.withDefault 0)) model.animationTime
+            , Cmd.none
+            )
+
+        HeresHowMuchILikeYou howMuch ->
+            ( { model | backendModelAffection = Just howMuch }
             , Cmd.none
             )
 

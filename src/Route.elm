@@ -10,7 +10,7 @@ type Route
     | Landing
     | Admin
     | AuthCallback String
-    | Login
+    | Account
     | BadRoute
 
 
@@ -31,7 +31,7 @@ matchRoute =
         , Parser.map Translate (Parser.s "translate")
         , Parser.map Admin (Parser.s "admin")
         , Parser.map AuthCallback (Parser.s "login" </> Parser.string </> Parser.s "callback")
-        , Parser.map Login (Parser.s "login")
+        , Parser.map Account (Parser.s "account")
         ]
 
 
@@ -51,8 +51,8 @@ routeToString route =
             AuthCallback methodId ->
                 [ "login", methodId, "callback" ]
 
-            Login ->
-                [ "login" ]
+            Account ->
+                [ "account" ]
 
             BadRoute ->
                 [ "badroute" ]

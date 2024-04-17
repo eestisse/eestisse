@@ -8,8 +8,6 @@ import Dict.Extra
 import Env
 import GPTRequests
 import Http
-import Json.Decode
-import Json.Encode
 import Lamdera exposing (ClientId, SessionId)
 import List.Extra
 import Result.Extra
@@ -155,13 +153,6 @@ update msg model =
                             , Cmd.none
                             )
 
-        UpdateUserDelinquencyStates time ->
-            --> check for users paidUntil values against `time`
-            --> if not overdue, set subscriptionState = Active
-            --> if < 2 days overdue, set subscriptionState = Warning
-            --> if > 2 days overdue, set subscriptionState = Delinquent
-            Debug.todo ""
-
 
 updateFromFrontend : SessionId -> ClientId -> ToBackend -> BackendModel -> ( BackendModel, Cmd BackendMsg )
 updateFromFrontend sessionId clientId msg model =
@@ -232,6 +223,39 @@ updateFromFrontend sessionId clientId msg model =
                     GeneralData model.publicCredits
             )
 
+        HowMuchDoYouLikeMe ->
+            let
+                howMuchILikeYou =
+                    case Dict.get sessionId model.authedSessions of
+                        Nothing ->
+                            "I don't even know your name!"
+
+                        Just userEmail ->
+                            case Dict.get userEmail model.users of
+                                Nothing ->
+                                    "Well I know who you are " ++ userEmail ++ ", but I know nothing about you!"
+
+                                Just userInfo ->
+                                    case userMembershipStatus model.nowish userInfo of
+                                        NotStarted ->
+                                            "You seem alright " ++ userEmail ++ ", but I'm gonna need to see that cash bro"
+
+                                        MembershipExpired ->
+                                            "I remember when we really had something! :'("
+
+                                        MembershipAlmostExpired ->
+                                            "We're good. For now."
+
+                                        MembershipActive ->
+                                            "Oh we are so cool man, you da best :D :D"
+            in
+            ( model
+            , Lamdera.sendToFrontend clientId <| HeresHowMuchILikeYou howMuchILikeYou
+            )
+
+        DoLogout ->
+            Auth.logout sessionId clientId model
+
 
 handleStripeWebhook : Stripe.StripeEvent -> BackendModel -> ( Result Http.Error String, BackendModel, Cmd BackendMsg )
 handleStripeWebhook webhook model =
@@ -259,8 +283,9 @@ handleStripeWebhook webhook model =
                 ( Just userEmail, Just subscriptionId, Just customerId ) ->
                     let
                         _ =
-                            Debug.log "got here! with newUser " newUser
+                            Debug.log "got checkout complete webhook" ""
 
+                        -- if there is a matched invoice, we want to remember it and remove it from hangingInvoices
                         ( newHangingInvoices, maybeMatchedInvoice ) =
                             case List.Extra.findIndex (.customerId >> (==) customerId) model.hangingInvoices of
                                 Just i ->
@@ -272,7 +297,7 @@ handleStripeWebhook webhook model =
                         stripeInfo =
                             { customerId = customerId
                             , subscriptionId = subscriptionId
-                            , paidUntil = maybeMatchedInvoice |> Maybe.map (Debug.todo "")
+                            , paidUntil = maybeMatchedInvoice |> Maybe.map .paidUntil
                             }
 
                         newUser : UserInfo
@@ -280,22 +305,13 @@ handleStripeWebhook webhook model =
                             { email = userEmail
                             , stripeInfo = stripeInfo
                             }
-
-                        newModel =
-                            { model
-                                | hangingInvoices = newHangingInvoices
-                            }
-
-                        cmd =
-                            Cmd.none
-
-                        -- todo
-                        --> search for matching invoice in hangingInvoices, if found, remove hangingInvoice and store full paid user profile
-                        --> save in users
                     in
                     ( okResponse
-                    , newModel
-                    , cmd
+                    , { model
+                        | hangingInvoices = newHangingInvoices
+                        , users = model.users |> Dict.insert userEmail newUser
+                      }
+                    , Cmd.none
                     )
 
         Stripe.InvoicePaid invoiceData ->
@@ -383,14 +399,17 @@ modifyCreditBalanceAndBroadcast newCredits model =
 
 notifyAdminOfError : String -> Cmd BackendMsg
 notifyAdminOfError s =
-    Debug.todo ""
+    let
+        _ =
+            Debug.log "hey admin! Error: " s
+    in
+    Cmd.none
 
 
 subscriptions : BackendModel -> Sub BackendMsg
 subscriptions _ =
     Sub.batch
         [ Time.every Config.publicUsageConfig.addCreditIntervalMillis (always AddPublicCredits)
-        , Time.every (1000 * 60 * 60 * 24) UpdateUserDelinquencyStates
         , Time.every 1000 UpdateNow
         , Lamdera.onConnect OnConnect
         ]
