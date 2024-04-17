@@ -9,7 +9,8 @@ import Json.Encode
 import Lamdera exposing (SessionId)
 import Lamdera.Json
 import LamderaRPC exposing (RPC(..))
-import Stripe
+import Stripe.Types as Stripe
+import Stripe.Utils as Stripe
 import Time
 import Types exposing (..)
 
@@ -35,7 +36,7 @@ stripeWebhookHandler :
     -> String
     -> ( Result Http.Error String, BackendModel, Cmd BackendMsg )
 stripeWebhookHandler _ model headers bodyString =
-    case ( Json.Decode.decodeString Stripe.decodeWebhook bodyString, checkStripeHeaderSignature bodyString headers Env.stripeWebhookSecret model.nowish ) of
+    case ( Json.Decode.decodeString Stripe.stripeEventDecoder bodyString, checkStripeHeaderSignature bodyString headers Env.stripeWebhookSecret model.nowish ) of
         ( _, False ) ->
             ( Err (Http.BadBody "invalid stripe signature"), model, Backend.notifyAdminOfError "invalid stripe signature" )
 

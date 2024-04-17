@@ -34,5 +34,10 @@ stripeWebhookSecret =
     ""
 
 
+stripeApiKey : String
+stripeApiKey =
+    ""
+
+
 mode =
     Development

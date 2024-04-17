@@ -11,6 +11,7 @@ import Lamdera exposing (ClientId, SessionId)
 import Responsive exposing (..)
 import Route exposing (Route)
 import Set exposing (Set)
+import Stripe.Types as Stripe
 import Time
 import Url exposing (Url)
 
@@ -42,6 +43,7 @@ type alias BackendModel =
     , pendingAuths : Dict Lamdera.SessionId Auth.Common.PendingAuth
     , authedSessions : Dict Lamdera.SessionId String
     , users : Dict String UserInfo
+    , hangingInvoices : List PaidInvoice
     }
 
 
@@ -76,6 +78,7 @@ type BackendMsg
     | AddPublicCredits
     | UpdateNow Time.Posix
     | OnConnect SessionId ClientId
+    | SubscriptionDataReceived (Result Http.Error Stripe.SubscriptionData)
     | UpdateUserDelinquencyStates Time.Posix
 
 
@@ -97,6 +100,12 @@ type ToFrontend
     | AdminDataMsg AdminData
     | GeneralDataMsg GeneralData
     | CreditsUpdated Int
+
+
+type alias PaidInvoice =
+    { customerId : String
+    , paidUntil : Time.Posix
+    }
 
 
 type alias UserInfo =
@@ -219,4 +228,18 @@ type alias RGB =
     { red : Float
     , green : Float
     , blue : Float
+    }
+
+
+updateUserPaidUntil : Time.Posix -> UserInfo -> UserInfo
+updateUserPaidUntil paidUntil userInfo =
+    { userInfo
+        | stripeInfo =
+            let
+                oldStripeInfo =
+                    userInfo.stripeInfo
+            in
+            { oldStripeInfo
+                | paidUntil = Just paidUntil
+            }
     }

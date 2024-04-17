@@ -135,3 +135,8 @@ list2ToTuple l =
 
         _ ->
             Nothing
+
+
+unixTimestampToPosix : Int -> Time.Posix
+unixTimestampToPosix ts =
+    (ts * 1000) |> Time.millisToPosix

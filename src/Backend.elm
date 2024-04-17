@@ -4,6 +4,7 @@ import Auth
 import Auth.Flow
 import Config
 import Dict exposing (Dict)
+import Dict.Extra
 import Env
 import GPTRequests
 import Http
@@ -13,9 +14,11 @@ import Lamdera exposing (ClientId, SessionId)
 import List.Extra
 import Result.Extra
 import Set
-import Stripe
+import Stripe.Types as Stripe
+import Stripe.Utils as Stripe
 import Time
 import Types exposing (..)
+import Utils
 
 
 app =
@@ -37,6 +40,7 @@ init =
       , pendingAuths = Dict.empty
       , authedSessions = Dict.empty
       , users = Dict.empty
+      , hangingInvoices = []
       }
     , Cmd.none
     )
@@ -47,6 +51,11 @@ update msg model =
     case msg of
         NoOpBackendMsg ->
             ( model, Cmd.none )
+
+        UpdateNow time ->
+            ( { model | nowish = time }
+            , Cmd.none
+            )
 
         OnConnect sessionId clientId ->
             case Dict.get sessionId model.authedSessions of
@@ -105,10 +114,46 @@ update msg model =
                 Cmd.none
             )
 
-        UpdateNow time ->
-            ( { model | nowish = time }
-            , Cmd.none
-            )
+        SubscriptionDataReceived result ->
+            case result of
+                Err httpErr ->
+                    ( model, notifyAdminOfError <| "Http error when fetching subscription data: " ++ Utils.httpErrorToString httpErr )
+
+                Ok subscriptionData ->
+                    let
+                        paidInvoice : PaidInvoice
+                        paidInvoice =
+                            { customerId = subscriptionData.customerId
+                            , paidUntil = subscriptionData.currentPeriodEnd
+                            }
+
+                        maybeMatchingUser =
+                            model.users
+                                |> Dict.Extra.find
+                                    (\_ user ->
+                                        user.stripeInfo.customerId == paidInvoice.customerId
+                                    )
+                                |> Maybe.map Tuple.first
+                    in
+                    case maybeMatchingUser of
+                        Just userEmail ->
+                            ( { model
+                                | users =
+                                    model.users
+                                        |> Dict.update userEmail
+                                            (Maybe.map (updateUserPaidUntil paidInvoice.paidUntil))
+                              }
+                            , Cmd.none
+                            )
+
+                        Nothing ->
+                            ( { model
+                                | hangingInvoices =
+                                    model.hangingInvoices
+                                        |> List.append [ paidInvoice ]
+                              }
+                            , Cmd.none
+                            )
 
         UpdateUserDelinquencyStates time ->
             --> check for users paidUntil values against `time`
@@ -188,7 +233,7 @@ updateFromFrontend sessionId clientId msg model =
             )
 
 
-handleStripeWebhook : Stripe.Webhook -> BackendModel -> ( Result Http.Error String, BackendModel, Cmd BackendMsg )
+handleStripeWebhook : Stripe.StripeEvent -> BackendModel -> ( Result Http.Error String, BackendModel, Cmd BackendMsg )
 handleStripeWebhook webhook model =
     let
         okResponse =
@@ -216,30 +261,37 @@ handleStripeWebhook webhook model =
                         _ =
                             Debug.log "got here! with newUser " newUser
 
+                        ( newHangingInvoices, maybeMatchedInvoice ) =
+                            case List.Extra.findIndex (.customerId >> (==) customerId) model.hangingInvoices of
+                                Just i ->
+                                    ( List.Extra.removeAt i model.hangingInvoices, List.Extra.getAt i model.hangingInvoices )
+
+                                Nothing ->
+                                    ( model.hangingInvoices, Nothing )
+
                         stripeInfo =
                             { customerId = customerId
                             , subscriptionId = subscriptionId
-                            , paidUntil = Nothing
+                            , paidUntil = maybeMatchedInvoice |> Maybe.map (Debug.todo "")
                             }
 
                         newUser : UserInfo
                         newUser =
-                            case Dict.get userEmail model.users of
-                                Just alreadyExistingUser ->
-                                    { alreadyExistingUser
-                                        | stripeInfo = stripeInfo
-                                    }
+                            { email = userEmail
+                            , stripeInfo = stripeInfo
+                            }
 
-                                Nothing ->
-                                    { email = userEmail
-                                    , stripeInfo = stripeInfo
-                                    }
+                        newModel =
+                            { model
+                                | hangingInvoices = newHangingInvoices
+                            }
+
+                        cmd =
+                            Cmd.none
 
                         -- todo
                         --> search for matching invoice in hangingInvoices, if found, remove hangingInvoice and store full paid user profile
                         --> save in users
-                        ( newModel, cmd ) =
-                            Debug.todo ""
                     in
                     ( okResponse
                     , newModel
@@ -247,14 +299,18 @@ handleStripeWebhook webhook model =
                     )
 
         Stripe.InvoicePaid invoiceData ->
-            -- todo
-            --> extract subscription id, customer id
-            --> get subscription
-            --> extract current_period_end
-            --> create paidInvoice (customer id, subscription id, paid until)
-            --> search for matching user in `users`, if found, update user record
-            --> .. if NOT found, add to hangingInvoices
-            Debug.todo ""
+            case ( invoiceData.customerId, invoiceData.subscriptionId ) of
+                ( Nothing, _ ) ->
+                    ( okResponse, model, notifyAdminOfError <| "no customerId in InvoicePaid. Session ID: " ++ invoiceData.id )
+
+                ( _, Nothing ) ->
+                    ( okResponse, model, notifyAdminOfError <| "no subscrptionId in InvoicePaid. Session ID: " ++ invoiceData.id )
+
+                ( Just _, Just subscriptionId ) ->
+                    ( okResponse
+                    , model
+                    , Stripe.getSubscriptionData subscriptionId SubscriptionDataReceived
+                    )
 
 
 signupFormToEmailAndConsets : SignupFormModel -> EmailAndConsents
