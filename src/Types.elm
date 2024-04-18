@@ -22,7 +22,7 @@ type alias FrontendModel =
     , route : Route
     , authFlow : Auth.Common.Flow
     , authRedirectBaseUrl : Url
-    , authedUserEmail : Maybe String
+    , authedUserInfo : Maybe FrontendUserInfo
     , dProfile : Maybe DisplayProfile
     , translationPageModel : TranslationPageModel
     , signupState : SignupState
@@ -43,8 +43,9 @@ type alias BackendModel =
     , emailsWithConsents : List EmailAndConsents
     , requests : List ( Time.Posix, ( String, Bool ), Result GptAssistError Translation )
     , pendingAuths : Dict Lamdera.SessionId Auth.Common.PendingAuth
-    , authedSessions : Dict Lamdera.SessionId String
-    , users : Dict String UserInfo
+    , authedSessions : Dict Lamdera.SessionId Int
+    , users : Dict Int UserInfo
+    , nextUserId : Int
     , hangingInvoices : List PaidInvoice
     }
 
@@ -71,7 +72,7 @@ type FrontendMsg
     | Animate Time.Posix
     | FiddleRandomBackroundPath Time.Posix
     | ShowCreditCounterTooltip Bool
-    | TriggerStripePayment String
+    | TriggerStripePayment Int
     | AskHowMuchYouLikeMe
 
 
@@ -99,7 +100,7 @@ type ToBackend
 type ToFrontend
     = NoOpToFrontend
     | AuthToFrontend Auth.Common.ToFrontend
-    | AuthSuccess String
+    | AuthSuccess FrontendUserInfo
     | TranslationResult String (Result GptAssistError Translation)
     | EmailSubmitAck
     | AdminDataMsg AdminData
@@ -116,7 +117,13 @@ type alias PaidInvoice =
 
 type alias UserInfo =
     { email : String
-    , stripeInfo : StripeInfo
+    , stripeInfo : Maybe StripeInfo
+    }
+
+
+type alias FrontendUserInfo =
+    { id : Int
+    , email : String
     }
 
 
@@ -237,22 +244,16 @@ type alias RGB =
     }
 
 
-updateUserPaidUntil : Time.Posix -> UserInfo -> UserInfo
-updateUserPaidUntil paidUntil userInfo =
+updateUserStripeInfo : StripeInfo -> UserInfo -> UserInfo
+updateUserStripeInfo stripeInfo userInfo =
     { userInfo
-        | stripeInfo =
-            let
-                oldStripeInfo =
-                    userInfo.stripeInfo
-            in
-            { oldStripeInfo
-                | paidUntil = Just paidUntil
-            }
+        | stripeInfo = Just stripeInfo
     }
 
 
 type MembershipStatus
-    = NotStarted
+    = NoStripeInfo
+    | NotStarted
     | MembershipActive
     | MembershipAlmostExpired
     | MembershipExpired
@@ -260,16 +261,28 @@ type MembershipStatus
 
 userMembershipStatus : Time.Posix -> UserInfo -> MembershipStatus
 userMembershipStatus nowish user =
-    case user.stripeInfo.paidUntil of
+    case user.stripeInfo of
         Nothing ->
-            NotStarted
+            NoStripeInfo
 
-        Just paidUntil ->
-            if Time.Extra.compare paidUntil nowish == GT then
-                MembershipActive
+        Just stripeInfo ->
+            case stripeInfo.paidUntil of
+                Nothing ->
+                    NotStarted
 
-            else if Time.Extra.diff Time.Extra.Day Time.utc nowish paidUntil <= 2 then
-                MembershipAlmostExpired
+                Just paidUntil ->
+                    if Time.Extra.compare paidUntil nowish == GT then
+                        MembershipActive
 
-            else
-                MembershipExpired
+                    else if Time.Extra.diff Time.Extra.Day Time.utc nowish paidUntil <= 2 then
+                        MembershipAlmostExpired
+
+                    else
+                        MembershipExpired
+
+
+toFrontendUserInfo : ( Int, UserInfo ) -> FrontendUserInfo
+toFrontendUserInfo ( id, userInfo ) =
+    { id = id
+    , email = userInfo.email
+    }

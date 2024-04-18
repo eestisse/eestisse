@@ -64,7 +64,7 @@ init url key =
             , creditsCounterAnimationState = Nothing
             , authFlow = Auth.Common.Idle
             , authRedirectBaseUrl = { url | query = Nothing, fragment = Nothing }
-            , authedUserEmail = Nothing
+            , authedUserInfo = Nothing
             , backendModelAffection = Nothing
             }
     in
@@ -278,12 +278,12 @@ update msg model =
             , Cmd.none
             )
 
-        TriggerStripePayment emailString ->
+        TriggerStripePayment userId ->
             let
                 targetLink =
                     Url.Builder.crossOrigin Config.stripePaymentLinkBaseUrl
                         [ Config.stripePaymentLinkId ]
-                        [ Url.Builder.string "client_reference_id" emailString ]
+                        [ Url.Builder.string "client_reference_id" (String.fromInt userId) ]
             in
             ( model, Nav.load targetLink )
 
@@ -307,8 +307,8 @@ updateFromBackend msg model =
         AuthToFrontend authToFrontendMsg ->
             Auth.updateFromBackend authToFrontendMsg model
 
-        AuthSuccess authUserEmail ->
-            ( { model | authedUserEmail = Just authUserEmail }
+        AuthSuccess frontendUserInfo ->
+            ( { model | authedUserInfo = Just frontendUserInfo }
             , Cmd.none
             )
 

@@ -56,25 +56,60 @@ handleAuthSuccess :
     -> Maybe Auth.Common.Token
     -> Time.Posix
     -> ( BackendModel, Cmd BackendMsg )
-handleAuthSuccess backendModel sessionId clientId userInfo _ _ _ =
+handleAuthSuccess backendModel sessionId clientId authUserInfo _ _ _ =
     -- TODO handle renewing sessions if that is something you need
     let
-        sessionsWithoutThisOne : Dict Lamdera.SessionId String
+        ( newModel, ( userId, userInfo ) ) =
+            addOrGetUserFromEmail authUserInfo.email backendModel
+
+        sessionsWithoutThisOne : Dict Lamdera.SessionId Int
         sessionsWithoutThisOne =
-            Dict.Extra.removeWhen (\_ email -> email == userInfo.email) backendModel.authedSessions
+            Dict.Extra.removeWhen (\_ id -> id == userId) backendModel.authedSessions
 
         newSessions =
-            Dict.insert sessionId userInfo.email sessionsWithoutThisOne
+            Dict.insert sessionId userId sessionsWithoutThisOne
 
         response =
-            AuthSuccess <| userInfo.email
+            AuthSuccess <| toFrontendUserInfo ( userId, userInfo )
     in
-    ( { backendModel | authedSessions = newSessions }
+    ( { newModel | authedSessions = newSessions }
     , Cmd.batch
         [ -- renewSession_ user_.id sessionId clientId
           Lamdera.sendToFrontend clientId response
         ]
     )
+
+
+addOrGetUserFromEmail : String -> BackendModel -> ( BackendModel, ( Int, UserInfo ) )
+addOrGetUserFromEmail email model =
+    let
+        maybeFoundUser =
+            model.users
+                |> Dict.Extra.find
+                    (\_ userInfo ->
+                        userInfo.email == email
+                    )
+    in
+    case maybeFoundUser of
+        Just foundUserAndId ->
+            ( model, foundUserAndId )
+
+        Nothing ->
+            let
+                newUser : UserInfo
+                newUser =
+                    { email = email
+                    , stripeInfo = Nothing
+                    }
+            in
+            ( { model
+                | users =
+                    model.users
+                        |> Dict.insert model.nextUserId newUser
+                , nextUserId = model.nextUserId + 1
+              }
+            , ( model.nextUserId, newUser )
+            )
 
 
 logout : Lamdera.SessionId -> Lamdera.ClientId -> BackendModel -> ( BackendModel, Cmd msg )

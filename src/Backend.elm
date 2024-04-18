@@ -38,6 +38,7 @@ init =
       , pendingAuths = Dict.empty
       , authedSessions = Dict.empty
       , users = Dict.empty
+      , nextUserId = 0
       , hangingInvoices = []
       }
     , Cmd.none
@@ -57,13 +58,20 @@ update msg model =
 
         OnConnect sessionId clientId ->
             case Dict.get sessionId model.authedSessions of
-                Just userInfo ->
-                    ( model
-                    , Lamdera.sendToFrontend clientId <| AuthSuccess userInfo
-                    )
-
                 Nothing ->
                     ( model, Cmd.none )
+
+                Just userId ->
+                    case Dict.get userId model.users of
+                        Nothing ->
+                            ( model
+                            , notifyAdminOfError "userId not found in users!"
+                            )
+
+                        Just userInfo ->
+                            ( model
+                            , Lamdera.sendToFrontend clientId <| AuthSuccess <| toFrontendUserInfo ( userId, userInfo )
+                            )
 
         AuthBackendMsg authMsg ->
             Auth.Flow.backendUpdate (Auth.backendConfig model) authMsg
@@ -125,21 +133,30 @@ update msg model =
                             , paidUntil = subscriptionData.currentPeriodEnd
                             }
 
-                        maybeMatchingUser =
+                        maybeMatchingUserIdAndStripeInfo =
                             model.users
-                                |> Dict.Extra.find
+                                |> Dict.Extra.filterMap
                                     (\_ user ->
-                                        user.stripeInfo.customerId == paidInvoice.customerId
+                                        user.stripeInfo
+                                            |> Maybe.andThen
+                                                (\stripeInfo ->
+                                                    if stripeInfo.customerId == paidInvoice.customerId then
+                                                        Just stripeInfo
+
+                                                    else
+                                                        Nothing
+                                                )
                                     )
-                                |> Maybe.map Tuple.first
+                                |> Dict.toList
+                                |> List.head
                     in
-                    case maybeMatchingUser of
-                        Just userEmail ->
+                    case maybeMatchingUserIdAndStripeInfo of
+                        Just ( userId, stripeInfo ) ->
                             ( { model
                                 | users =
                                     model.users
-                                        |> Dict.update userEmail
-                                            (Maybe.map (updateUserPaidUntil paidInvoice.paidUntil))
+                                        |> Dict.update userId
+                                            (Maybe.map (updateUserStripeInfo { stripeInfo | paidUntil = Just paidInvoice.paidUntil }))
                               }
                             , Cmd.none
                             )
@@ -230,24 +247,31 @@ updateFromFrontend sessionId clientId msg model =
                         Nothing ->
                             "I don't even know your name!"
 
-                        Just userEmail ->
-                            case Dict.get userEmail model.users of
+                        Just userId ->
+                            case Dict.get userId model.users of
                                 Nothing ->
-                                    "Well I know who you are " ++ userEmail ++ ", but I know nothing about you!"
+                                    "Well I know you're user number " ++ String.fromInt userId ++ ", but I know nothing about you!"
 
                                 Just userInfo ->
-                                    case userMembershipStatus model.nowish userInfo of
-                                        NotStarted ->
-                                            "You seem alright " ++ userEmail ++ ", but I'm gonna need to see that cash bro"
+                                    "Hey there "
+                                        ++ userInfo.email
+                                        ++ " - "
+                                        ++ (case userMembershipStatus model.nowish userInfo of
+                                                NoStripeInfo ->
+                                                    "I don't see any Stripe info yet."
 
-                                        MembershipExpired ->
-                                            "I remember when we really had something! :'("
+                                                NotStarted ->
+                                                    "I see Stripe info, but don't see any payment progress"
 
-                                        MembershipAlmostExpired ->
-                                            "We're good. For now."
+                                                MembershipExpired ->
+                                                    "I remember when we really had something! :'("
 
-                                        MembershipActive ->
-                                            "Oh we are so cool man, you da best :D :D"
+                                                MembershipAlmostExpired ->
+                                                    "We're good. For now."
+
+                                                MembershipActive ->
+                                                    "Oh we are so cool man, you da best :D :D"
+                                           )
             in
             ( model
             , Lamdera.sendToFrontend clientId <| HeresHowMuchILikeYou howMuchILikeYou
@@ -280,11 +304,8 @@ handleStripeWebhook webhook model =
                 ( _, _, Nothing ) ->
                     ( okResponse, model, notifyAdminOfError <| "no customerId in StripeSessionCompleted. Session ID: " ++ stripeSessionData.id )
 
-                ( Just userEmail, Just subscriptionId, Just customerId ) ->
+                ( Just userId, Just subscriptionId, Just customerId ) ->
                     let
-                        _ =
-                            Debug.log "got checkout complete webhook" ""
-
                         -- if there is a matched invoice, we want to remember it and remove it from hangingInvoices
                         ( newHangingInvoices, maybeMatchedInvoice ) =
                             case List.Extra.findIndex (.customerId >> (==) customerId) model.hangingInvoices of
@@ -299,17 +320,18 @@ handleStripeWebhook webhook model =
                             , subscriptionId = subscriptionId
                             , paidUntil = maybeMatchedInvoice |> Maybe.map .paidUntil
                             }
-
-                        newUser : UserInfo
-                        newUser =
-                            { email = userEmail
-                            , stripeInfo = stripeInfo
-                            }
                     in
                     ( okResponse
                     , { model
                         | hangingInvoices = newHangingInvoices
-                        , users = model.users |> Dict.insert userEmail newUser
+                        , users =
+                            model.users
+                                |> Dict.update userId
+                                    (Maybe.map
+                                        (\userInfo ->
+                                            { userInfo | stripeInfo = Just stripeInfo }
+                                        )
+                                    )
                       }
                     , Cmd.none
                     )

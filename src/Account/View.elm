@@ -14,15 +14,15 @@ page dProfile model =
         , Element.centerY
         , Element.spacing 20
         ]
-        [ case model.authedUserEmail of
+        [ case model.authedUserInfo of
             Nothing ->
                 mainActionButton "login with google oauth" <|
                     Just <|
                         AuthSigninRequested { methodId = "OAuthGoogle", username = Nothing }
 
-            Just email ->
+            Just userInfo ->
                 Element.row []
-                    [ Element.text <| "Logged in as " ++ email
+                    [ Element.text <| "Logged in as " ++ userInfo.email
                     , mainActionButton "log out" <|
                         Just <|
                             Logout
@@ -34,9 +34,9 @@ page dProfile model =
                     AskHowMuchYouLikeMe
             , viewHowMuchYouLikeMe model.backendModelAffection
             ]
-        , case model.authedUserEmail of
-            Just email ->
-                mainActionButton "take my money" <| Just <| TriggerStripePayment email
+        , case model.authedUserInfo of
+            Just userInfo ->
+                mainActionButton "take my money" <| Just <| TriggerStripePayment userInfo.id
 
             Nothing ->
                 Element.none

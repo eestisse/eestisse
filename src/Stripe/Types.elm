@@ -10,7 +10,7 @@ type StripeEvent
 
 type alias CheckoutSession =
     { id : String
-    , clientReferenceId : Maybe String
+    , clientReferenceId : Maybe Int
     , customerId : Maybe String
     , subscriptionId : Maybe String
     }

@@ -107,7 +107,7 @@ stripeEventDecoder =
                             CheckoutSessionCompleted
                             (D.succeed CheckoutSession
                                 |> required "data" (D.field "object" (D.field "id" D.string))
-                                |> required "data" (D.field "object" (D.field "client_reference_id" <| D.nullable D.string))
+                                |> required "data" (D.field "object" (D.field "client_reference_id" <| D.nullable userIdDecoder))
                                 |> required "data" (D.field "object" (D.field "customer" <| D.nullable D.string))
                                 |> required "data" (D.field "object" (D.field "subscription" <| D.nullable D.string))
                             )
@@ -123,6 +123,16 @@ stripeEventDecoder =
 
                     _ ->
                         D.fail ("Unhandled stripe webhook event: " ++ eventType)
+            )
+
+
+userIdDecoder : D.Decoder Int
+userIdDecoder =
+    D.string
+        |> D.andThen
+            (String.toInt
+                >> Maybe.map D.succeed
+                >> Maybe.withDefault (D.fail "non-inty string")
             )
 
 
