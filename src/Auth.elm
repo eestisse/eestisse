@@ -10,6 +10,7 @@ import Dict.Extra
 import Env
 import Lamdera
 import Time
+import Time.Extra
 import Types exposing (..)
 import Utils
 
@@ -36,7 +37,7 @@ backendConfig model =
     , backendModel = model
     , loadMethod = Auth.Flow.methodLoader config.methods
     , handleAuthSuccess = handleAuthSuccess model
-    , isDev = True
+    , isDev = Env.mode == Env.Development
     , renewSession = renewSession
     , logout = logout
     }
@@ -70,7 +71,7 @@ handleAuthSuccess backendModel sessionId clientId authUserInfo _ _ _ =
             Dict.insert sessionId userId sessionsWithoutThisOne
 
         response =
-            AuthSuccess <| toFrontendUserInfo ( userId, userInfo )
+            AuthSuccess <| toFrontendUserInfo ( userId, userInfo, userMembershipStatus backendModel.nowish userInfo )
     in
     ( { newModel | authedSessions = newSessions }
     , Cmd.batch
@@ -127,3 +128,25 @@ updateFromBackend authToFrontendMsg model =
 
         Auth.Common.AuthSessionChallenge _ ->
             ( model, Cmd.none )
+
+
+userMembershipStatus : Time.Posix -> UserInfo -> MembershipStatus
+userMembershipStatus nowish user =
+    case user.stripeInfo of
+        Nothing ->
+            NoStripeInfo
+
+        Just stripeInfo ->
+            case stripeInfo.paidUntil of
+                Nothing ->
+                    NotStarted
+
+                Just paidUntil ->
+                    if Time.Extra.compare paidUntil nowish == GT then
+                        MembershipActive
+
+                    else if Time.Extra.diff Time.Extra.Day Time.utc paidUntil nowish <= 2 then
+                        MembershipAlmostExpired
+
+                    else
+                        MembershipExpired

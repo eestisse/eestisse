@@ -21,7 +21,7 @@ type alias FrontendModel =
     , route : Route
     , authFlow : Auth.Common.Flow
     , authRedirectBaseUrl : Url
-    , authedUserInfo : Maybe FrontendUserInfo
+    , maybeAuthedUserInfo : Maybe FrontendUserInfo
     , dProfile : Maybe DisplayProfile
     , translationPageModel : TranslationPageModel
     , signupState : SignupState
@@ -123,6 +123,7 @@ type alias UserInfo =
 type alias FrontendUserInfo =
     { id : Int
     , email : String
+    , membershipStatus : MembershipStatus
     }
 
 
@@ -258,8 +259,27 @@ type MembershipStatus
     | MembershipExpired
 
 
-toFrontendUserInfo : ( Int, UserInfo ) -> FrontendUserInfo
-toFrontendUserInfo ( id, userInfo ) =
+toFrontendUserInfo : ( Int, UserInfo, MembershipStatus ) -> FrontendUserInfo
+toFrontendUserInfo ( id, userInfo, membershipStatus ) =
     { id = id
     , email = userInfo.email
+    , membershipStatus = membershipStatus
     }
+
+
+maybeFrontendUserHasActiveMembership : Maybe FrontendUserInfo -> Bool
+maybeFrontendUserHasActiveMembership maybeFrontendUserInfo =
+    case maybeFrontendUserInfo of
+        Nothing ->
+            False
+
+        Just userInfo ->
+            case userInfo.membershipStatus of
+                MembershipActive ->
+                    True
+
+                MembershipAlmostExpired ->
+                    True
+
+                _ ->
+                    False

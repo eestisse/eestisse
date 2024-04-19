@@ -15,7 +15,6 @@ import Set
 import Stripe.Types as Stripe
 import Stripe.Utils as Stripe
 import Time
-import Time.Extra
 import Types exposing (..)
 import Utils
 
@@ -71,7 +70,7 @@ update msg model =
 
                         Just userInfo ->
                             ( model
-                            , Lamdera.sendToFrontend clientId <| AuthSuccess <| toFrontendUserInfo ( userId, userInfo )
+                            , Lamdera.sendToFrontend clientId <| AuthSuccess <| toFrontendUserInfo ( userId, userInfo, Auth.userMembershipStatus model.nowish userInfo )
                             )
 
         AuthBackendMsg authMsg ->
@@ -257,7 +256,7 @@ updateFromFrontend sessionId clientId msg model =
                                     "Hey there "
                                         ++ userInfo.email
                                         ++ " - "
-                                        ++ (case userMembershipStatus model.nowish userInfo of
+                                        ++ (case Auth.userMembershipStatus model.nowish userInfo of
                                                 NoStripeInfo ->
                                                     "I don't see any Stripe info yet."
 
@@ -436,25 +435,3 @@ subscriptions _ =
         , Time.every 1000 UpdateNow
         , Lamdera.onConnect OnConnect
         ]
-
-
-userMembershipStatus : Time.Posix -> UserInfo -> MembershipStatus
-userMembershipStatus nowish user =
-    case user.stripeInfo of
-        Nothing ->
-            NoStripeInfo
-
-        Just stripeInfo ->
-            case stripeInfo.paidUntil of
-                Nothing ->
-                    NotStarted
-
-                Just paidUntil ->
-                    if Time.Extra.compare paidUntil nowish == GT then
-                        MembershipActive
-
-                    else if Time.Extra.diff Time.Extra.Day Time.utc paidUntil nowish <= 2 then
-                        MembershipAlmostExpired
-
-                    else
-                        MembershipExpired

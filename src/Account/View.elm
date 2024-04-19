@@ -14,7 +14,7 @@ page dProfile model =
         , Element.centerY
         , Element.spacing 20
         ]
-        [ case model.authedUserInfo of
+        [ case model.maybeAuthedUserInfo of
             Nothing ->
                 mainActionButton "login with google oauth" <|
                     Just <|
@@ -34,7 +34,7 @@ page dProfile model =
                     AskHowMuchYouLikeMe
             , viewHowMuchYouLikeMe model.backendModelAffection
             ]
-        , case model.authedUserInfo of
+        , case model.maybeAuthedUserInfo of
             Just userInfo ->
                 mainActionButton "take my money" <| Just <| TriggerStripePayment userInfo.id
 

@@ -13,18 +13,18 @@ import Types exposing (..)
 import Utils
 
 
-page : DisplayProfile -> TranslationPageModel -> Element FrontendMsg
-page dProfile translationPageModel =
+page : DisplayProfile -> Maybe FrontendUserInfo -> TranslationPageModel -> Element FrontendMsg
+page dProfile maybeAuthedUserInfo translationPageModel =
     case translationPageModel of
         InputtingText translationInputModel ->
-            viewTranslationPageInput dProfile translationInputModel
+            viewTranslationPageInput dProfile maybeAuthedUserInfo translationInputModel
 
         RequestSent requestState ->
             viewTranslationPageRequestState dProfile requestState
 
 
-viewTranslationPageInput : DisplayProfile -> TranslationInputModel -> Element FrontendMsg
-viewTranslationPageInput dProfile translationInputModel =
+viewTranslationPageInput : DisplayProfile -> Maybe FrontendUserInfo -> TranslationInputModel -> Element FrontendMsg
+viewTranslationPageInput dProfile maybeAuthedUserInfo translationInputModel =
     let
         submitMsgIfEnabled =
             if translationInputModel.input /= "" && translationInputModel.publicConsentChecked then
@@ -80,26 +80,29 @@ viewTranslationPageInput dProfile translationInputModel =
             , Element.column
                 [ Element.width Element.fill
                 , Element.alignBottom
-                , Element.spacing 20
+                , Element.width Element.fill
+                , Element.spacing 10
                 ]
                 [ Input.checkbox
-                    []
+                    [ Element.centerX
+                    , Element.width Element.shrink
+                    ]
                     { onChange = \f -> TranslationInputModelChanged { translationInputModel | publicConsentChecked = f }
                     , icon = Input.defaultCheckbox
                     , checked = translationInputModel.publicConsentChecked
                     , label =
                         Input.labelRight
                             [ Font.size <| responsiveVal dProfile 18 20
-                            , Element.width Element.fill
+                            , Font.color <| Element.rgb 0.3 0.3 0.3
                             ]
                         <|
-                            Element.paragraph
-                                [ Element.spacing 2
-                                , Font.color <| Element.rgb 0.3 0.3 0.3
-                                ]
-                                [ Element.text "I understand that this translation will be publicly viewable by other Eestisse users." ]
+                            Element.text "Share translation publicly"
                     }
-                , Element.el [ Element.centerX ] <| translateButton submitMsgIfEnabled
+                , if translationInputModel.publicConsentChecked || maybeFrontendUserHasActiveMembership maybeAuthedUserInfo then
+                    Element.el [ Element.centerX ] <| translateButton submitMsgIfEnabled
+
+                  else
+                    Element.text "hold up there bucko"
                 ]
             ]
 

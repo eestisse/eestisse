@@ -50,7 +50,7 @@ init url key =
                 InputtingText <|
                     TranslationInputModel
                         ""
-                        False
+                        True
 
             -- RequestSent <| Waiting "test stuff" 1
             -- RequestSent <| RequestComplete Testing.completedRequestExample
@@ -64,7 +64,7 @@ init url key =
             , creditsCounterAnimationState = Nothing
             , authFlow = Auth.Common.Idle
             , authRedirectBaseUrl = { url | query = Nothing, fragment = Nothing }
-            , authedUserInfo = Nothing
+            , maybeAuthedUserInfo = Nothing
             , backendModelAffection = Nothing
             }
     in
@@ -198,7 +198,7 @@ update msg model =
         EditTranslation inputText ->
             ( { model
                 | translationPageModel =
-                    InputtingText { input = inputText, publicConsentChecked = False }
+                    InputtingText { input = inputText, publicConsentChecked = True }
               }
             , Cmd.none
             )
@@ -230,7 +230,7 @@ update msg model =
                 |> Tuple.mapBoth
                     (\model_ ->
                         { model_
-                            | translationPageModel = InputtingText { input = "", publicConsentChecked = False }
+                            | translationPageModel = InputtingText { input = "", publicConsentChecked = True }
                         }
                     )
                     (\cmd ->
@@ -308,7 +308,7 @@ updateFromBackend msg model =
             Auth.updateFromBackend authToFrontendMsg model
 
         AuthSuccess frontendUserInfo ->
-            ( { model | authedUserInfo = Just frontendUserInfo }
+            ( { model | maybeAuthedUserInfo = Just frontendUserInfo }
             , Cmd.none
             )
 
