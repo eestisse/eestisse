@@ -223,10 +223,10 @@ update msg model =
             )
 
         GotoRoute route ->
-            changeRouteAndAnimate model route
+            gotoRouteAndAnimate model route
 
         GotoTranslate_FocusAndClear ->
-            changeRouteAndAnimate model Route.Translate
+            gotoRouteAndAnimate model Route.Translate
                 |> Tuple.mapBoth
                     (\model_ ->
                         { model_
@@ -291,6 +291,9 @@ update msg model =
             ( model
             , Lamdera.sendToBackend HowMuchDoYouLikeMe
             )
+
+        UserIntent_ActivateMembership ->
+            gotoRouteAndAnimate model Route.Account
 
         Logout ->
             ( model
@@ -383,8 +386,8 @@ startCreditCounterAnimation goingUp now model =
     }
 
 
-changeRouteAndAnimate : FrontendModel -> Route -> ( FrontendModel, Cmd FrontendMsg )
-changeRouteAndAnimate model route =
+gotoRouteAndAnimate : FrontendModel -> Route -> ( FrontendModel, Cmd FrontendMsg )
+gotoRouteAndAnimate model route =
     ( { model
         | route = route
         , backgroundModel =

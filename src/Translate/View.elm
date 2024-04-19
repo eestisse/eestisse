@@ -102,7 +102,21 @@ viewTranslationPageInput dProfile maybeAuthedUserInfo translationInputModel =
                     Element.el [ Element.centerX ] <| translateButton submitMsgIfEnabled
 
                   else
-                    Element.text "hold up there bucko"
+                    responsiveVal dProfile
+                        Element.column
+                        Element.row
+                        [ Element.centerX
+                        , Element.spacing 10
+                        ]
+                        [ Element.column
+                            [ Element.spacing 5
+                            , Font.color <| Element.rgb 1 0 0
+                            ]
+                            [ Element.text "You must have an active membership"
+                            , Element.text "to process translations privately."
+                            ]
+                        , mainActionButton "Activate Membership" <| Just UserIntent_ActivateMembership
+                        ]
                 ]
             ]
 

@@ -73,6 +73,7 @@ type FrontendMsg
     | ShowCreditCounterTooltip Bool
     | TriggerStripePayment Int
     | AskHowMuchYouLikeMe
+    | UserIntent_ActivateMembership
 
 
 type BackendMsg
