@@ -13,7 +13,6 @@ import Route exposing (Route)
 import Set exposing (Set)
 import Stripe.Types as Stripe
 import Time
-import Time.Extra
 import Url exposing (Url)
 
 
@@ -257,28 +256,6 @@ type MembershipStatus
     | MembershipActive
     | MembershipAlmostExpired
     | MembershipExpired
-
-
-userMembershipStatus : Time.Posix -> UserInfo -> MembershipStatus
-userMembershipStatus nowish user =
-    case user.stripeInfo of
-        Nothing ->
-            NoStripeInfo
-
-        Just stripeInfo ->
-            case stripeInfo.paidUntil of
-                Nothing ->
-                    NotStarted
-
-                Just paidUntil ->
-                    if Time.Extra.compare paidUntil nowish == GT then
-                        MembershipActive
-
-                    else if Time.Extra.diff Time.Extra.Day Time.utc nowish paidUntil <= 2 then
-                        MembershipAlmostExpired
-
-                    else
-                        MembershipExpired
 
 
 toFrontendUserInfo : ( Int, UserInfo ) -> FrontendUserInfo
