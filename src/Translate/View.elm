@@ -5,6 +5,7 @@ import CommonView exposing (..)
 import Element exposing (Attribute, Element)
 import Element.Background
 import Element.Border as Border
+import Element.Events as Events
 import Element.Font as Font
 import Element.Input as Input
 import List.Extra
@@ -98,25 +99,30 @@ viewTranslationPageInput dProfile maybeAuthedUserInfo translationInputModel =
                         <|
                             Element.text "Share translation publicly"
                     }
-                , if translationInputModel.publicConsentChecked || maybeFrontendUserHasActiveMembership maybeAuthedUserInfo then
-                    Element.el [ Element.centerX ] <| translateButton submitMsgIfEnabled
+                , Element.el
+                    [ Element.width Element.fill
+                    , Element.height <| Element.px 50
+                    ]
+                  <|
+                    if translationInputModel.publicConsentChecked || maybeFrontendUserHasActiveMembership maybeAuthedUserInfo then
+                        Element.el [ Element.centerX ] <| translateButton submitMsgIfEnabled
 
-                  else
-                    responsiveVal dProfile
+                    else
                         Element.column
-                        Element.row
-                        [ Element.centerX
-                        , Element.spacing 10
-                        ]
-                        [ Element.column
                             [ Element.spacing 5
                             , Font.color <| Element.rgb 1 0 0
+                            , Element.centerX
                             ]
-                            [ Element.text "You must have an active membership"
-                            , Element.text "to process translations privately."
+                            [ Element.row
+                                [ Element.centerX ]
+                                [ Element.text "You must have an "
+                                , Element.el
+                                    (linkAttributes ++ [ Element.pointer, Events.onClick UserIntent_ActivateMembership ])
+                                  <|
+                                    Element.text "active membership"
+                                ]
+                            , Element.el [ Element.centerX ] <| Element.text "to process translations privately."
                             ]
-                        , mainActionButton "Activate Membership" <| Just UserIntent_ActivateMembership
-                        ]
                 ]
             ]
 
