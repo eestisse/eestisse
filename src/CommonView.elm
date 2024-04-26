@@ -223,3 +223,18 @@ basicShadow =
         , blur = 5
         , color = Element.rgb 0.8 0.8 0.8
         }
+
+
+bulletPointList : Int -> List (Attribute msg) -> List (Element msg) -> Element msg
+bulletPointList bulletFontSizeAndSpacing attributes items =
+    Element.column
+        ([ Element.spacing (bulletFontSizeAndSpacing // 2) ] ++ attributes)
+        (items
+            |> List.map
+                (\item ->
+                    Element.row [ Element.spacing bulletFontSizeAndSpacing ]
+                        [ Element.el [ Element.alignTop ] <| Element.text "•"
+                        , item
+                        ]
+                )
+        )
