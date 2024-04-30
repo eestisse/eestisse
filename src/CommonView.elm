@@ -6,6 +6,7 @@ import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input
+import Html
 import Html.Attributes
 import Responsive exposing (..)
 import Types exposing (..)
@@ -238,3 +239,16 @@ bulletPointList bulletFontSizeAndSpacing attributes items =
                         ]
                 )
         )
+
+
+textWithCutoff : String -> Element msg
+textWithCutoff s =
+    Element.html <|
+        Html.div
+            [ Html.Attributes.style "text-overflow" "ellipsis"
+            , Html.Attributes.style "white-space" "nowrap"
+            , Html.Attributes.style "overflow" "hidden"
+            , Html.Attributes.style "width" "100%"
+            , Html.Attributes.style "flex-basis" "auto"
+            ]
+            [ Html.text s ]

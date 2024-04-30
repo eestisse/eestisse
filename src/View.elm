@@ -225,7 +225,7 @@ creditCounterTooltip dProfile credits =
                     Element.text <|
                         String.fromInt credits
                 , Element.el [ Font.color Colors.darkBlue, Font.bold ] <| Element.text " credits"
-                , Element.text " left for public use. A few credits are added every 5 minutes."
+                , Element.text " left for public use. Credits are added slowly over time and cap out at 100."
                 ]
             , Element.paragraph
                 [ Element.width Element.fill

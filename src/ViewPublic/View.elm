@@ -1,9 +1,12 @@
 module ViewPublic.View exposing (..)
 
+import Colors
 import CommonTypes exposing (..)
 import CommonView exposing (..)
 import Element exposing (Element)
-import Element.Input as Input
+import Element.Background
+import Element.Border as Border
+import Element.Events as Events
 import Responsive exposing (..)
 import Types exposing (..)
 import ViewPublic.Types exposing (..)
@@ -26,6 +29,7 @@ maybeViewTranslationList dProfile maybeTranslationRecords =
         Just translationRecords ->
             Element.column
                 [ Element.spacing 20
+                , Element.width Element.fill
                 ]
                 (translationRecords
                     |> List.map (viewTranslationRecordPreviewButton dProfile)
@@ -34,4 +38,17 @@ maybeViewTranslationList dProfile maybeTranslationRecords =
 
 viewTranslationRecordPreviewButton : DisplayProfile -> ( Int, TranslationRecord ) -> Element FrontendMsg
 viewTranslationRecordPreviewButton dProfile ( id, translationRecord ) =
-    Element.text translationRecord.input
+    Element.column
+        [ Element.padding 10
+        , Element.spacing 5
+        , Element.width Element.fill
+        , Border.rounded 10
+        , Border.width 1
+        , Element.Background.color <| Colors.offWhite
+        , Element.pointer
+        , Events.onClick NoOpFrontendMsg
+        ]
+        [ textWithCutoff translationRecord.input
+        , hbreakElement
+        , textWithCutoff translationRecord.translation.translation
+        ]
