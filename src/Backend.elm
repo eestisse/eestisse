@@ -240,43 +240,6 @@ updateFromFrontend sessionId clientId msg model =
                     GeneralData model.publicCredits
             )
 
-        HowMuchDoYouLikeMe ->
-            let
-                howMuchILikeYou =
-                    case Dict.get sessionId model.authedSessions of
-                        Nothing ->
-                            "I don't even know your name!"
-
-                        Just userId ->
-                            case Dict.get userId model.users of
-                                Nothing ->
-                                    "Well I know you're user number " ++ String.fromInt userId ++ ", but I know nothing about you!"
-
-                                Just userInfo ->
-                                    "Hey there "
-                                        ++ userInfo.email
-                                        ++ " - "
-                                        ++ (case Auth.userMembershipStatus model.nowish userInfo of
-                                                NoStripeInfo ->
-                                                    "I don't see any Stripe info yet."
-
-                                                NotStarted ->
-                                                    "I see Stripe info, but don't see any payment progress"
-
-                                                MembershipExpired ->
-                                                    "I remember when we really had something! :'("
-
-                                                MembershipAlmostExpired ->
-                                                    "We're good. For now."
-
-                                                MembershipActive ->
-                                                    "Oh we are so cool man, you da best :D :D"
-                                           )
-            in
-            ( model
-            , Lamdera.sendToFrontend clientId <| HeresHowMuchILikeYou howMuchILikeYou
-            )
-
         DoLogout ->
             Auth.logout sessionId clientId model
 

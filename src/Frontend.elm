@@ -22,6 +22,7 @@ import Url
 import Url.Builder
 import Utils
 import View
+import ViewPublic.State as ViewPublic
 
 
 app =
@@ -65,7 +66,7 @@ init url key =
             , authFlow = Auth.Common.Idle
             , authRedirectBaseUrl = { url | query = Nothing, fragment = Nothing }
             , maybeAuthedUserInfo = Nothing
-            , backendModelAffection = Nothing
+            , viewPublicModel = ViewPublic.init
             }
     in
     (case route of
@@ -287,11 +288,6 @@ update msg model =
             in
             ( model, Nav.load targetLink )
 
-        AskHowMuchYouLikeMe ->
-            ( model
-            , Lamdera.sendToBackend HowMuchDoYouLikeMe
-            )
-
         UserIntent_ActivateMembership ->
             gotoRouteAndAnimate model Route.Account
 
@@ -366,11 +362,6 @@ updateFromBackend msg model =
         CreditsUpdated newCredits ->
             ( { model | publicCredits = Just newCredits }
                 |> startCreditCounterAnimation (newCredits >= (model.publicCredits |> Maybe.withDefault 0)) model.animationTime
-            , Cmd.none
-            )
-
-        HeresHowMuchILikeYou howMuch ->
-            ( { model | backendModelAffection = Just howMuch }
             , Cmd.none
             )
 

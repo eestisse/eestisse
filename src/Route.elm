@@ -11,6 +11,7 @@ type Route
     | Admin
     | AuthCallback String
     | Account
+    | ViewPublic
     | BadRoute
 
 
@@ -31,6 +32,7 @@ matchRoute =
         , Parser.map Translate (Parser.s "translate")
         , Parser.map Admin (Parser.s "admin")
         , Parser.map AuthCallback (Parser.s "login" </> Parser.string </> Parser.s "callback")
+        , Parser.map ViewPublic (Parser.s "public_")
         , Parser.map Account (Parser.s "account")
         ]
 
@@ -53,6 +55,9 @@ routeToString route =
 
             Account ->
                 [ "account" ]
+
+            ViewPublic ->
+                [ "public_" ]
 
             BadRoute ->
                 [ "badroute" ]

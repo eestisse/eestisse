@@ -14,6 +14,7 @@ import Set exposing (Set)
 import Stripe.Types as Stripe
 import Time
 import Url exposing (Url)
+import ViewPublic.Types as ViewPublic
 
 
 type alias FrontendModel =
@@ -31,7 +32,7 @@ type alias FrontendModel =
     , publicCredits : Maybe Int
     , showCreditCounterTooltip : Bool
     , creditsCounterAnimationState : Maybe CreditsCounterAnimationState
-    , backendModelAffection : Maybe String
+    , viewPublicModel : ViewPublic.ViewPublicModel
     }
 
 
@@ -72,7 +73,6 @@ type FrontendMsg
     | FiddleRandomBackroundPath Time.Posix
     | ShowCreditCounterTooltip Bool
     | TriggerStripePayment Int
-    | AskHowMuchYouLikeMe
     | UserIntent_ActivateMembership
 
 
@@ -93,7 +93,6 @@ type ToBackend
     | SubmitSignup SignupFormModel
     | RequestImportantNumber
     | RequestGeneralData
-    | HowMuchDoYouLikeMe
     | DoLogout
 
 
@@ -106,7 +105,6 @@ type ToFrontend
     | AdminDataMsg AdminData
     | GeneralDataMsg GeneralData
     | CreditsUpdated Int
-    | HeresHowMuchILikeYou String
 
 
 type alias PaidInvoice =

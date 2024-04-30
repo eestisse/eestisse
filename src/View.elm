@@ -21,6 +21,7 @@ import Time
 import Translate.View
 import Types exposing (..)
 import Utils
+import ViewPublic.View
 
 
 root : FrontendModel -> Browser.Document FrontendMsg
@@ -131,6 +132,9 @@ view dProfile model =
 
                 Route.Account ->
                     Account.View.page dProfile model
+
+                Route.ViewPublic ->
+                    ViewPublic.View.page dProfile model.viewPublicModel
 
                 Route.BadRoute ->
                     viewBadRoute
