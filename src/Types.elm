@@ -1,10 +1,12 @@
 module Types exposing (..)
 
+import Array exposing (Array)
 import Auth.Common
 import Background.Types as Background
 import Browser exposing (UrlRequest)
 import Browser.Dom
 import Browser.Navigation exposing (Key)
+import CommonTypes exposing (..)
 import Dict exposing (Dict)
 import Http
 import Lamdera exposing (ClientId, SessionId)
@@ -41,7 +43,8 @@ type alias BackendModel =
     , publicCredits : Int
     , emails_backup : Set String
     , emailsWithConsents : List EmailAndConsents
-    , requests : List ( Time.Posix, ( String, Bool ), Result GptAssistError Translation )
+    , allRequests : List ( Time.Posix, ( String, Bool ), Result GptAssistError Translation )
+    , publicTranslations : Array TranslationRecord
     , pendingAuths : Dict Lamdera.SessionId Auth.Common.PendingAuth
     , authedSessions : Dict Lamdera.SessionId Int
     , users : Dict Int UserInfo
@@ -94,6 +97,7 @@ type ToBackend
     | RequestImportantNumber
     | RequestGeneralData
     | DoLogout
+    | RequestPublicTranslations
 
 
 type ToFrontend
@@ -105,6 +109,7 @@ type ToFrontend
     | AdminDataMsg AdminData
     | GeneralDataMsg GeneralData
     | CreditsUpdated Int
+    | SendTranslationRecords (List ( Int, TranslationRecord ))
 
 
 type alias PaidInvoice =
@@ -198,41 +203,6 @@ type alias CompletedRequest =
     { inputText : String
     , translationResult : Result GptAssistError Translation
     , maybeSelectedBreakdownPart : Maybe BreakdownPart
-    }
-
-
-type GptAssistError
-    = OutOfCredits
-    | ApiProtocolError ProtocolError
-    | GptDecodeError String
-    | GptExpressedError String
-
-
-type ProtocolError
-    = RateLimited
-    | HttpError Http.Error
-
-
-type alias Translation =
-    { breakdown : Breakdown
-    , translation : String
-    , translatedTo : EnglishOrEstonian
-    }
-
-
-type EnglishOrEstonian
-    = English
-    | Estonian
-
-
-type alias Breakdown =
-    List BreakdownPart
-
-
-type alias BreakdownPart =
-    { estonian : String
-    , englishTranslation : String
-    , maybeExplanation : Maybe String
     }
 
 

@@ -12,6 +12,7 @@ import Browser.Navigation as Nav
 import Config
 import Dict exposing (Dict)
 import Lamdera
+import List.Extra
 import Responsive exposing (..)
 import Route exposing (Route)
 import Task
@@ -78,6 +79,9 @@ init url key =
                 key
                 (\msg -> Lamdera.sendToBackend (AuthToBackend msg))
 
+        Route.ViewPublic ->
+            ( model, Lamdera.sendToBackend <| RequestPublicTranslations )
+
         _ ->
             ( model, Cmd.none )
     )
@@ -119,8 +123,17 @@ update msg model =
                     )
 
         UrlChanged url ->
-            ( { model | route = Route.parseUrl url }
-            , Cmd.none
+            let
+                route =
+                    Route.parseUrl url
+            in
+            ( { model | route = route }
+            , case route of
+                Route.ViewPublic ->
+                    Lamdera.sendToBackend <| RequestPublicTranslations
+
+                _ ->
+                    Cmd.none
             )
 
         GotViewport viewport ->
@@ -362,6 +375,24 @@ updateFromBackend msg model =
         CreditsUpdated newCredits ->
             ( { model | publicCredits = Just newCredits }
                 |> startCreditCounterAnimation (newCredits >= (model.publicCredits |> Maybe.withDefault 0)) model.animationTime
+            , Cmd.none
+            )
+
+        SendTranslationRecords translationRecords ->
+            ( { model
+                | viewPublicModel =
+                    let
+                        oldVPM =
+                            model.viewPublicModel
+                    in
+                    { oldVPM
+                        | fetchedTranslations =
+                            Just
+                                (List.append (oldVPM.fetchedTranslations |> Maybe.withDefault []) translationRecords
+                                    |> List.Extra.uniqueBy Tuple.first
+                                )
+                    }
+              }
             , Cmd.none
             )
 

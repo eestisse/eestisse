@@ -1,7 +1,10 @@
 module Backend exposing (..)
 
+import Array exposing (Array)
+import Array.Extra
 import Auth
 import Auth.Flow
+import CommonTypes exposing (..)
 import Config
 import Dict exposing (Dict)
 import Dict.Extra
@@ -34,7 +37,8 @@ init =
       , publicCredits = 0
       , emails_backup = Set.empty
       , emailsWithConsents = []
-      , requests = []
+      , allRequests = []
+      , publicTranslations = Array.empty
       , pendingAuths = Dict.empty
       , authedSessions = Dict.empty
       , users = Dict.empty
@@ -83,7 +87,19 @@ update msg model =
 
                 modelWithResult =
                     { model
-                        | requests = model.requests |> List.append [ ( model.nowish, ( input, publicConsentChecked ), gptResult ) ]
+                        | allRequests = model.allRequests |> List.append [ ( model.nowish, ( input, publicConsentChecked ), gptResult ) ]
+                        , publicTranslations =
+                            if publicConsentChecked then
+                                case gptResult of
+                                    Ok translation ->
+                                        model.publicTranslations
+                                            |> Array.push (TranslationRecord model.nowish input translation)
+
+                                    Err _ ->
+                                        model.publicTranslations
+
+                            else
+                                model.publicTranslations
                     }
 
                 ( newModel, bcastCmd ) =
@@ -219,13 +235,13 @@ updateFromFrontend sessionId clientId msg model =
                             |> List.map Tuple.second
                             |> List.Extra.frequencies
                     , translationSuccesses =
-                        model.requests
+                        model.allRequests
                             |> List.Extra.count
                                 (\( _, _, result ) ->
                                     Result.Extra.isOk result
                                 )
                     , translationErrors =
-                        model.requests
+                        model.allRequests
                             |> List.Extra.count
                                 (\( _, _, result ) ->
                                     Result.Extra.isErr result
@@ -242,6 +258,18 @@ updateFromFrontend sessionId clientId msg model =
 
         DoLogout ->
             Auth.logout sessionId clientId model
+
+        RequestPublicTranslations ->
+            ( model
+            , Lamdera.sendToFrontend clientId <|
+                SendTranslationRecords <|
+                    (model.publicTranslations
+                        |> Array.indexedMap Tuple.pair
+                        |> Array.Extra.reverse
+                        |> Array.Extra.sliceUntil 20
+                        |> Array.toList
+                    )
+            )
 
 
 handleStripeWebhook : Stripe.StripeEvent -> BackendModel -> ( Result Http.Error String, BackendModel, Cmd BackendMsg )

@@ -1,5 +1,6 @@
 module Testing exposing (..)
 
+import CommonTypes exposing (..)
 import Types exposing (..)
 
 

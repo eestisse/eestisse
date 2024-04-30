@@ -1,9 +1,9 @@
 module ClaudeRequests exposing (..)
 
+import CommonTypes exposing (..)
 import Http
 import Json.Decode
 import Json.Encode
-import Types exposing (..)
 import Utils
 
 

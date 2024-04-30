@@ -1,6 +1,7 @@
 module Translate.View exposing (..)
 
 import Colors
+import CommonTypes exposing (..)
 import CommonView exposing (..)
 import Element exposing (Attribute, Element)
 import Element.Background

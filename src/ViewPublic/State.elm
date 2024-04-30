@@ -5,4 +5,4 @@ import ViewPublic.Types exposing (..)
 
 init : ViewPublicModel
 init =
-    {}
+    { fetchedTranslations = Nothing }
