@@ -47,7 +47,6 @@ init url key =
                 InputtingText <|
                     TranslationInputModel
                         ""
-                        False
 
             -- RequestSent <| Waiting "test stuff" 1
             -- RequestSent <| RequestComplete Testing.completedRequestExample
@@ -61,6 +60,7 @@ init url key =
             , creditsCounterAnimationState = Nothing
             , authFlow = Auth.Common.Idle
             , authRedirectBaseUrl = { url | query = Nothing, fragment = Nothing }
+            , publicConsentChecked = False
             }
     in
     (case route of
@@ -193,7 +193,7 @@ update msg model =
         EditTranslation inputText ->
             ( { model
                 | translationPageModel =
-                    InputtingText { input = inputText, publicConsentChecked = False }
+                    InputtingText { input = inputText }
               }
             , Cmd.none
             )
@@ -225,7 +225,7 @@ update msg model =
                 |> Tuple.mapBoth
                     (\model_ ->
                         { model_
-                            | translationPageModel = InputtingText { input = "", publicConsentChecked = False }
+                            | translationPageModel = InputtingText { input = "" }
                         }
                     )
                     (\cmd ->
@@ -270,6 +270,11 @@ update msg model =
 
         ShowCreditCounterTooltip flag ->
             ( { model | showCreditCounterTooltip = flag }
+            , Cmd.none
+            )
+
+        SetPublicConsentChecked flag ->
+            ( { model | publicConsentChecked = flag }
             , Cmd.none
             )
 

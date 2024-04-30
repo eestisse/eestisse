@@ -13,22 +13,22 @@ import Types exposing (..)
 import Utils
 
 
-page : DisplayProfile -> TranslationPageModel -> Element FrontendMsg
-page dProfile translationPageModel =
+page : DisplayProfile -> Bool -> TranslationPageModel -> Element FrontendMsg
+page dProfile publicConsentChecked translationPageModel =
     case translationPageModel of
         InputtingText translationInputModel ->
-            viewTranslationPageInput dProfile translationInputModel
+            viewTranslationPageInput dProfile publicConsentChecked translationInputModel
 
         RequestSent requestState ->
             viewTranslationPageRequestState dProfile requestState
 
 
-viewTranslationPageInput : DisplayProfile -> TranslationInputModel -> Element FrontendMsg
-viewTranslationPageInput dProfile translationInputModel =
+viewTranslationPageInput : DisplayProfile -> Bool -> TranslationInputModel -> Element FrontendMsg
+viewTranslationPageInput dProfile publicConsentChecked translationInputModel =
     let
         submitMsgIfEnabled =
-            if translationInputModel.input /= "" && translationInputModel.publicConsentChecked then
-                Just <| SubmitText translationInputModel.publicConsentChecked translationInputModel.input
+            if translationInputModel.input /= "" && publicConsentChecked then
+                Just <| SubmitText publicConsentChecked translationInputModel.input
 
             else
                 Nothing
@@ -84,9 +84,9 @@ viewTranslationPageInput dProfile translationInputModel =
                 ]
                 [ Input.checkbox
                     []
-                    { onChange = \f -> TranslationInputModelChanged { translationInputModel | publicConsentChecked = f }
+                    { onChange = SetPublicConsentChecked
                     , icon = Input.defaultCheckbox
-                    , checked = translationInputModel.publicConsentChecked
+                    , checked = publicConsentChecked
                     , label =
                         Input.labelRight
                             [ Font.size <| responsiveVal dProfile 18 20

@@ -22,6 +22,7 @@ type alias FrontendModel =
     , authRedirectBaseUrl : Url
     , dProfile : Maybe DisplayProfile
     , translationPageModel : TranslationPageModel
+    , publicConsentChecked : Bool
     , signupState : SignupState
     , maybeAdminData : Maybe AdminData
     , animationTime : Time.Posix
@@ -64,6 +65,7 @@ type FrontendMsg
     | Animate Time.Posix
     | FiddleRandomBackroundPath Time.Posix
     | ShowCreditCounterTooltip Bool
+    | SetPublicConsentChecked Bool
 
 
 type BackendMsg
@@ -150,7 +152,6 @@ type TranslationPageModel
 
 type alias TranslationInputModel =
     { input : String
-    , publicConsentChecked : Bool
     }
 
 
