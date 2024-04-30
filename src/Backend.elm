@@ -31,7 +31,7 @@ app =
 init : ( BackendModel, Cmd BackendMsg )
 init =
     ( { nowish = Time.millisToPosix 0
-      , publicCredits = 20
+      , publicCredits = 0
       , emails_backup = Set.empty
       , emailsWithConsents = []
       , requests = []

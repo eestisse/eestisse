@@ -15,8 +15,8 @@ counterUpdateAnimationIntervalMillis =
 
 publicUsageConfig : PublicUsageConfig
 publicUsageConfig =
-    { addCreditIntervalMillis = 1000 * 60 * 5 -- 5 min
-    , addCreditAmount = 5
+    { addCreditIntervalMillis = 1000 * 60 * 10 -- 5 min
+    , addCreditAmount = 3
     , maxCapacity = 100
     }
 
