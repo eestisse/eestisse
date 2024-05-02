@@ -48,6 +48,15 @@ maybeViewTranslationList dProfile maybeTranslationRecords =
 
 viewTranslationRecordPreviewButton : DisplayProfile -> ( Int, TranslationRecord ) -> Element FrontendMsg
 viewTranslationRecordPreviewButton dProfile ( id, translationRecord ) =
+    let
+        ( inputStyles, translatedStyles ) =
+            case translationRecord.translation.translatedTo of
+                English ->
+                    ( [ Font.italic ], [] )
+
+                Estonian ->
+                    ( [], [ Font.italic ] )
+    in
     Element.column
         [ Element.padding 10
         , Element.spacing 5
@@ -60,7 +69,7 @@ viewTranslationRecordPreviewButton dProfile ( id, translationRecord ) =
         , Element.pointer
         , Events.onClick NoOpFrontendMsg
         ]
-        [ textWithCutoff translationRecord.input
+        [ Element.el inputStyles <| textWithCutoff translationRecord.input
         , hbreakElement
-        , textWithCutoff translationRecord.translation.translation
+        , Element.el translatedStyles <| textWithCutoff translationRecord.translation.translation
         ]
