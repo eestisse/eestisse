@@ -390,6 +390,7 @@ updateFromBackend msg model =
                             Just
                                 (List.append (oldVPM.fetchedTranslations |> Maybe.withDefault []) translationRecords
                                     |> List.Extra.uniqueBy Tuple.first
+                                    |> List.sortBy (Tuple.first >> negate)
                                 )
                     }
               }
