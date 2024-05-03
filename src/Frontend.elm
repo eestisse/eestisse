@@ -23,7 +23,6 @@ import Url
 import Url.Builder
 import Utils
 import View
-import ViewPublic.State as ViewPublic
 
 
 app =
@@ -48,14 +47,6 @@ init url key =
         model =
             { key = key
             , route = route
-            , translationPageModel =
-                InputtingText <|
-                    TranslationInputModel
-                        ""
-                        True
-
-            -- RequestSent <| Waiting "test stuff" 1
-            -- RequestSent <| RequestComplete Testing.completedRequestExample
             , dProfile = Nothing
             , signupState = Inactive
             , maybeAdminData = Nothing
@@ -67,8 +58,18 @@ init url key =
             , authFlow = Auth.Common.Idle
             , authRedirectBaseUrl = { url | query = Nothing, fragment = Nothing }
             , maybeAuthedUserInfo = Nothing
-            , viewPublicModel = ViewPublic.init
+            , cachedTranslationRecords = Dict.empty
+            , doTranslateModel =
+                { input = ""
+                , state = Inputting
+                }
+            , publicConsentChecked = False
+            , viewTranslationModel = { maybeSelectedBreakdownPartId = Nothing }
+            , loadingAnimationCounter = 0
             }
+
+        routeCmd =
+            arriveAtRouteCmds route model
     in
     (case route of
         Route.AuthCallback methodId ->
@@ -78,9 +79,6 @@ init url key =
                 url
                 key
                 (\msg -> Lamdera.sendToBackend (AuthToBackend msg))
-
-        Route.ViewPublic ->
-            ( model, Lamdera.sendToBackend <| RequestPublicTranslations )
 
         _ ->
             ( model, Cmd.none )
@@ -96,6 +94,7 @@ init url key =
                         Cmd.none
                     , Lamdera.sendToBackend RequestGeneralData
                     , maybeAuthCmd
+                    , routeCmd
                     ]
             )
 
@@ -128,12 +127,7 @@ update msg model =
                     Route.parseUrl url
             in
             ( { model | route = route }
-            , case route of
-                Route.ViewPublic ->
-                    Lamdera.sendToBackend <| RequestPublicTranslations
-
-                _ ->
-                    Cmd.none
+            , arriveAtRouteCmds route model
             )
 
         GotViewport viewport ->
@@ -152,17 +146,33 @@ update msg model =
             , Cmd.none
             )
 
-        TranslationInputModelChanged newModel ->
+        TranslationInputChanged s ->
             ( { model
-                | translationPageModel = InputtingText newModel
+                | doTranslateModel =
+                    let
+                        old =
+                            model.doTranslateModel
+                    in
+                    { old
+                        | input = s
+                    }
+              }
+            , Cmd.none
+            )
+
+        PublicConsentChecked flag ->
+            ( { model
+                | publicConsentChecked = flag
               }
             , Cmd.none
             )
 
         SubmitText publicConsentChecked inputText ->
             ( { model
-                | translationPageModel =
-                    RequestSent <| Waiting inputText 0
+                | doTranslateModel =
+                    { input = inputText
+                    , state = TranslateRequestSubmitted
+                    }
               }
             , Cmd.batch
                 [ Lamdera.sendToBackend <| SubmitTextForTranslation publicConsentChecked inputText
@@ -170,52 +180,41 @@ update msg model =
                 ]
             )
 
-        ShowExplanation breakdownPart ->
-            case model.translationPageModel of
-                RequestSent (RequestComplete completedRequest) ->
+        ShowExplanation breakdownPartId ->
                     ( { model
-                        | translationPageModel =
-                            RequestSent <|
-                                RequestComplete
-                                    { completedRequest
-                                        | maybeSelectedBreakdownPart =
-                                            Just breakdownPart
-                                    }
+                | viewTranslationModel =
+                    let
+                        oldVTM =
+                            model.viewTranslationModel
+                    in
+                    { oldVTM | maybeSelectedBreakdownPartId = Just breakdownPartId }
                       }
                     , plausibleEventOutCmd "breakdown-shown"
                     )
 
-                _ ->
-                    ( model, Cmd.none )
-
         CycleLoadingAnimation ->
-            case model.translationPageModel of
-                RequestSent (Waiting text animationCounter) ->
                     let
                         newAnimationCounter =
-                            if animationCounter == 3 then
+                    if model.loadingAnimationCounter == 3 then
                                 0
 
                             else
-                                animationCounter + 1
+                        model.loadingAnimationCounter + 1
                     in
-                    ( { model
-                        | translationPageModel =
-                            RequestSent <| Waiting text newAnimationCounter
-                      }
-                    , Cmd.none
-                    )
-
-                _ ->
-                    ( model, Cmd.none )
-
-        EditTranslation inputText ->
             ( { model
-                | translationPageModel =
-                    InputtingText { input = inputText, publicConsentChecked = True }
+                | loadingAnimationCounter = newAnimationCounter
               }
             , Cmd.none
             )
+
+        EditTranslation input ->
+            { model
+                | doTranslateModel =
+                    { input = input
+                    , state = Inputting
+                    }
+            }
+                |> gotoRouteAndAnimate Route.Translate
 
         StartSignup ->
             ( { model | signupState = Active blankSignupForm }
@@ -237,14 +236,21 @@ update msg model =
             )
 
         GotoRoute route ->
-            gotoRouteAndAnimate model route
+            gotoRouteAndAnimate route model
 
         GotoTranslate_FocusAndClear ->
-            gotoRouteAndAnimate model Route.Translate
+            gotoRouteAndAnimate Route.Translate model
                 |> Tuple.mapBoth
                     (\model_ ->
                         { model_
-                            | translationPageModel = InputtingText { input = "", publicConsentChecked = True }
+                            | doTranslateModel =
+                                let
+                                    old =
+                                        model.doTranslateModel
+                                in
+                                { old
+                                    | input = ""
+                                }
                         }
                     )
                     (\cmd ->
@@ -302,7 +308,7 @@ update msg model =
             ( model, Nav.load targetLink )
 
         UserIntent_ActivateMembership ->
-            gotoRouteAndAnimate model Route.Account
+            gotoRouteAndAnimate Route.Account model
 
         Logout ->
             ( model
@@ -324,33 +330,52 @@ updateFromBackend msg model =
             , Cmd.none
             )
 
-        TranslationResult inputText translationResult ->
-            case model.translationPageModel of
-                RequestSent (Waiting lastRequestedText _) ->
-                    if inputText == lastRequestedText then
-                        ( { model
-                            | translationPageModel =
-                                RequestSent <|
-                                    RequestComplete
-                                        { inputText = inputText
-                                        , translationResult = translationResult
-                                        , maybeSelectedBreakdownPart = Nothing
-                                        }
-                          }
-                        , case translationResult of
-                            Ok _ ->
-                                plausibleEventOutCmd "translation-complete"
+        TranslationResult inputText translationRecordResult ->
+            let
+                newCachedTranslationRecords =
+                    case translationRecordResult of
+                        Ok translationRecord ->
+                            model.cachedTranslationRecords
+                                |> Dict.insert
+                                    translationRecord.id
+                                    translationRecord
 
-                            Err _ ->
-                                plausibleEventOutCmd "translation-error"
+                        Err _ ->
+                            model.cachedTranslationRecords
+
+                newModel =
+                    { model
+                        | cachedTranslationRecords = newCachedTranslationRecords
+                    }
+            in
+            if model.route == Route.Translate && model.doTranslateModel.state == TranslateRequestSubmitted && inputText == model.doTranslateModel.input then
+                case translationRecordResult of
+                    Ok translationRecord ->
+                        gotoRouteAndAnimate (Route.View translationRecord.id) newModel
+                            |> Tuple.mapSecond
+                                (\cmd ->
+                                    Cmd.batch
+                                        [ cmd
+                                        , plausibleEventOutCmd "translation-complete"
+                                        ]
+                                )
+
+                    Err gptAssistError ->
+                        ( { newModel
+                            | doTranslateModel =
+                                let
+                                    old =
+                                        newModel.doTranslateModel
+                                in
+                                { old
+                                    | state = Error gptAssistError
+                                }
+                          }
+                        , plausibleEventOutCmd "translation-error"
                         )
 
                     else
-                        -- ignore; we're getting a result from an older request
-                        ( model, Cmd.none )
-
-                _ ->
-                    -- ignore, we're getting a result but the user has navigated away
+                -- ignore; the result has come back but the user has moved away from the page
                     ( model, Cmd.none )
 
         EmailSubmitAck ->
@@ -378,21 +403,24 @@ updateFromBackend msg model =
             , Cmd.none
             )
 
-        SendTranslationRecords translationRecords ->
-            ( { model
-                | viewPublicModel =
+        RequestTranslationRecordsResult translationRecordsResult ->
+            case translationRecordsResult of
+                Err errStr ->
                     let
-                        oldVPM =
-                            model.viewPublicModel
+                        _ =
+                            Debug.log "error fetching translationRecord:" errStr
                     in
-                    { oldVPM
-                        | fetchedTranslations =
-                            Just
-                                (List.append (oldVPM.fetchedTranslations |> Maybe.withDefault []) translationRecords
-                                    |> List.Extra.uniqueBy Tuple.first
-                                    |> List.sortBy (Tuple.first >> negate)
+                    ( model, Cmd.none )
+
+                Ok translationRecords ->
+                    ( { model
+                        | cachedTranslationRecords =
+                            Dict.union
+                                (translationRecords
+                                    |> List.map (\tr -> ( tr.id, tr ))
+                                    |> Dict.fromList
                                 )
-                    }
+                                model.cachedTranslationRecords
               }
             , Cmd.none
             )
@@ -409,8 +437,8 @@ startCreditCounterAnimation goingUp now model =
     }
 
 
-gotoRouteAndAnimate : FrontendModel -> Route -> ( FrontendModel, Cmd FrontendMsg )
-gotoRouteAndAnimate model route =
+gotoRouteAndAnimate : Route -> FrontendModel -> ( FrontendModel, Cmd FrontendMsg )
+gotoRouteAndAnimate route model =
     ( { model
         | route = route
         , backgroundModel =
@@ -447,8 +475,8 @@ getViewportCmd =
 subscriptions : FrontendModel -> Sub FrontendMsg
 subscriptions model =
     Sub.batch
-        [ case model.translationPageModel of
-            RequestSent (Waiting _ _) ->
+        [ case ( model.route, model.doTranslateModel.state ) of
+            ( Route.Translate, TranslateRequestSubmitted ) ->
                 Sub.batch
                     [ Time.every 900 (always CycleLoadingAnimation)
                     , Time.every 900 FiddleRandomBackroundPath
@@ -459,6 +487,24 @@ subscriptions model =
         , Browser.Events.onAnimationFrame Animate
         , Browser.Events.onResize Types.Resize
         ]
+
+
+arriveAtRouteCmds : Route -> FrontendModel -> Cmd FrontendMsg
+arriveAtRouteCmds route model =
+    case route of
+        Route.Browse ->
+            Lamdera.sendToBackend <| RequestPublicTranslations
+
+        Route.View id ->
+            case getTranslationRecord id model of
+                Just _ ->
+                    Cmd.none
+
+                Nothing ->
+                    Lamdera.sendToBackend <| RequestTranslation id
+
+        _ ->
+            Cmd.none
 
 
 port plausible_event_out : String -> Cmd msg

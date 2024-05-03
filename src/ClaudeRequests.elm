@@ -1,9 +1,9 @@
 module ClaudeRequests exposing (..)
 
-import CommonTypes exposing (..)
 import Http
 import Json.Decode
 import Json.Encode
+import Translation.Types exposing (..)
 import Utils
 
 
@@ -237,6 +237,8 @@ translationDecoder : Json.Decode.Decoder Translation
 translationDecoder =
     Json.Decode.map3
         Translation
+        (Json.Decode.field "translated to" englishOrEstonianDecoder)
+        (Json.Decode.field "translation" Json.Decode.string)
         (Json.Decode.field "breakdown"
             (Json.Decode.list
                 (Utils.decode3Tuple
@@ -248,8 +250,6 @@ translationDecoder =
                 )
             )
         )
-        (Json.Decode.field "translation" Json.Decode.string)
-        (Json.Decode.field "translated to" englishOrEstonianDecoder)
 
 
 englishOrEstonianDecoder : Json.Decode.Decoder EnglishOrEstonian

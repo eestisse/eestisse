@@ -1,6 +1,6 @@
 module Testing exposing (..)
 
-import CommonTypes exposing (..)
+import Translation.Types exposing (..)
 import Types exposing (..)
 
 
@@ -16,7 +16,9 @@ completedRequestExample =
 
 translation : Translation
 translation =
-    { breakdown =
+    { translatedTo = English
+    , translatedText = "my name is Logan"
+    , breakdown =
         [ { estonian = "minu"
           , englishTranslation = "my"
           , maybeExplanation = Nothing
@@ -34,36 +36,4 @@ translation =
           , maybeExplanation = Just "some explanation here some explanation here some explanation here some explanation here some explanation here some explanation here some explanation here some explanation here some explanation here some explanation here some explanation here some explanation here some explanation here some explanation here some explanation here some explanation here some explanation here some explanation here some explanation here some explanation here some explanation here some explanation here some explanation here some explanation here "
           }
         ]
-    , translation = "my name is Logan"
-    , translatedTo = English
-    }
-
-
-completedRequestExample2 : CompletedRequest
-completedRequestExample2 =
-    { inputText = ""
-    , translationResult =
-        Ok <|
-            { breakdown =
-                [ { estonian = "minu"
-                  , englishTranslation = "my"
-                  , maybeExplanation = Nothing
-                  }
-                , { estonian = "nimi"
-                  , englishTranslation = "is"
-                  , maybeExplanation = Just "some explanation here some explanation here some explanation here some explanation here some explanation here some explanation here "
-                  }
-                , { estonian = "on"
-                  , englishTranslation = "is"
-                  , maybeExplanation = Just "some explanation here some explanation here some explanation here some explanation here some explanation here some explanation here "
-                  }
-                , { estonian = "Logan Logan Logan Logan Logan Logan Logan Logan Logan Logan Logan Logan Logan Logan Logan Logan Logan Logan Logan "
-                  , englishTranslation = "is is is is is is is is is is is is is is is is is is is is is is is is is is is is is is is is is is is is "
-                  , maybeExplanation = Just "some explanation here some explanation here some explanation here some explanation here some explanation here some explanation here "
-                  }
-                ]
-            , translation = "my name is Logan"
-            , translatedTo = English
-            }
-    , maybeSelectedBreakdownPart = Nothing
     }

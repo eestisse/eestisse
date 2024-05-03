@@ -1,5 +1,6 @@
 module Route exposing (..)
 
+import Translation.Types exposing (..)
 import Url exposing (Url)
 import Url.Builder
 import Url.Parser as Parser exposing ((</>), Parser)
@@ -11,7 +12,8 @@ type Route
     | Admin
     | AuthCallback String
     | Account
-    | ViewPublic
+    | Browse
+    | View Int
     | BadRoute
 
 
@@ -32,8 +34,9 @@ matchRoute =
         , Parser.map Translate (Parser.s "translate")
         , Parser.map Admin (Parser.s "admin")
         , Parser.map AuthCallback (Parser.s "login" </> Parser.string </> Parser.s "callback")
-        , Parser.map ViewPublic (Parser.s "public_")
+        , Parser.map Browse (Parser.s "browse")
         , Parser.map Account (Parser.s "account")
+        , Parser.map View (Parser.s "view" </> Parser.int)
         ]
 
 
@@ -56,8 +59,11 @@ routeToString route =
             Account ->
                 [ "account" ]
 
-            ViewPublic ->
-                [ "public_" ]
+            Browse ->
+                [ "browse" ]
+
+            View id ->
+                [ "view", String.fromInt id ]
 
             BadRoute ->
                 [ "badroute" ]

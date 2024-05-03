@@ -6,7 +6,6 @@ import Background.Types as Background
 import Browser exposing (UrlRequest)
 import Browser.Dom
 import Browser.Navigation exposing (Key)
-import CommonTypes exposing (..)
 import Dict exposing (Dict)
 import Http
 import Lamdera exposing (ClientId, SessionId)
@@ -15,8 +14,8 @@ import Route exposing (Route)
 import Set exposing (Set)
 import Stripe.Types as Stripe
 import Time
+import Translation.Types exposing (..)
 import Url exposing (Url)
-import ViewPublic.Types as ViewPublic
 
 
 type alias FrontendModel =
@@ -26,7 +25,6 @@ type alias FrontendModel =
     , authRedirectBaseUrl : Url
     , maybeAuthedUserInfo : Maybe FrontendUserInfo
     , dProfile : Maybe DisplayProfile
-    , translationPageModel : TranslationPageModel
     , signupState : SignupState
     , maybeAdminData : Maybe AdminData
     , animationTime : Time.Posix
@@ -34,7 +32,11 @@ type alias FrontendModel =
     , publicCredits : Maybe Int
     , showCreditCounterTooltip : Bool
     , creditsCounterAnimationState : Maybe CreditsCounterAnimationState
-    , viewPublicModel : ViewPublic.ViewPublicModel
+    , cachedTranslationRecords : Dict Int TranslationRecord
+    , doTranslateModel : DoTranslateModel
+    , publicConsentChecked : Bool
+    , viewTranslationModel : ViewTranslationModel
+    , loadingAnimationCounter : Int
     }
 
 
@@ -43,8 +45,8 @@ type alias BackendModel =
     , publicCredits : Int
     , emails_backup : Set String
     , emailsWithConsents : List EmailAndConsents
-    , allRequests : List ( Time.Posix, ( String, Bool ), Result GptAssistError Translation )
-    , publicTranslations : Array TranslationRecord
+    , preConsentRequests : List ( Time.Posix, String, Result GptAssistError Translation )
+    , translationRecords : Array TranslationRecord
     , pendingAuths : Dict Lamdera.SessionId Auth.Common.PendingAuth
     , authedSessions : Dict Lamdera.SessionId Int
     , users : Dict Int UserInfo
@@ -61,9 +63,10 @@ type FrontendMsg
     | UrlChanged Url
     | GotViewport Browser.Dom.Viewport
     | Resize Int Int
-    | TranslationInputModelChanged TranslationInputModel
+    | TranslationInputChanged String
+    | PublicConsentChecked Bool
     | SubmitText Bool String
-    | ShowExplanation BreakdownPart
+    | ShowExplanation Int
     | CycleLoadingAnimation
     | EditTranslation String
     | GotoRoute Route
@@ -82,7 +85,7 @@ type FrontendMsg
 type BackendMsg
     = NoOpBackendMsg
     | AuthBackendMsg Auth.Common.BackendMsg
-    | GptResponseReceived ClientId Bool String (Result Http.Error String)
+    | GptResponseReceived ( SessionId, ClientId ) Bool String (Result Http.Error String)
     | AddPublicCredits
     | UpdateNow Time.Posix
     | OnConnect SessionId ClientId
@@ -98,18 +101,35 @@ type ToBackend
     | RequestGeneralData
     | DoLogout
     | RequestPublicTranslations
+    | RequestTranslation Int
 
 
 type ToFrontend
     = NoOpToFrontend
     | AuthToFrontend Auth.Common.ToFrontend
     | AuthSuccess FrontendUserInfo
-    | TranslationResult String (Result GptAssistError Translation)
+    | TranslationResult String (Result GptAssistError TranslationRecord)
     | EmailSubmitAck
     | AdminDataMsg AdminData
     | GeneralDataMsg GeneralData
     | CreditsUpdated Int
-    | SendTranslationRecords (List ( Int, TranslationRecord ))
+    | RequestTranslationRecordsResult (Result String (List TranslationRecord))
+
+
+type alias DoTranslateModel =
+    { input : String
+    , state : DoTranslateState
+    }
+
+
+type DoTranslateState
+    = Inputting
+    | TranslateRequestSubmitted
+    | Error GptAssistError
+
+
+type alias ViewTranslationModel =
+    { maybeSelectedBreakdownPartId : Maybe Int }
 
 
 type alias PaidInvoice =
@@ -140,8 +160,6 @@ type alias StripeInfo =
 
 type alias AdminData =
     { emailsAndConsents : List ( String, Int )
-    , translationSuccesses : Int
-    , translationErrors : Int
     }
 
 
@@ -181,17 +199,6 @@ blankSignupForm =
         ""
         False
         False
-
-
-type TranslationPageModel
-    = InputtingText TranslationInputModel
-    | RequestSent RequestState
-
-
-type alias TranslationInputModel =
-    { input : String
-    , publicConsentChecked : Bool
-    }
 
 
 type RequestState
@@ -252,3 +259,8 @@ maybeFrontendUserHasActiveMembership maybeFrontendUserInfo =
 
                 _ ->
                     False
+
+
+getTranslationRecord : Int -> FrontendModel -> Maybe TranslationRecord
+getTranslationRecord id model =
+    Dict.get id model.cachedTranslationRecords

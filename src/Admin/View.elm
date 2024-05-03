@@ -51,8 +51,4 @@ page maybeNumbers =
                         |> Element.column
                             [ Element.spacing 40
                             ]
-                    , Element.column []
-                        [ Element.text <| "Successful translations: " ++ String.fromInt adminData.translationSuccesses
-                        , Element.text <| "translations errors: " ++ String.fromInt adminData.translationErrors
-                        ]
                     ]

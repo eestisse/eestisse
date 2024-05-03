@@ -3,10 +3,12 @@ module View exposing (..)
 import Account.View
 import Admin.View
 import Background.View
+import Browse.View
 import Browser
 import Colors
 import CommonView exposing (..)
 import Config
+import Dict exposing (Dict)
 import Element exposing (Attribute, Element)
 import Element.Background
 import Element.Border as Border
@@ -18,10 +20,10 @@ import Landing.View
 import Responsive exposing (..)
 import Route exposing (Route)
 import Time
-import Translate.View
+import Translation.Types exposing (..)
+import Translation.View
 import Types exposing (..)
 import Utils
-import ViewPublic.View
 
 
 root : FrontendModel -> Browser.Document FrontendMsg
@@ -119,7 +121,7 @@ view dProfile model =
                 ]
             , case model.route of
                 Route.Translate ->
-                    Translate.View.page dProfile model.maybeAuthedUserInfo model.translationPageModel
+                    Translation.View.viewDoTranslatePage dProfile model.maybeAuthedUserInfo model.doTranslateModel model.publicConsentChecked model.loadingAnimationCounter
 
                 Route.Landing ->
                     Landing.View.page dProfile model.signupState
@@ -133,8 +135,16 @@ view dProfile model =
                 Route.Account ->
                     Account.View.page dProfile model
 
-                Route.ViewPublic ->
-                    ViewPublic.View.page dProfile model.viewPublicModel
+                Route.Browse ->
+                    Browse.View.page dProfile model.cachedTranslationRecords
+
+                Route.View id ->
+                    case getTranslationRecord id model of
+                        Just translationRecord ->
+                            Translation.View.viewTranslationPage dProfile translationRecord model.viewTranslationModel
+
+                        Nothing ->
+                            Translation.View.viewLoadingTranslationPage dProfile
 
                 Route.BadRoute ->
                     viewBadRoute

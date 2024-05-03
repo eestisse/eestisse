@@ -4,7 +4,6 @@ import Array exposing (Array)
 import Array.Extra
 import Auth
 import Auth.Flow
-import CommonTypes exposing (..)
 import Config
 import Dict exposing (Dict)
 import Dict.Extra
@@ -17,7 +16,9 @@ import Result.Extra
 import Set
 import Stripe.Types as Stripe
 import Stripe.Utils as Stripe
+import Testing
 import Time
+import Translation.Types exposing (..)
 import Types exposing (..)
 import Utils
 
@@ -34,11 +35,11 @@ app =
 init : ( BackendModel, Cmd BackendMsg )
 init =
     ( { nowish = Time.millisToPosix 0
-      , publicCredits = 0
+      , publicCredits = 10
       , emails_backup = Set.empty
       , emailsWithConsents = []
-      , allRequests = []
-      , publicTranslations = Array.empty
+      , preConsentRequests = []
+      , translationRecords = Array.empty
       , pendingAuths = Dict.empty
       , authedSessions = Dict.empty
       , users = Dict.empty
@@ -80,26 +81,25 @@ update msg model =
         AuthBackendMsg authMsg ->
             Auth.Flow.backendUpdate (Auth.backendConfig model) authMsg
 
-        GptResponseReceived clientId publicConsentChecked input fetchResult ->
+        GptResponseReceived ( sessionId, clientId ) publicConsentChecked input fetchResult ->
             let
-                gptResult =
+                translationRecordResult =
                     GPTRequests.processGptResponse fetchResult
+                        |> Result.map
+                            (TranslationRecord (Array.length model.translationRecords) (sessionIdToMaybeUserId sessionId model) publicConsentChecked model.nowish input)
+
+                newTranslationRecords =
+                    case translationRecordResult of
+                        Ok newRecord ->
+                            model.translationRecords
+                                |> Array.push newRecord
+
+                        Err _ ->
+                            model.translationRecords
 
                 modelWithResult =
                     { model
-                        | allRequests = model.allRequests |> List.append [ ( model.nowish, ( input, publicConsentChecked ), gptResult ) ]
-                        , publicTranslations =
-                            if publicConsentChecked then
-                                case gptResult of
-                                    Ok translation ->
-                                        model.publicTranslations
-                                            |> Array.push (TranslationRecord model.nowish input translation)
-
-                                    Err _ ->
-                                        model.publicTranslations
-
-                            else
-                                model.publicTranslations
+                        | translationRecords = newTranslationRecords
                     }
 
                 ( newModel, bcastCmd ) =
@@ -113,7 +113,7 @@ update msg model =
             ( newModel
             , Cmd.batch
                 [ Lamdera.sendToFrontend clientId
-                    (TranslationResult input <| gptResult)
+                    (TranslationResult input <| translationRecordResult)
                 , bcastCmd
                 ]
             )
@@ -189,6 +189,10 @@ update msg model =
 
 updateFromFrontend : SessionId -> ClientId -> ToBackend -> BackendModel -> ( BackendModel, Cmd BackendMsg )
 updateFromFrontend sessionId clientId msg model =
+    let
+        maybeUserId =
+            sessionIdToMaybeUserId sessionId model
+    in
     case msg of
         NoOpToBackend ->
             ( model, Cmd.none )
@@ -202,7 +206,7 @@ updateFromFrontend sessionId clientId msg model =
                     |> deductOneCreditAndBroadcast
                     |> Tuple.mapSecond
                         (\bcastCmd ->
-                            Cmd.batch [ bcastCmd, requestGptTranslationCmd clientId publicConsentChecked input ]
+                            Cmd.batch [ bcastCmd, requestGptTranslationCmd ( sessionId, clientId ) publicConsentChecked input ]
                         )
 
             else
@@ -234,18 +238,6 @@ updateFromFrontend sessionId clientId msg model =
                             |> List.Extra.unique
                             |> List.map Tuple.second
                             |> List.Extra.frequencies
-                    , translationSuccesses =
-                        model.allRequests
-                            |> List.Extra.count
-                                (\( _, _, result ) ->
-                                    Result.Extra.isOk result
-                                )
-                    , translationErrors =
-                        model.allRequests
-                            |> List.Extra.count
-                                (\( _, _, result ) ->
-                                    Result.Extra.isErr result
-                                )
                     }
             )
 
@@ -262,14 +254,37 @@ updateFromFrontend sessionId clientId msg model =
         RequestPublicTranslations ->
             ( model
             , Lamdera.sendToFrontend clientId <|
-                SendTranslationRecords <|
-                    (model.publicTranslations
-                        |> Array.indexedMap Tuple.pair
-                        |> Array.Extra.reverse
-                        |> Array.Extra.sliceUntil 20
-                        |> Array.toList
-                    )
+                RequestTranslationRecordsResult <|
+                    Ok <|
+                        (model.translationRecords
+                            |> Array.filter (\tr -> tr.public)
+                            |> Array.Extra.reverse
+                            |> Array.Extra.sliceUntil 20
+                            |> Array.toList
+                        )
             )
+
+        RequestTranslation id ->
+            case Array.get id model.translationRecords of
+                Nothing ->
+                    ( model, Cmd.none )
+
+                Just translationRecord ->
+                    let
+                        hasPermission =
+                            translationRecord.public || (maybeUserId == translationRecord.fromUserId)
+                    in
+                    ( model
+                    , if hasPermission then
+                        Lamdera.sendToFrontend clientId <|
+                            RequestTranslationRecordsResult <|
+                                Ok <|
+                                    List.singleton <|
+                                        translationRecord
+
+                      else
+                        Lamdera.sendToFrontend clientId <| RequestTranslationRecordsResult <| Err "You don't have permission to view that translation"
+                    )
 
 
 handleStripeWebhook : Stripe.StripeEvent -> BackendModel -> ( Result Http.Error String, BackendModel, Cmd BackendMsg )
@@ -378,14 +393,14 @@ signupFormToEmailAndConsets signupForm =
 --         }
 
 
-requestGptTranslationCmd : ClientId -> Bool -> String -> Cmd BackendMsg
-requestGptTranslationCmd clientId publicConsentChecked inputText =
+requestGptTranslationCmd : ( SessionId, ClientId ) -> Bool -> String -> Cmd BackendMsg
+requestGptTranslationCmd sessionAndClientId publicConsentChecked inputText =
     Http.request
         { method = "POST"
         , headers = [ Http.header "Authorization" ("Bearer " ++ Env.openaiApiKey) ]
         , url = "https://api.openai.com/v1/chat/completions"
         , body = Http.jsonBody <| GPTRequests.encode <| GPTRequests.translateFromEstonian inputText
-        , expect = Http.expectJson (GptResponseReceived clientId publicConsentChecked inputText) GPTRequests.apiResponseDecoder
+        , expect = Http.expectJson (GptResponseReceived sessionAndClientId publicConsentChecked inputText) GPTRequests.apiResponseDecoder
         , timeout = Nothing
         , tracker = Nothing
         }
@@ -426,3 +441,9 @@ subscriptions _ =
         , Time.every 1000 UpdateNow
         , Lamdera.onConnect OnConnect
         ]
+
+
+sessionIdToMaybeUserId : SessionId -> BackendModel -> Maybe Int
+sessionIdToMaybeUserId sessionId model =
+    model.authedSessions
+        |> Dict.get sessionId

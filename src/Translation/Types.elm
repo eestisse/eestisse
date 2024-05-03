@@ -1,4 +1,4 @@
-module CommonTypes exposing (..)
+module Translation.Types exposing (..)
 
 import Http
 import Time
@@ -21,14 +21,17 @@ type alias BreakdownPart =
 
 
 type alias Translation =
-    { breakdown : Breakdown
-    , translation : String
-    , translatedTo : EnglishOrEstonian
+    { translatedTo : EnglishOrEstonian
+    , translatedText : String
+    , breakdown : Breakdown
     }
 
 
 type alias TranslationRecord =
-    { time : Time.Posix
+    { id : Int
+    , fromUserId : Maybe Int
+    , public : Bool
+    , time : Time.Posix
     , input : String
     , translation : Translation
     }
@@ -44,3 +47,8 @@ type GptAssistError
 type ProtocolError
     = RateLimited
     | HttpError Http.Error
+
+
+type PublicOrPersonal
+    = Public
+    | Personal
