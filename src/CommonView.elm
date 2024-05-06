@@ -4,6 +4,7 @@ import Colors
 import Element exposing (Attribute, Element)
 import Element.Background as Background
 import Element.Border as Border
+import Element.Events as Events
 import Element.Font as Font
 import Element.Input as Input
 import Html
@@ -252,3 +253,11 @@ textWithCutoff s =
             , Html.Attributes.style "flex-basis" "auto"
             ]
             [ Html.text s ]
+
+
+actionLink : String -> msg -> Element msg
+actionLink text msg =
+    Element.el
+        (linkAttributes ++ [ Element.pointer, Events.onClick msg ])
+    <|
+        Element.text text

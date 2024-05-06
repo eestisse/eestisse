@@ -85,7 +85,7 @@ view dProfile model =
                             , Border.rounded 10
                             , Element.Background.color <| Colors.lightBlue
                             ]
-                            { onPress = Just <| GotoRoute Route.Landing
+                            { onPress = Just <| GotoRouteAndAnimate Route.Landing
                             , label =
                                 Element.image
                                     [ Element.height <| Element.px <| responsiveVal dProfile 20 30
@@ -101,11 +101,11 @@ view dProfile model =
                     titleElement dProfile (model.route == Route.Landing)
                 , Element.el [ Element.width Element.fill ] <|
                     if model.route == Route.Translate then
-                        case model.publicCredits of
+                        case model.maybePublicCreditsInfo of
                             Nothing ->
                                 Element.none
 
-                            Just publicCredits ->
+                            Just publicCreditsInfo ->
                                 let
                                     maybeCounterAnimationStateAndTime =
                                         model.creditsCounterAnimationState
@@ -114,14 +114,14 @@ view dProfile model =
                                                     ( state, model.animationTime )
                                                 )
                                 in
-                                viewPublicCredits dProfile model.showCreditCounterTooltip publicCredits maybeCounterAnimationStateAndTime
+                                viewPublicCredits dProfile model.showCreditCounterTooltip publicCreditsInfo.current maybeCounterAnimationStateAndTime
 
                     else
                         Element.none
                 ]
             , case model.route of
                 Route.Translate ->
-                    Translation.View.viewDoTranslatePage dProfile model.maybeAuthedUserInfo model.doTranslateModel model.publicConsentChecked model.loadingAnimationCounter
+                    Translation.View.viewDoTranslatePage dProfile model.maybePublicCreditsInfo model.time_updatePerSecond model.maybeAuthedUserInfo model.doTranslateModel model.publicConsentChecked model.loadingAnimationCounter
 
                 Route.Landing ->
                     Landing.View.page dProfile model.signupState
@@ -267,7 +267,7 @@ titleElement dProfile showSubtitle =
                 }
             , Element.Background.color Colors.lightBlue
             ]
-            { onPress = Just <| GotoRoute Route.Landing
+            { onPress = Just <| GotoRouteAndAnimate Route.Landing
             , label =
                 CommonView.coloredEestisseText
                     [ Font.size <| responsiveVal dProfile 28 42
@@ -298,7 +298,7 @@ routeLinkElement text color route =
         , Font.color <| Element.rgb 1 1 1
         , Font.size 20
         ]
-        { onPress = Just <| GotoRoute route
+        { onPress = Just <| GotoRouteAndAnimate route
         , label = Element.text text
         }
 

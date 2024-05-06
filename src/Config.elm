@@ -2,7 +2,7 @@ module Config exposing (..)
 
 
 type alias PublicUsageConfig =
-    { addCreditIntervalMillis : Float
+    { addCreditIntervalMillis : Int
     , addCreditAmount : Int
     , maxCapacity : Int
     }
@@ -15,9 +15,9 @@ counterUpdateAnimationIntervalMillis =
 
 publicUsageConfig : PublicUsageConfig
 publicUsageConfig =
-    { addCreditIntervalMillis = 1000 * 60 * 10 -- 5 min
-    , addCreditAmount = 3
-    , maxCapacity = 100
+    { addCreditIntervalMillis = 1000 * 60 * 5 -- 5 min
+    , addCreditAmount = 2
+    , maxCapacity = 20
     }
 
 

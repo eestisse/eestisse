@@ -28,8 +28,9 @@ type alias FrontendModel =
     , signupState : SignupState
     , maybeAdminData : Maybe AdminData
     , animationTime : Time.Posix
+    , time_updatePerSecond : Time.Posix
     , backgroundModel : Maybe Background.Model
-    , publicCredits : Maybe Int
+    , maybePublicCreditsInfo : Maybe PublicCreditsInfo
     , showCreditCounterTooltip : Bool
     , creditsCounterAnimationState : Maybe CreditsCounterAnimationState
     , cachedTranslationRecords : Dict Int TranslationRecord
@@ -42,7 +43,7 @@ type alias FrontendModel =
 
 type alias BackendModel =
     { nowish : Time.Posix
-    , publicCredits : Int
+    , publicCreditsInfo : PublicCreditsInfo
     , emails_backup : Set String
     , emailsWithConsents : List EmailAndConsents
     , preConsentRequests : List ( Time.Posix, String, Result GptAssistError Translation )
@@ -69,7 +70,7 @@ type FrontendMsg
     | ShowExplanation Int
     | CycleLoadingAnimation
     | EditTranslation String
-    | GotoRoute Route
+    | GotoRouteAndAnimate Route
     | GotoTranslate_FocusAndClear
     | StartSignup
     | SubmitSignupClicked SignupFormModel
@@ -80,14 +81,16 @@ type FrontendMsg
     | ShowCreditCounterTooltip Bool
     | TriggerStripePayment Int
     | UserIntent_ActivateMembership
+    | UpdateFrontendNow Time.Posix
 
 
 type BackendMsg
     = NoOpBackendMsg
+    | InitialTimeVal Time.Posix
     | AuthBackendMsg Auth.Common.BackendMsg
     | GptResponseReceived ( SessionId, ClientId ) Bool String (Result Http.Error String)
     | AddPublicCredits
-    | UpdateNow Time.Posix
+    | UpdateBackendNow Time.Posix
     | OnConnect SessionId ClientId
     | SubscriptionDataReceived (Result Http.Error Stripe.SubscriptionData)
 
@@ -112,7 +115,7 @@ type ToFrontend
     | EmailSubmitAck
     | AdminDataMsg AdminData
     | GeneralDataMsg GeneralData
-    | CreditsUpdated Int
+    | CreditsInfoUpdated PublicCreditsInfo
     | RequestTranslationRecordsResult (Result String (List TranslationRecord))
 
 
@@ -170,7 +173,7 @@ type alias CreditsCounterAnimationState =
 
 
 type alias GeneralData =
-    { publicCredits : Int }
+    { publicCreditsInfo : PublicCreditsInfo }
 
 
 type alias EmailAndConsents =
@@ -190,6 +193,13 @@ type alias SignupFormModel =
     { emailInput : String
     , newFeaturesConsentChecked : Bool
     , userInterviewsConsentChecked : Bool
+    }
+
+
+type alias PublicCreditsInfo =
+    { current : Int
+    , nextRefresh : Time.Posix
+    , refreshAmount : Int
     }
 
 

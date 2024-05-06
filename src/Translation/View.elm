@@ -10,6 +10,9 @@ import Element.Font as Font
 import Element.Input as Input
 import List.Extra
 import Responsive exposing (..)
+import Route
+import Time
+import Time.Extra
 import Translation.Types exposing (..)
 import Types exposing (..)
 import Utils
@@ -26,11 +29,20 @@ viewLoadingTranslationPage dProfile =
             Element.text "Fetching translation..."
 
 
-viewDoTranslatePage : DisplayProfile -> Maybe FrontendUserInfo -> DoTranslateModel -> Bool -> Int -> Element FrontendMsg
-viewDoTranslatePage dProfile maybeAuthedUserInfo doTranslateModel publicConsentChecked animationCounter =
+viewDoTranslatePage : DisplayProfile -> Maybe PublicCreditsInfo -> Time.Posix -> Maybe FrontendUserInfo -> DoTranslateModel -> Bool -> Int -> Element FrontendMsg
+viewDoTranslatePage dProfile maybePublicCreditsInfo now maybeAuthedUserInfo doTranslateModel publicConsentChecked animationCounter =
     case doTranslateModel.state of
         Inputting ->
-            viewTranslateInputPage dProfile maybeAuthedUserInfo doTranslateModel.input publicConsentChecked
+            case maybePublicCreditsInfo of
+                Just publicCreditsInfo ->
+                    if publicCreditsInfo.current == 0 then
+                        viewNoCreditsPage dProfile publicCreditsInfo now
+
+                    else
+                        viewTranslateInputPage dProfile maybeAuthedUserInfo doTranslateModel.input publicConsentChecked
+
+                Nothing ->
+                    viewTranslateInputPage dProfile maybeAuthedUserInfo doTranslateModel.input publicConsentChecked
 
         TranslateRequestSubmitted ->
             viewWaitingForResponsePage dProfile doTranslateModel.input animationCounter
@@ -235,10 +247,7 @@ viewTranslateInputPage dProfile maybeAuthedUserInfo input publicConsentChecked =
                             [ Element.row
                                 [ Element.centerX ]
                                 [ Element.text "You must have an "
-                                , Element.el
-                                    (linkAttributes ++ [ Element.pointer, Events.onClick UserIntent_ActivateMembership ])
-                                  <|
-                                    Element.text "active membership"
+                                , actionLink "active membership" UserIntent_ActivateMembership
                                 ]
                             , Element.el [ Element.centerX ] <| Element.text "to process translations privately."
                             ]
@@ -475,3 +484,59 @@ translateButton maybeSubmitMsg =
     mainActionButton
         "Translate"
         maybeSubmitMsg
+
+
+viewNoCreditsPage : DisplayProfile -> PublicCreditsInfo -> Time.Posix -> Element FrontendMsg
+viewNoCreditsPage dProfile publicCreditsInfo now =
+    primaryBox
+        [ Element.width Element.fill ]
+    <|
+        Element.column
+            [ Element.centerX
+            , Element.spacing 20
+            , Font.size <| responsiveVal dProfile 14 18
+            ]
+            [ Element.paragraph [ Font.size <| responsiveVal dProfile 20 24 ] [ Element.text "No more public translate credits available!" ]
+            , Element.column
+                [ Element.spacing 10 ]
+                [ Element.text "You can:"
+                , bulletPointList
+                    (responsiveVal dProfile 14 18)
+                    [ Element.paddingEach
+                        { left = 10
+                        , right = 0
+                        , bottom = 0
+                        , top = 0
+                        }
+                    ]
+                    [ Element.paragraph []
+                        [ actionLink "Subscribe (3€/month)" UserIntent_ActivateMembership
+                        , Element.text " for unlimited personal translations and more!"
+                        ]
+                    , Element.paragraph []
+                        [ actionLink "Check out other users' translations" <| GotoRouteAndAnimate Route.Browse
+                        ]
+                    , Element.paragraph []
+                        [ Element.text <| "Wait until a few more public translation credits trickle in (" ++ newCreditsArrivingString publicCreditsInfo now ++ ")"
+                        ]
+                    ]
+                ]
+            ]
+
+
+newCreditsArrivingString : PublicCreditsInfo -> Time.Posix -> String
+newCreditsArrivingString publicCreditsInfo now =
+    let
+        totalSecondsDiff =
+            Time.Extra.diff Time.Extra.Second Time.utc now publicCreditsInfo.nextRefresh
+
+        minutesLeft =
+            totalSecondsDiff // 60
+
+        secondsLeft =
+            totalSecondsDiff - (minutesLeft * 60)
+
+        timeStr =
+            String.fromInt minutesLeft ++ ":" ++ String.padLeft 2 '0' (String.fromInt secondsLeft)
+    in
+    String.fromInt publicCreditsInfo.refreshAmount ++ " more arriving in " ++ timeStr

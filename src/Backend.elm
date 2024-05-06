@@ -16,6 +16,7 @@ import Result.Extra
 import Set
 import Stripe.Types as Stripe
 import Stripe.Utils as Stripe
+import Task
 import Testing
 import Time
 import Translation.Types exposing (..)
@@ -35,7 +36,11 @@ app =
 init : ( BackendModel, Cmd BackendMsg )
 init =
     ( { nowish = Time.millisToPosix 0
-      , publicCredits = 10
+      , publicCreditsInfo =
+            { current = 0
+            , nextRefresh = Time.millisToPosix 0
+            , refreshAmount = Config.publicUsageConfig.addCreditAmount
+            }
       , emails_backup = Set.empty
       , emailsWithConsents = []
       , preConsentRequests = []
@@ -46,7 +51,8 @@ init =
       , nextUserId = 0
       , hangingInvoices = []
       }
-    , Cmd.none
+    , Time.now
+        |> Task.perform InitialTimeVal
     )
 
 
@@ -56,7 +62,22 @@ update msg model =
         NoOpBackendMsg ->
             ( model, Cmd.none )
 
-        UpdateNow time ->
+        InitialTimeVal t ->
+            ( { model
+                | nowish = t
+                , publicCreditsInfo =
+                    { current = 0
+                    , nextRefresh =
+                        Time.posixToMillis t
+                            + Config.publicUsageConfig.addCreditIntervalMillis
+                            |> Time.millisToPosix
+                    , refreshAmount = Config.publicUsageConfig.addCreditAmount
+                    }
+              }
+            , Cmd.none
+            )
+
+        UpdateBackendNow time ->
             ( { model | nowish = time }
             , Cmd.none
             )
@@ -123,17 +144,22 @@ update msg model =
                 newPublicCredits =
                     min
                         Config.publicUsageConfig.maxCapacity
-                        (model.publicCredits + Config.publicUsageConfig.addCreditAmount)
+                        (model.publicCreditsInfo.current + Config.publicUsageConfig.addCreditAmount)
+
+                newPublicCreditsInfo =
+                    { current = newPublicCredits
+                    , nextRefresh =
+                        Time.posixToMillis model.nowish
+                            + Config.publicUsageConfig.addCreditIntervalMillis
+                            |> Time.millisToPosix
+                    , refreshAmount = Config.publicUsageConfig.addCreditAmount
+                    }
             in
             ( { model
-                | publicCredits =
-                    newPublicCredits
+                | publicCreditsInfo =
+                    newPublicCreditsInfo
               }
-            , if newPublicCredits /= model.publicCredits then
-                Lamdera.broadcast <| CreditsUpdated newPublicCredits
-
-              else
-                Cmd.none
+            , Lamdera.broadcast <| CreditsInfoUpdated newPublicCreditsInfo
             )
 
         SubscriptionDataReceived result ->
@@ -201,7 +227,7 @@ updateFromFrontend sessionId clientId msg model =
             Auth.Flow.updateFromFrontend (Auth.backendConfig model) clientId sessionId authToBackend model
 
         SubmitTextForTranslation publicConsentChecked input ->
-            if model.publicCredits > 0 then
+            if model.publicCreditsInfo.current > 0 then
                 model
                     |> deductOneCreditAndBroadcast
                     |> Tuple.mapSecond
@@ -245,7 +271,7 @@ updateFromFrontend sessionId clientId msg model =
             ( model
             , Lamdera.sendToFrontend clientId <|
                 GeneralDataMsg <|
-                    GeneralData model.publicCredits
+                    GeneralData model.publicCreditsInfo
             )
 
         DoLogout ->
@@ -408,20 +434,30 @@ requestGptTranslationCmd sessionAndClientId publicConsentChecked inputText =
 
 deductOneCreditAndBroadcast : BackendModel -> ( BackendModel, Cmd BackendMsg )
 deductOneCreditAndBroadcast model =
-    modifyCreditBalanceAndBroadcast (model.publicCredits - 1) model
+    modifyCreditBalanceAndBroadcast (model.publicCreditsInfo.current - 1) model
 
 
 refundOneCreditAndBroadcast : BackendModel -> ( BackendModel, Cmd BackendMsg )
 refundOneCreditAndBroadcast model =
-    modifyCreditBalanceAndBroadcast (model.publicCredits + 1) model
+    modifyCreditBalanceAndBroadcast (model.publicCreditsInfo.current + 1) model
 
 
 modifyCreditBalanceAndBroadcast : Int -> BackendModel -> ( BackendModel, Cmd BackendMsg )
 modifyCreditBalanceAndBroadcast newCredits model =
+    let
+        newPublicCreditsInfo =
+            let
+                old =
+                    model.publicCreditsInfo
+            in
+            { old
+                | current = newCredits
+            }
+    in
     ( { model
-        | publicCredits = newCredits
+        | publicCreditsInfo = newPublicCreditsInfo
       }
-    , Lamdera.broadcast <| CreditsUpdated newCredits
+    , Lamdera.broadcast <| CreditsInfoUpdated newPublicCreditsInfo
     )
 
 
@@ -437,8 +473,8 @@ notifyAdminOfError s =
 subscriptions : BackendModel -> Sub BackendMsg
 subscriptions _ =
     Sub.batch
-        [ Time.every Config.publicUsageConfig.addCreditIntervalMillis (always AddPublicCredits)
-        , Time.every 1000 UpdateNow
+        [ Time.every (toFloat Config.publicUsageConfig.addCreditIntervalMillis) (always AddPublicCredits)
+        , Time.every 1000 UpdateBackendNow
         , Lamdera.onConnect OnConnect
         ]
 

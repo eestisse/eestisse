@@ -51,8 +51,9 @@ init url key =
             , signupState = Inactive
             , maybeAdminData = Nothing
             , animationTime = Time.millisToPosix 0
+            , time_updatePerSecond = Time.millisToPosix 0
             , backgroundModel = Nothing
-            , publicCredits = Nothing
+            , maybePublicCreditsInfo = Nothing
             , showCreditCounterTooltip = False
             , creditsCounterAnimationState = Nothing
             , authFlow = Auth.Common.Idle
@@ -235,7 +236,7 @@ update msg model =
             , Cmd.none
             )
 
-        GotoRoute route ->
+        GotoRouteAndAnimate route ->
             gotoRouteAndAnimate route model
 
         GotoTranslate_FocusAndClear ->
@@ -313,6 +314,11 @@ update msg model =
         Logout ->
             ( model
             , Lamdera.sendToBackend DoLogout
+            )
+
+        UpdateFrontendNow now ->
+            ( { model | time_updatePerSecond = now }
+            , Cmd.none
             )
 
 
@@ -393,13 +399,13 @@ updateFromBackend msg model =
             )
 
         GeneralDataMsg generalData ->
-            ( { model | publicCredits = Just generalData.publicCredits }
+            ( { model | maybePublicCreditsInfo = Just generalData.publicCreditsInfo }
             , Cmd.none
             )
 
-        CreditsUpdated newCredits ->
-            ( { model | publicCredits = Just newCredits }
-                |> startCreditCounterAnimation (newCredits >= (model.publicCredits |> Maybe.withDefault 0)) model.animationTime
+        CreditsInfoUpdated newCreditsInfo ->
+            ( { model | maybePublicCreditsInfo = Just newCreditsInfo }
+                |> startCreditCounterAnimation (newCreditsInfo.current >= (model.maybePublicCreditsInfo |> Maybe.map .current |> Maybe.withDefault 0)) model.animationTime
             , Cmd.none
             )
 
@@ -486,6 +492,7 @@ subscriptions model =
                 Sub.none
         , Browser.Events.onAnimationFrame Animate
         , Browser.Events.onResize Types.Resize
+        , Time.every 1000 UpdateFrontendNow
         ]
 
 

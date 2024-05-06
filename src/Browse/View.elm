@@ -65,7 +65,7 @@ viewTranslationRecordPreviewButton dProfile translationRecord =
         , Element.Background.color <| Element.rgba 0 0 1 0.05
         , Font.size <| responsiveVal dProfile 16 18
         , Element.pointer
-        , Events.onClick <| GotoRoute <| Route.View translationRecord.id
+        , Events.onClick <| GotoRouteAndAnimate <| Route.View translationRecord.id
         ]
         [ Element.el inputStyles <| textWithCutoff translationRecord.input
         , hbreakElement
