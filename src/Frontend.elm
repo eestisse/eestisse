@@ -63,7 +63,7 @@ init url key =
                 { input = ""
                 , state = Inputting
                 }
-            , publicConsentChecked = False
+            , publicConsentChecked = True
             , viewTranslationModel = { maybeSelectedBreakdownPartId = Nothing }
             , loadingAnimationCounter = 0
             }
@@ -74,7 +74,7 @@ init url key =
     (case route of
         Route.AuthCallback methodId ->
             Auth.Flow.init
-                model
+                { model | route = Route.Subscribe }
                 methodId
                 url
                 key
@@ -308,7 +308,7 @@ update msg model =
             ( model, Nav.load targetLink )
 
         UserIntent_ActivateMembership ->
-            gotoRouteAndAnimate Route.Account model
+            gotoRouteAndAnimate Route.Subscribe model
 
         Logout ->
             ( model

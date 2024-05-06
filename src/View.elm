@@ -1,6 +1,5 @@
 module View exposing (..)
 
-import Account.View
 import Admin.View
 import Background.View
 import Browse.View
@@ -19,6 +18,7 @@ import Html exposing (Html)
 import Landing.View
 import Responsive exposing (..)
 import Route exposing (Route)
+import Subscribe.View
 import Time
 import Translation.Types exposing (..)
 import Translation.View
@@ -132,8 +132,8 @@ view dProfile model =
                 Route.AuthCallback _ ->
                     Element.el [ Element.centerX ] <| Element.text "User authenticated. Redirecting..."
 
-                Route.Account ->
-                    Account.View.page dProfile model
+                Route.Subscribe ->
+                    Subscribe.View.page dProfile model
 
                 Route.Browse ->
                     Browse.View.page dProfile model.cachedTranslationRecords

@@ -181,7 +181,7 @@ primaryBoxCustomColors borderColor backgroundColor extraAttributes innerEl =
         ([ Element.padding 10
          , Border.rounded 30
          , Border.shadow
-            { offset = ( -5, -5 )
+            { offset = ( -5, 5 )
             , size = 5
             , blur = 10
             , color = Element.rgba 0 0 0 0.3
