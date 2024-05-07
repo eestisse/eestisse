@@ -35,24 +35,19 @@ page dProfile model =
                 Element.text "oh nice brudda nice wan"
 
               else
-                case model.maybeAuthedUserInfo of
-                    Nothing ->
-                        signinElement dProfile
+                Element.column
+                    [ Element.centerX
+                    , Element.spacing <| responsiveVal dProfile 15 30
+                    ]
+                    [ Element.el [ Element.centerX ] <| viewOffer dProfile
+                    , case model.maybeAuthedUserInfo of
+                        Nothing ->
+                            signinElement dProfile
 
-                    Just userInfo ->
-                        viewOfferAndPurchaseButtons dProfile userInfo
+                        Just userInfo ->
+                            purchaseButton dProfile userInfo
+                    ]
             ]
-
-
-viewOfferAndPurchaseButtons : DisplayProfile -> FrontendUserInfo -> Element FrontendMsg
-viewOfferAndPurchaseButtons dProfile userInfo =
-    Element.column
-        [ Element.width Element.fill
-        , Element.spacing 20
-        ]
-        [ Element.el [ Element.centerX ] <| viewOffer dProfile
-        , Element.el [ Element.centerX ] <| purchaseButton dProfile userInfo
-        ]
 
 
 viewOffer : DisplayProfile -> Element FrontendMsg
@@ -110,8 +105,7 @@ signinElement dProfile =
         [ Element.centerX
         , Element.spacing 10
         ]
-        [ Element.el [ Font.size 14, Element.centerX ] <| Element.text "Login with... "
-        , googleSigninButton dProfile
+        [ googleSigninButton dProfile
         ]
 
 
@@ -122,6 +116,7 @@ purchaseButton dProfile userInfo =
         , Font.size 18
         , Font.extraBold
         , Font.color <| Colors.white
+        , Element.centerX
         , Border.rounded 5
         , Element.height <| Element.px 50
         , Element.width <| Element.px 250
