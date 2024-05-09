@@ -1,5 +1,7 @@
 module Config exposing (..)
 
+import Env
+
 
 type alias PublicUsageConfig =
     { addCreditIntervalMillis : Int
@@ -38,4 +40,17 @@ stripePaymentLinkBaseUrl =
 
 stripePaymentLinkId : String
 stripePaymentLinkId =
-    "test_dR66sbe114VB69G7st"
+    if Env.mode == Env.Development then
+        "test_dR66sbe114VB69G7st"
+
+    else
+        Debug.todo "need real payment link id"
+
+
+stripeUserPortalLink : String
+stripeUserPortalLink =
+    if Env.mode == Env.Development then
+        "https://billing.stripe.com/p/login/test_dR66pse1idd55cAdQQ"
+
+    else
+        Debug.todo "need real stripe user portal link"
