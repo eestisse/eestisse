@@ -261,3 +261,29 @@ actionLink text msg =
         (linkAttributes ++ [ Element.pointer, Events.onClick msg ])
     <|
         Element.text text
+
+
+signinElement : DisplayProfile -> Element FrontendMsg
+signinElement dProfile =
+    Element.column
+        [ Element.centerX
+        , Element.spacing 10
+        ]
+        [ googleSigninButton dProfile
+        ]
+
+
+googleSigninButton : DisplayProfile -> Element FrontendMsg
+googleSigninButton dProfile =
+    Input.button
+        []
+        { onPress =
+            Just <|
+                AuthSigninRequested { methodId = "OAuthGoogle", username = Nothing }
+        , label =
+            Element.image
+                []
+                { src = "/google-signin-button.png"
+                , description = "Google"
+                }
+        }

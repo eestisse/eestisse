@@ -11,6 +11,7 @@ type Route
     | Landing
     | Admin
     | AuthCallback String
+    | Account
     | Subscribe
     | Browse
     | View Int
@@ -34,6 +35,7 @@ matchRoute =
         , Parser.map Translate (Parser.s "translate")
         , Parser.map Admin (Parser.s "admin")
         , Parser.map AuthCallback (Parser.s "login" </> Parser.string </> Parser.s "callback")
+        , Parser.map Account (Parser.s "account")
         , Parser.map Browse (Parser.s "browse")
         , Parser.map Subscribe (Parser.s "subscribe")
         , Parser.map View (Parser.s "view" </> Parser.int)
@@ -56,6 +58,9 @@ routeToString route =
             AuthCallback methodId ->
                 [ "login", methodId, "callback" ]
 
+            Account ->
+                [ "account" ]
+
             Subscribe ->
                 [ "subscribe" ]
 
@@ -69,3 +74,13 @@ routeToString route =
                 [ "badroute" ]
         )
         []
+
+
+shouldRedirect : Route -> Bool
+shouldRedirect route =
+    case route of
+        AuthCallback _ ->
+            True
+
+        _ ->
+            False

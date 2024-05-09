@@ -1,5 +1,6 @@
 module View exposing (..)
 
+import Account.View
 import Admin.View
 import Background.View
 import Browse.View
@@ -75,49 +76,56 @@ view dProfile model =
             , Element.spacing <| responsiveVal dProfile 25 40
             , Element.padding 10
             ]
-            [ Element.row
+            [ Element.column
                 [ Element.width Element.fill
+                , Element.spacing <| responsiveVal dProfile 5 15
                 ]
-                [ Element.el [ Element.width Element.fill ] <|
-                    if model.route == Route.Translate then
-                        Input.button
-                            [ Element.padding 10
-                            , Border.rounded 10
-                            , Element.Background.color <| Colors.lightBlue
-                            ]
-                            { onPress = Just <| GotoRouteAndAnimate Route.Landing
-                            , label =
-                                Element.image
-                                    [ Element.height <| Element.px <| responsiveVal dProfile 20 30
-                                    ]
-                                    { src = "left-arrow-black.png"
-                                    , description = "back"
-                                    }
-                            }
+                [ Element.row
+                    [ Element.width Element.fill
+                    ]
+                    [ Element.el [ Element.width Element.fill ] <|
+                        if model.route == Route.Translate then
+                            Input.button
+                                [ Element.padding 10
+                                , Border.rounded 10
+                                , Element.Background.color <| Colors.lightBlue
+                                ]
+                                { onPress = Just <| GotoRouteAndAnimate Route.Landing
+                                , label =
+                                    Element.image
+                                        [ Element.height <| Element.px <| responsiveVal dProfile 20 30
+                                        ]
+                                        { src = "left-arrow-black.png"
+                                        , description = "back"
+                                        }
+                                }
 
-                    else
-                        Element.none
-                , Element.el [ Element.centerX ] <|
-                    titleElement dProfile (model.route == Route.Landing)
-                , Element.el [ Element.width Element.fill ] <|
-                    if model.route == Route.Translate then
-                        case model.maybePublicCreditsInfo of
-                            Nothing ->
-                                Element.none
+                        else
+                            Element.none
+                    , Element.el [ Element.centerX ] <|
+                        titleElement dProfile
+                    , Element.el
+                        [ Element.width Element.fill
+                        , Element.height Element.fill
+                        ]
+                      <|
+                        if model.route /= Route.Account && model.route /= Route.Subscribe && not (Route.shouldRedirect model.route) then
+                            Element.el
+                                [ Element.alignRight
+                                , Element.alignTop
+                                , Element.padding 10
+                                ]
+                            <|
+                                signInOrAccountButton dProfile model.maybeAuthedUserInfo
 
-                            Just publicCreditsInfo ->
-                                let
-                                    maybeCounterAnimationStateAndTime =
-                                        model.creditsCounterAnimationState
-                                            |> Maybe.map
-                                                (\state ->
-                                                    ( state, model.animationTime )
-                                                )
-                                in
-                                viewPublicCredits dProfile model.showCreditCounterTooltip publicCreditsInfo.current maybeCounterAnimationStateAndTime
+                        else
+                            Element.none
+                    ]
+                , if model.route == Route.Landing then
+                    Element.el [ Element.centerX ] <| subtitleElement dProfile
 
-                    else
-                        Element.none
+                  else
+                    Element.none
                 ]
             , case model.route of
                 Route.Translate ->
@@ -131,6 +139,9 @@ view dProfile model =
 
                 Route.AuthCallback _ ->
                     Element.el [ Element.centerX ] <| Element.text "User authenticated. Redirecting..."
+
+                Route.Account ->
+                    Account.View.page dProfile model.maybeAuthedUserInfo
 
                 Route.Subscribe ->
                     Subscribe.View.page dProfile model
@@ -151,61 +162,48 @@ view dProfile model =
             ]
 
 
-viewPublicCredits : DisplayProfile -> Bool -> Int -> Maybe ( CreditsCounterAnimationState, Time.Posix ) -> Element FrontendMsg
-viewPublicCredits dProfile showCreditCounterTooltip credits maybeCounterAnimationStateAndTime =
-    let
-        backgroundColor =
-            let
-                baseColor =
-                    Element.rgba 1 1 1 0.2
-            in
-            case maybeCounterAnimationStateAndTime of
-                Nothing ->
-                    baseColor
+signInOrAccountButton : DisplayProfile -> Maybe FrontendUserInfo -> Element FrontendMsg
+signInOrAccountButton dProfile maybeUserInfo =
+    case maybeUserInfo of
+        Nothing ->
+            Input.button
+                [ responsiveVal dProfile
+                    (Element.paddingXY 18 8)
+                    (Element.paddingXY 30 10)
+                , Border.rounded 4
+                , Element.Background.color Colors.blue
+                , Font.color Colors.white
+                , Font.bold
+                , Font.size <| responsiveVal dProfile 14 16
+                ]
+                { onPress = Just <| GotoRouteAndAnimate <| Route.Account
+                , label = Element.text "Sign In"
+                }
 
-                Just ( animationState, now ) ->
+        Just userInfo ->
+            Input.button
+                [ Border.rounded 200 -- easy way to make a circle! :D
+                , Element.width <| Element.px 40
+                , Element.height <| Element.px 40
+                , Element.Background.color Colors.offWhite
+                ]
+                { onPress = Just <| GotoRouteAndAnimate <| Route.Account
+                , label =
                     let
-                        startColor =
-                            if animationState.goingUp then
-                                Element.rgba 0 1 0 0.2
-
-                            else
-                                Element.rgba 1 0 0 0.2
-
-                        progressFloat =
-                            toFloat
-                                (Time.posixToMillis now
-                                    - Time.posixToMillis animationState.startTime
-                                )
-                                / Config.counterUpdateAnimationIntervalMillis
-                                |> min Config.counterUpdateAnimationIntervalMillis
+                        userCharString =
+                            userInfo.email |> String.toUpper |> String.toList |> List.head |> Maybe.withDefault '?' |> String.fromChar
                     in
-                    Utils.interpolateColors
-                        progressFloat
-                        startColor
-                        baseColor
-    in
-    Element.column
-        [ Element.alignRight
-        , Font.color Colors.darkBlue
-        , Font.size <| responsiveVal dProfile 24 28
-        , madimiFont
-        , Element.padding <| responsiveVal dProfile 7 10
-        , Element.centerY
-        , Border.rounded 8
-        , Border.width 1
-        , Border.color <| Element.rgba 0 0 0 0.2
-        , Element.Background.color backgroundColor
-        , Element.pointer
-        , Events.onClick <| ShowCreditCounterTooltip <| not showCreditCounterTooltip
-        , Element.below <|
-            if showCreditCounterTooltip then
-                creditCounterTooltip dProfile credits
-
-            else
-                Element.none
-        ]
-        [ Element.text <| String.fromInt credits ]
+                    Element.el
+                        [ Element.centerX
+                        , Element.centerY
+                        , Font.bold
+                        , madimiFont
+                        , Font.color Colors.blue
+                        , Font.size 18
+                        ]
+                    <|
+                        Element.text userCharString
+                }
 
 
 creditCounterTooltip : DisplayProfile -> Int -> Element FrontendMsg
@@ -245,47 +243,44 @@ creditCounterTooltip dProfile credits =
         ]
 
 
-titleElement : DisplayProfile -> Bool -> Element FrontendMsg
-titleElement dProfile showSubtitle =
-    let
-        emphasizedText =
-            Element.el [ Font.color <| Colors.darkGreen ] << Element.text
-    in
-    Element.column
+emphasizedText : String -> Element FrontendMsg
+emphasizedText =
+    Element.el [ Font.color <| Colors.darkGreen ] << Element.text
+
+
+titleElement : DisplayProfile -> Element FrontendMsg
+titleElement dProfile =
+    Input.button
         [ Element.centerX
         , madimiFont
-        , Element.spacing 15
-        ]
-        [ Input.button
-            [ Element.centerX
-            , Element.paddingXY 18 8
-            , Border.roundEach
-                { topLeft = 25
-                , bottomRight = 25
-                , topRight = 3
-                , bottomLeft = 3
-                }
-            , Element.Background.color Colors.lightBlue
-            ]
-            { onPress = Just <| GotoRouteAndAnimate Route.Landing
-            , label =
-                CommonView.coloredEestisseText
-                    [ Font.size <| responsiveVal dProfile 28 42
-                    , Font.italic
-                    ]
+        , Element.paddingXY 18 8
+        , Border.roundEach
+            { topLeft = 25
+            , bottomRight = 25
+            , topRight = 3
+            , bottomLeft = 3
             }
-        , if showSubtitle then
-            Element.column
-                [ Font.color <| Element.rgb 0.2 0.2 0.2
-                , Font.size <| responsiveVal dProfile 24 36
+        , Element.Background.color Colors.lightBlue
+        ]
+        { onPress = Just <| GotoRouteAndAnimate Route.Landing
+        , label =
+            CommonView.coloredEestisseText
+                [ Font.size <| responsiveVal dProfile 28 42
+                , Font.italic
                 ]
-                [ Element.row [ Element.centerX ]
-                    [ emphasizedText "An Estonian tutor in your pocket"
-                    ]
-                ]
+        }
 
-          else
-            Element.none
+
+subtitleElement : DisplayProfile -> Element FrontendMsg
+subtitleElement dProfile =
+    Element.column
+        [ Font.color <| Element.rgb 0.2 0.2 0.2
+        , Font.size <| responsiveVal dProfile 24 36
+        , madimiFont
+        ]
+        [ Element.row [ Element.centerX ]
+            [ emphasizedText "An Estonian tutor in your pocket"
+            ]
         ]
 
 

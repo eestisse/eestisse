@@ -188,26 +188,26 @@ update msg model =
             )
 
         ShowExplanation breakdownPartId ->
-                    ( { model
+            ( { model
                 | viewTranslationModel =
                     let
                         oldVTM =
                             model.viewTranslationModel
                     in
                     { oldVTM | maybeSelectedBreakdownPartId = Just breakdownPartId }
-                      }
-                    , plausibleEventOutCmd "breakdown-shown"
-                    )
+              }
+            , plausibleEventOutCmd "breakdown-shown"
+            )
 
         CycleLoadingAnimation ->
-                    let
-                        newAnimationCounter =
+            let
+                newAnimationCounter =
                     if model.loadingAnimationCounter == 3 then
-                                0
+                        0
 
-                            else
+                    else
                         model.loadingAnimationCounter + 1
-                    in
+            in
             ( { model
                 | loadingAnimationCounter = newAnimationCounter
               }
@@ -369,9 +369,9 @@ updateFromBackend msg model =
                         , plausibleEventOutCmd "translation-error"
                         )
 
-                    else
+            else
                 -- ignore; the result has come back but the user has moved away from the page
-                    ( model, Cmd.none )
+                ( model, Cmd.none )
 
         AdminDataMsg adminData ->
             ( { model
@@ -409,9 +409,9 @@ updateFromBackend msg model =
                                     |> Dict.fromList
                                 )
                                 model.cachedTranslationRecords
-              }
-            , Cmd.none
-            )
+                      }
+                    , Cmd.none
+                    )
 
         RequestRedirectReturnPageResult maybeReturnRoute ->
             case model.route of
@@ -424,6 +424,13 @@ updateFromBackend msg model =
 
                 _ ->
                     ( model, Cmd.none )
+
+        LogoutAck ->
+            ( { model
+                | maybeAuthedUserInfo = Nothing
+              }
+            , Cmd.none
+            )
 
 
 startCreditCounterAnimation : Bool -> Time.Posix -> FrontendModel -> FrontendModel

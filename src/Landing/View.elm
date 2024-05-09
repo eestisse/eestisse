@@ -104,7 +104,7 @@ futureFeaturesAndSignupElement dProfile maybeUserInfo =
                 [ Font.center
                 ]
                 [ [ Element.text "Eestisse's goal is to make learning Estonian "
-                  , Element.el [ Font.bold ] <| Element.text "fun, easy, and effective"
+                  , Element.el [ Font.bold ] <| Element.text "fun and relevant to your life"
                   , Element.text ", and this is just the beginning!"
                   ]
                 ]
@@ -121,9 +121,8 @@ futureFeaturesAndSignupElement dProfile maybeUserInfo =
 
                 Just _ ->
                     CommonView.makeParagraphs
-                        [ Font.center ]
-                        [ [ Element.text "Thanks for signing up! You can also "
-                          , CommonView.newTabLink [ CommonView.plausibleTrackButtonClick "discord-link-clicked" ] "https://discord.gg/HQJMbBUmna" "join the Discord"
+                        [ Font.center, Element.width Element.fill ]
+                        [ [ CommonView.newTabLink [ CommonView.plausibleTrackButtonClick "discord-link-clicked" ] "https://discord.gg/HQJMbBUmna" "Join the Discord"
                           , Element.text " if you have questions or comments."
                           ]
                         ]

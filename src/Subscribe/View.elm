@@ -99,16 +99,6 @@ viewOffer dProfile =
         ]
 
 
-signinElement : DisplayProfile -> Element FrontendMsg
-signinElement dProfile =
-    Element.column
-        [ Element.centerX
-        , Element.spacing 10
-        ]
-        [ googleSigninButton dProfile
-        ]
-
-
 purchaseButton : DisplayProfile -> FrontendUserInfo -> Element FrontendMsg
 purchaseButton dProfile userInfo =
     Input.button
@@ -123,20 +113,4 @@ purchaseButton dProfile userInfo =
         ]
         { onPress = Just <| TriggerStripePayment userInfo.id
         , label = Element.el [ Element.centerX ] <| Element.text "Checkout with Stripe"
-        }
-
-
-googleSigninButton : DisplayProfile -> Element FrontendMsg
-googleSigninButton dProfile =
-    Input.button
-        []
-        { onPress =
-            Just <|
-                AuthSigninRequested { methodId = "OAuthGoogle", username = Nothing }
-        , label =
-            Element.image
-                []
-                { src = "/google-signin-button.png"
-                , description = "Google"
-                }
         }

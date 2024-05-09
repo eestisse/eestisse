@@ -114,6 +114,7 @@ type ToFrontend
     | CreditsInfoUpdated PublicCreditsInfo
     | RequestTranslationRecordsResult (Result String (List TranslationRecord))
     | RequestRedirectReturnPageResult (Maybe Route.Route)
+    | LogoutAck
 
 
 type alias SessionInfo =

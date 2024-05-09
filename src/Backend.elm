@@ -282,6 +282,13 @@ updateFromFrontend sessionId clientId msg model =
 
         DoLogout ->
             Auth.logout sessionId clientId model
+                |> Tuple.mapSecond
+                    (\cmd ->
+                        Cmd.batch
+                            [ cmd
+                            , Lamdera.sendToFrontend clientId LogoutAck
+                            ]
+                    )
 
         RequestPublicTranslations ->
             ( model
