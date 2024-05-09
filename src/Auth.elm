@@ -58,26 +58,27 @@ handleAuthSuccess :
     -> Time.Posix
     -> ( BackendModel, Cmd BackendMsg )
 handleAuthSuccess backendModel sessionId clientId authUserInfo _ _ _ =
-    -- TODO handle renewing sessions if that is something you need
     let
-        ( newModel, ( userId, userInfo ) ) =
+        ( modelWithEmail, ( userId, userInfo ) ) =
             addOrGetUserFromEmail authUserInfo.email backendModel
 
-        sessionsWithoutThisOne : Dict Lamdera.SessionId Int
-        sessionsWithoutThisOne =
-            Dict.Extra.removeWhen (\_ id -> id == userId) backendModel.authedSessions
+        existingOrNewSession =
+            modelWithEmail.sessions
+                |> Dict.get sessionId
+                |> Maybe.withDefault blankSession
 
         newSessions =
-            Dict.insert sessionId userId sessionsWithoutThisOne
-
-        response =
-            AuthSuccess <| toFrontendUserInfo ( userId, userInfo, userMembershipStatus backendModel.nowish userInfo )
+            modelWithEmail.sessions
+                |> Dict.insert
+                    sessionId
+                    { existingOrNewSession
+                        | maybeAuthedUserId = Just userId
+                    }
     in
-    ( { newModel | authedSessions = newSessions }
-    , Cmd.batch
-        [ -- renewSession_ user_.id sessionId clientId
-          Lamdera.sendToFrontend clientId response
-        ]
+    ( { modelWithEmail
+        | sessions = newSessions
+      }
+    , Lamdera.sendToFrontend clientId <| AuthSuccess <| toFrontendUserInfo ( userId, userInfo, userMembershipStatus modelWithEmail.nowish userInfo )
     )
 
 
@@ -115,7 +116,18 @@ addOrGetUserFromEmail email model =
 
 logout : Lamdera.SessionId -> Lamdera.ClientId -> BackendModel -> ( BackendModel, Cmd msg )
 logout sessionId _ model =
-    ( { model | authedSessions = model.authedSessions |> Dict.remove sessionId }, Cmd.none )
+    ( { model
+        | sessions =
+            model.sessions
+                |> Dict.update sessionId
+                    (Maybe.map
+                        (\sessionInfo ->
+                            { sessionInfo | maybeAuthedUserId = Nothing }
+                        )
+                    )
+      }
+    , Cmd.none
+    )
 
 
 updateFromBackend authToFrontendMsg model =

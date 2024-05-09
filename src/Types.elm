@@ -49,7 +49,7 @@ type alias BackendModel =
     , preConsentRequests : List ( Time.Posix, String, Result GptAssistError Translation )
     , translationRecords : Array TranslationRecord
     , pendingAuths : Dict Lamdera.SessionId Auth.Common.PendingAuth
-    , authedSessions : Dict Lamdera.SessionId Int
+    , sessions : Dict Lamdera.SessionId SessionInfo
     , users : Dict Int UserInfo
     , nextUserId : Int
     , hangingInvoices : List PaidInvoice
@@ -105,6 +105,8 @@ type ToBackend
     | DoLogout
     | RequestPublicTranslations
     | RequestTranslation Int
+    | SetRedirectReturnPage Route.Route
+    | RequestAndClearRedirectReturnPage
 
 
 type ToFrontend
@@ -117,6 +119,17 @@ type ToFrontend
     | GeneralDataMsg GeneralData
     | CreditsInfoUpdated PublicCreditsInfo
     | RequestTranslationRecordsResult (Result String (List TranslationRecord))
+    | RequestRedirectReturnPageResult (Maybe Route.Route)
+
+
+type alias SessionInfo =
+    { maybeAuthedUserId : Maybe Int
+    , redirectReturnPage : Maybe Route.Route
+    }
+
+
+blankSession =
+    SessionInfo Nothing Nothing
 
 
 type alias DoTranslateModel =

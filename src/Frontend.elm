@@ -109,6 +109,13 @@ update msg model =
         AuthSigninRequested { methodId, username } ->
             Auth.Flow.signInRequested methodId model username
                 |> Tuple.mapSecond (AuthToBackend >> Lamdera.sendToBackend)
+                |> Tuple.mapSecond
+                    (\authCmd ->
+                        Cmd.batch
+                            [ Lamdera.sendToBackend <| SetRedirectReturnPage model.route
+                            , authCmd
+                            ]
+                    )
 
         UrlClicked urlRequest ->
             case urlRequest of
@@ -306,7 +313,9 @@ update msg model =
                         [ Config.stripePaymentLinkId ]
                         [ Url.Builder.string "client_reference_id" (String.fromInt userId) ]
             in
-            ( model, Nav.load targetLink )
+            ( model
+            , Nav.load targetLink
+            )
 
         UserIntent_ActivateMembership ->
             gotoRouteAndAnimate Route.Subscribe model
@@ -431,6 +440,18 @@ updateFromBackend msg model =
             , Cmd.none
             )
 
+        RequestRedirectReturnPageResult maybeReturnRoute ->
+            case model.route of
+                Route.AuthCallback _ ->
+                    model
+                        |> gotoRouteAndAnimate
+                            (maybeReturnRoute
+                                |> Maybe.withDefault Route.Landing
+                            )
+
+                _ ->
+                    ( model, Cmd.none )
+
 
 startCreditCounterAnimation : Bool -> Time.Posix -> FrontendModel -> FrontendModel
 startCreditCounterAnimation goingUp now model =
@@ -499,6 +520,9 @@ subscriptions model =
 arriveAtRouteCmds : Route -> FrontendModel -> Cmd FrontendMsg
 arriveAtRouteCmds route model =
     case route of
+        Route.AuthCallback _ ->
+            Lamdera.sendToBackend <| RequestAndClearRedirectReturnPage
+
         Route.Browse ->
             Lamdera.sendToBackend <| RequestPublicTranslations
 

@@ -46,7 +46,7 @@ init =
       , preConsentRequests = []
       , translationRecords = Array.empty
       , pendingAuths = Dict.empty
-      , authedSessions = Dict.empty
+      , sessions = Dict.empty
       , users = Dict.empty
       , nextUserId = 0
       , hangingInvoices = []
@@ -83,21 +83,36 @@ update msg model =
             )
 
         OnConnect sessionId clientId ->
-            case Dict.get sessionId model.authedSessions of
+            case Dict.get sessionId model.sessions of
                 Nothing ->
-                    ( model, Cmd.none )
+                    ( { model
+                        | sessions =
+                            model.sessions
+                                |> Dict.insert
+                                    sessionId
+                                    blankSession
+                      }
+                    , Cmd.none
+                    )
 
-                Just userId ->
-                    case Dict.get userId model.users of
-                        Nothing ->
-                            ( model
-                            , notifyAdminOfError "userId not found in users!"
+                Just sessionInfo ->
+                    let
+                        maybeUserIdAndInfo =
+                            sessionInfo.maybeAuthedUserId
+                                |> Maybe.andThen
+                                    (\userId ->
+                                        Dict.get userId model.users
+                                            |> Maybe.map (Tuple.pair userId)
+                                    )
+                    in
+                    ( model
+                    , maybeUserIdAndInfo
+                        |> Maybe.map
+                            (\( userId, userInfo ) ->
+                                Lamdera.sendToFrontend clientId <| AuthSuccess <| toFrontendUserInfo ( userId, userInfo, Auth.userMembershipStatus model.nowish userInfo )
                             )
-
-                        Just userInfo ->
-                            ( model
-                            , Lamdera.sendToFrontend clientId <| AuthSuccess <| toFrontendUserInfo ( userId, userInfo, Auth.userMembershipStatus model.nowish userInfo )
-                            )
+                        |> Maybe.withDefault Cmd.none
+                    )
 
         AuthBackendMsg authMsg ->
             Auth.Flow.backendUpdate (Auth.backendConfig model) authMsg
@@ -312,6 +327,32 @@ updateFromFrontend sessionId clientId msg model =
                         Lamdera.sendToFrontend clientId <| RequestTranslationRecordsResult <| Err "You don't have permission to view that translation"
                     )
 
+        SetRedirectReturnPage route ->
+            ( { model
+                | sessions =
+                    model.sessions
+                        |> Dict.update sessionId
+                            (Maybe.map
+                                (\session ->
+                                    { session
+                                        | redirectReturnPage = Just route
+                                    }
+                                )
+                            )
+              }
+            , Cmd.none
+            )
+
+        RequestAndClearRedirectReturnPage ->
+            ( model |> clearRedirectReturnPageForSession sessionId
+            , Lamdera.sendToFrontend clientId <|
+                RequestRedirectReturnPageResult
+                    (model.sessions
+                        |> Dict.get sessionId
+                        |> Maybe.andThen .redirectReturnPage
+                    )
+            )
+
 
 handleStripeWebhook : Stripe.StripeEvent -> BackendModel -> ( Result Http.Error String, BackendModel, Cmd BackendMsg )
 handleStripeWebhook webhook model =
@@ -481,5 +522,16 @@ subscriptions _ =
 
 sessionIdToMaybeUserId : SessionId -> BackendModel -> Maybe Int
 sessionIdToMaybeUserId sessionId model =
-    model.authedSessions
+    model.sessions
         |> Dict.get sessionId
+        |> Maybe.andThen .maybeAuthedUserId
+
+
+clearRedirectReturnPageForSession : SessionId -> BackendModel -> BackendModel
+clearRedirectReturnPageForSession sessionId model =
+    { model
+        | sessions =
+            model.sessions
+                |> Dict.update sessionId
+                    (Maybe.map (\session -> { session | redirectReturnPage = Nothing }))
+    }
