@@ -10,19 +10,20 @@ import Element.Events as Events
 import Element.Font as Font
 import Element.Input as Input
 import Responsive exposing (..)
+import Route
 import Types exposing (..)
 import Utils
 
 
-page : DisplayProfile -> SignupState -> Element FrontendMsg
-page dProfile signupState =
+page : DisplayProfile -> Maybe FrontendUserInfo -> Element FrontendMsg
+page dProfile maybeUserInfo =
     Element.column
         [ Element.width Element.fill
         , Element.height Element.fill
         , Element.spacing 25
         ]
         [ mainExplainer dProfile
-        , futureFeaturesAndSignupElement dProfile signupState
+        , futureFeaturesAndSignupElement dProfile maybeUserInfo
         ]
 
 
@@ -89,8 +90,8 @@ mainExplainer dProfile =
             ]
 
 
-futureFeaturesAndSignupElement : DisplayProfile -> SignupState -> Element FrontendMsg
-futureFeaturesAndSignupElement dProfile signupState =
+futureFeaturesAndSignupElement : DisplayProfile -> Maybe FrontendUserInfo -> Element FrontendMsg
+futureFeaturesAndSignupElement dProfile maybeUserInfo =
     primaryBox
         [ Element.width Element.fill ]
     <|
@@ -107,35 +108,18 @@ futureFeaturesAndSignupElement dProfile signupState =
                   , Element.text ", and this is just the beginning!"
                   ]
                 ]
-            , case signupState of
-                Inactive ->
+            , case maybeUserInfo of
+                Nothing ->
                     CommonView.makeParagraphs
                         [ Font.center ]
-                        [ [ Input.button
-                                CommonView.linkAttributes
-                                { onPress = Just <| StartSignup
-                                , label = Element.text "Sign up"
-                                }
+                        [ [ actionLink "Sign up" <| GotoRouteAndAnimate Route.Subscribe
                           , Element.text " or "
                           , CommonView.newTabLink [ CommonView.plausibleTrackButtonClick "discord-link-clicked" ] "https://discord.gg/HQJMbBUmna" "join the Discord"
                           , Element.text " to hear about when more features drop."
                           ]
                         ]
 
-                Active signupForm ->
-                    viewSignupForm dProfile signupForm
-
-                Submitting ->
-                    Element.el
-                        [ Element.centerX
-                        , Element.centerY
-                        , Font.italic
-                        , Font.color <| Element.rgb 0.5 0.5 0.5
-                        ]
-                    <|
-                        Element.text "Submitting..."
-
-                Submitted ->
+                Just _ ->
                     CommonView.makeParagraphs
                         [ Font.center ]
                         [ [ Element.text "Thanks for signing up! You can also "
@@ -144,99 +128,3 @@ futureFeaturesAndSignupElement dProfile signupState =
                           ]
                         ]
             ]
-
-
-viewSignupForm : DisplayProfile -> SignupFormModel -> Element FrontendMsg
-viewSignupForm dProfile formModel =
-    Element.column
-        [ Element.height Element.fill
-        , Element.padding 10
-        , Element.centerX
-        , Border.width 1
-        , Border.color <| Element.rgba 0 0 0 0.1
-        , Border.rounded 5
-        , Element.Background.color Colors.lightBlue
-        , Element.spacing 15
-        , CommonView.basicShadow
-        ]
-        [ viewEmailInput dProfile formModel
-        , consentOptions dProfile formModel
-        , Element.el [ Element.centerX ] <| signupButton dProfile formModel
-        ]
-
-
-viewEmailInput : DisplayProfile -> SignupFormModel -> Element FrontendMsg
-viewEmailInput dProfile formModel =
-    Input.text
-        [ Element.width Element.fill
-        , Element.padding 10
-        , Border.rounded 5
-        , Border.width 1
-        , Border.color <| Element.rgb 0.7 0.7 1
-        , Element.Background.color <| Element.rgb 0.98 0.98 1
-        , Utils.onEnter <|
-            if isSignupFormReadyToSubmit formModel then
-                SubmitSignupClicked formModel
-
-            else
-                NoOpFrontendMsg
-        , CommonView.htmlId "email-input"
-        ]
-        { onChange = \text -> SignupFormChanged <| { formModel | emailInput = text }
-        , text = formModel.emailInput
-        , placeholder = Just <| Input.placeholder [ Font.color <| Element.rgb 0.5 0.5 0.5 ] <| Element.text "you@somewhere.neat"
-        , label = Input.labelHidden "email input"
-        }
-
-
-consentOptions : DisplayProfile -> SignupFormModel -> Element FrontendMsg
-consentOptions dProfile formModel =
-    Element.column
-        [ Element.spacing 10
-        ]
-        [ Element.el [ Font.size <| responsiveVal dProfile 18 20 ] <|
-            Element.text "I am interested in..."
-        , consentCheckbox dProfile Config.newFeaturesConsentWording formModel.newFeaturesConsentChecked (\b -> { formModel | newFeaturesConsentChecked = b })
-        , consentCheckbox dProfile Config.userInterviewsConsentWording formModel.userInterviewsConsentChecked (\b -> { formModel | userInterviewsConsentChecked = b })
-        ]
-
-
-consentCheckbox : DisplayProfile -> String -> Bool -> (Bool -> SignupFormModel) -> Element FrontendMsg
-consentCheckbox dProfile text checked formUpdater =
-    Input.checkbox
-        []
-        { onChange = formUpdater >> SignupFormChanged
-        , icon = Input.defaultCheckbox
-        , checked = checked
-        , label =
-            Input.labelRight
-                [ Element.paddingEach
-                    { left = 8
-                    , right = 0
-                    , bottom = 0
-                    , top = 0
-                    }
-                , Font.size <| responsiveVal dProfile 16 18
-                , Element.width Element.fill
-                ]
-            <|
-                Element.paragraph [ Element.spacing 2 ] [ Element.text text ]
-        }
-
-
-signupButton : DisplayProfile -> SignupFormModel -> Element FrontendMsg
-signupButton dProfile formModel =
-    mainActionButton
-        "Sign up"
-        (if isSignupFormReadyToSubmit formModel then
-            Just <| SubmitSignupClicked formModel
-
-         else
-            Nothing
-        )
-
-
-isSignupFormReadyToSubmit : SignupFormModel -> Bool
-isSignupFormReadyToSubmit signupForm =
-    Utils.isValidEmail signupForm.emailInput
-        && (signupForm.newFeaturesConsentChecked || signupForm.userInterviewsConsentChecked)

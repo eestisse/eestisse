@@ -124,7 +124,7 @@ view dProfile model =
                     Translation.View.viewDoTranslatePage dProfile model.maybePublicCreditsInfo model.time_updatePerSecond model.maybeAuthedUserInfo model.doTranslateModel model.publicConsentChecked model.loadingAnimationCounter
 
                 Route.Landing ->
-                    Landing.View.page dProfile model.signupState
+                    Landing.View.page dProfile model.maybeAuthedUserInfo
 
                 Route.Admin ->
                     Admin.View.page model.maybeAdminData

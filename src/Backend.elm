@@ -255,15 +255,6 @@ updateFromFrontend sessionId clientId msg model =
                 , Lamdera.sendToFrontend clientId <| TranslationResult input (Err OutOfCredits)
                 )
 
-        SubmitSignup signupForm ->
-            ( { model
-                | emailsWithConsents =
-                    model.emailsWithConsents
-                        |> List.append [ signupFormToEmailAndConsets signupForm ]
-              }
-            , Lamdera.sendToFrontend clientId EmailSubmitAck
-            )
-
         RequestImportantNumber ->
             ( model
             , Lamdera.sendToFrontend clientId <|

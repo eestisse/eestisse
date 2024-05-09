@@ -48,7 +48,6 @@ init url key =
             { key = key
             , route = route
             , dProfile = Nothing
-            , signupState = Inactive
             , maybeAdminData = Nothing
             , animationTime = Time.millisToPosix 0
             , time_updatePerSecond = Time.millisToPosix 0
@@ -224,25 +223,6 @@ update msg model =
             }
                 |> gotoRouteAndAnimate Route.Translate
 
-        StartSignup ->
-            ( { model | signupState = Active blankSignupForm }
-            , focusEmailInputCmd
-            )
-
-        SubmitSignupClicked signupForm ->
-            ( { model | signupState = Submitting }
-            , Lamdera.sendToBackend <| SubmitSignup signupForm
-            )
-
-        SignupFormChanged newForm ->
-            ( { model
-                | signupState =
-                    Active <|
-                        newForm
-              }
-            , Cmd.none
-            )
-
         GotoRouteAndAnimate route ->
             gotoRouteAndAnimate route model
 
@@ -392,13 +372,6 @@ updateFromBackend msg model =
                     else
                 -- ignore; the result has come back but the user has moved away from the page
                     ( model, Cmd.none )
-
-        EmailSubmitAck ->
-            ( { model
-                | signupState = Submitted
-              }
-            , plausibleEventOutCmd "email-signup"
-            )
 
         AdminDataMsg adminData ->
             ( { model

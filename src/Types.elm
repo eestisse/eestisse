@@ -25,7 +25,6 @@ type alias FrontendModel =
     , authRedirectBaseUrl : Url
     , maybeAuthedUserInfo : Maybe FrontendUserInfo
     , dProfile : Maybe DisplayProfile
-    , signupState : SignupState
     , maybeAdminData : Maybe AdminData
     , animationTime : Time.Posix
     , time_updatePerSecond : Time.Posix
@@ -72,9 +71,6 @@ type FrontendMsg
     | EditTranslation String
     | GotoRouteAndAnimate Route
     | GotoTranslate_FocusAndClear
-    | StartSignup
-    | SubmitSignupClicked SignupFormModel
-    | SignupFormChanged SignupFormModel
     | FetchImportantNumber
     | Animate Time.Posix
     | FiddleRandomBackroundPath Time.Posix
@@ -99,7 +95,6 @@ type ToBackend
     = NoOpToBackend
     | AuthToBackend Auth.Common.ToBackend
     | SubmitTextForTranslation Bool String
-    | SubmitSignup SignupFormModel
     | RequestImportantNumber
     | RequestGeneralData
     | DoLogout
@@ -114,7 +109,6 @@ type ToFrontend
     | AuthToFrontend Auth.Common.ToFrontend
     | AuthSuccess FrontendUserInfo
     | TranslationResult String (Result GptAssistError TranslationRecord)
-    | EmailSubmitAck
     | AdminDataMsg AdminData
     | GeneralDataMsg GeneralData
     | CreditsInfoUpdated PublicCreditsInfo
