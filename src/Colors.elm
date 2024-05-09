@@ -86,3 +86,8 @@ lightBlue =
 darkBlue : Color
 darkBlue =
     Element.rgb 0 0.2 1
+
+
+green : Color
+green =
+    Element.rgb 0 1 0
