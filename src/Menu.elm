@@ -12,8 +12,8 @@ import Route exposing (Route)
 import Types exposing (..)
 
 
-viewMenu : DisplayProfile -> Route -> Element FrontendMsg
-viewMenu dProfile currentRoute =
+viewMenu : DisplayProfile -> Maybe FrontendUserInfo -> Route -> Element FrontendMsg
+viewMenu dProfile maybeUserInfo currentRoute =
     Element.column
         [ Element.height Element.fill
         , Element.spacing 15
@@ -59,7 +59,7 @@ viewMenu dProfile currentRoute =
             Element.none
         , Element.column
             []
-            (menuOptions
+            (menuOptions maybeUserInfo
                 |> List.map
                     (\option ->
                         viewOption dProfile (currentRoute == option.route) option
@@ -74,13 +74,21 @@ type alias MenuOption =
     }
 
 
-menuOptions : List MenuOption
-menuOptions =
-    [ MenuOption "Account" Route.Account
-    , MenuOption "Translate" Route.Translate
-    , MenuOption "Your Translations" Route.BrowsePersonal
-    , MenuOption "Public Translations" Route.Browse
-    ]
+menuOptions : Maybe FrontendUserInfo -> List MenuOption
+menuOptions maybeUserInfo =
+    case maybeUserInfo of
+        Just _ ->
+            [ MenuOption "Account" Route.Account
+            , MenuOption "Translate" Route.Translate
+            , MenuOption "Your Translations" Route.BrowsePersonal
+            , MenuOption "Public Translations" Route.Browse
+            ]
+
+        Nothing ->
+            [ MenuOption "Sign in / Sign up" Route.Account
+            , MenuOption "Translate" Route.Translate
+            , MenuOption "Public Translations" Route.Browse
+            ]
 
 
 viewOption : DisplayProfile -> Bool -> MenuOption -> Element FrontendMsg
