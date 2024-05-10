@@ -1,4 +1,4 @@
-module Browse.View exposing (..)
+module History.View exposing (..)
 
 import CommonView exposing (..)
 import Dict exposing (Dict)
@@ -12,16 +12,15 @@ import ViewTranslationList exposing (viewTranslationList)
 page : DisplayProfile -> Dict Int TranslationRecord -> Element FrontendMsg
 page dProfile cachedTranslationRecords =
     let
-        -- prevents the user seeing their personal histories in the public list, which would imply that their translations are in the *global* public list
-        publicTranslationRecords =
+        personalTranslationRecords =
             cachedTranslationRecords
                 |> Dict.filter
                     (\_ record ->
-                        record.public
+                        not record.public
                     )
     in
     primaryBox
         [ Element.width Element.fill
         , Element.height Element.fill
         ]
-        (viewTranslationList dProfile publicTranslationRecords)
+        (viewTranslationList dProfile personalTranslationRecords)

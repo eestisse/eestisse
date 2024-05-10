@@ -12,6 +12,7 @@ import Element.Background
 import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input
+import History.View
 import Landing.View
 import Menu
 import Responsive exposing (..)
@@ -182,7 +183,7 @@ viewPage dProfile model =
             Browse.View.page dProfile model.cachedTranslationRecords
 
         Route.BrowsePersonal ->
-            Element.text "lol yeah no"
+            History.View.page dProfile model.cachedTranslationRecords
 
         Route.View id ->
             case getTranslationRecord id model of

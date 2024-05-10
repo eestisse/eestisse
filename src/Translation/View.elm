@@ -159,7 +159,7 @@ viewTranslateInputPage : DisplayProfile -> Maybe FrontendUserInfo -> String -> B
 viewTranslateInputPage dProfile maybeAuthedUserInfo input publicConsentChecked =
     let
         submitMsgIfEnabled =
-            if input /= "" && publicConsentChecked then
+            if input /= "" && maybeFrontendUserHasActiveMembership maybeAuthedUserInfo then
                 Just <| SubmitText publicConsentChecked input
 
             else
