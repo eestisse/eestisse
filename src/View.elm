@@ -63,7 +63,7 @@ view dProfile model =
                 Element.Background.color <| Colors.vibrantTeal
         , Element.inFront <|
             if dProfile == Mobile && model.mobileMenuOpen then
-                Menu.viewMenu dProfile model.route
+                Menu.viewMenu dProfile model.maybeAuthedUserInfo model.route
 
             else
                 Element.none
@@ -126,7 +126,12 @@ view dProfile model =
                     Element.none
                 ]
             , if dProfile == Mobile then
-                Element.el [ Element.paddingXY 10 0 ] <|
+                Element.el
+                    [ Element.paddingXY 10 0
+                    , Element.width Element.fill
+                    , Element.height Element.fill
+                    ]
+                <|
                     viewPage dProfile model
 
               else
@@ -140,7 +145,7 @@ view dProfile model =
                     , Element.spaceEvenly
                     ]
                     [ Element.el [ Element.width <| Element.px sideElWidth, Element.alignTop ] <|
-                        Menu.viewMenu dProfile model.route
+                        Menu.viewMenu dProfile model.maybeAuthedUserInfo model.route
                     , Element.el
                         [ Element.width (Element.fill |> Element.maximum 900)
                         , Element.height Element.fill
