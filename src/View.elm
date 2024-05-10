@@ -182,7 +182,7 @@ viewPage dProfile model =
         Route.Browse ->
             Browse.View.page dProfile model.cachedTranslationRecords
 
-        Route.BrowsePersonal ->
+        Route.History ->
             History.View.page dProfile model.cachedTranslationRecords
 
         Route.View id ->

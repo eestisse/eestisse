@@ -38,6 +38,8 @@ type alias FrontendModel =
     , viewTranslationModel : ViewTranslationModel
     , loadingAnimationCounter : Int
     , mobileMenuOpen : Bool
+    , noMorePublicTranslationsToFetch : Bool
+    , noMorePersonalTranslationsToFetch : Bool
     }
 
 
@@ -100,7 +102,7 @@ type ToBackend
     | RequestImportantNumber
     | RequestGeneralData
     | DoLogout
-    | RequestPublicTranslations
+    | RequestTranslations PublicOrPersonal ( Maybe Int, Int )
     | RequestTranslation Int
     | SetRedirectReturnPage Route.Route
     | RequestAndClearRedirectReturnPage
@@ -115,6 +117,7 @@ type ToFrontend
     | GeneralDataMsg GeneralData
     | CreditsInfoUpdated PublicCreditsInfo
     | RequestTranslationRecordsResult (Result String (List TranslationRecord))
+    | NoMoreTranslationsToFetch PublicOrPersonal
     | RequestRedirectReturnPageResult (Maybe Route.Route)
     | LogoutAck
 

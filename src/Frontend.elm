@@ -18,6 +18,7 @@ import Route exposing (Route)
 import Task
 import Testing
 import Time
+import Translation.Types exposing (..)
 import Types exposing (..)
 import Url
 import Url.Builder
@@ -67,6 +68,8 @@ init url key =
             , viewTranslationModel = { maybeSelectedBreakdownPartId = Nothing }
             , loadingAnimationCounter = 0
             , mobileMenuOpen = False
+            , noMorePublicTranslationsToFetch = False
+            , noMorePersonalTranslationsToFetch = False
             }
 
         routeCmd =
@@ -434,6 +437,16 @@ updateFromBackend msg model =
             , Cmd.none
             )
 
+        NoMoreTranslationsToFetch publicOrPersonal ->
+            ( case publicOrPersonal of
+                Public ->
+                    { model | noMorePublicTranslationsToFetch = True }
+
+                Personal ->
+                    { model | noMorePersonalTranslationsToFetch = True }
+            , Cmd.none
+            )
+
 
 startCreditCounterAnimation : Bool -> Time.Posix -> FrontendModel -> FrontendModel
 startCreditCounterAnimation goingUp now model =
@@ -507,7 +520,10 @@ arriveAtRouteCmds route model =
             Lamdera.sendToBackend <| RequestAndClearRedirectReturnPage
 
         Route.Browse ->
-            Lamdera.sendToBackend <| RequestPublicTranslations
+            Lamdera.sendToBackend <| RequestTranslations Public
+
+        Route.History ->
+            Lamdera.sendToBackend <| RequestTranslations Personal
 
         Route.View id ->
             case getTranslationRecord id model of

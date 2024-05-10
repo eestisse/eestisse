@@ -80,7 +80,7 @@ menuOptions maybeUserInfo =
         Just _ ->
             [ MenuOption "Account" Route.Account
             , MenuOption "Translate" Route.Translate
-            , MenuOption "Your Translations" Route.BrowsePersonal
+            , MenuOption "Your Translations" Route.History
             , MenuOption "Public Translations" Route.Browse
             ]
 

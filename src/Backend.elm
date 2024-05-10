@@ -290,17 +290,65 @@ updateFromFrontend sessionId clientId msg model =
                             ]
                     )
 
-        RequestPublicTranslations ->
-            ( model
-            , Lamdera.sendToFrontend clientId <|
-                RequestTranslationRecordsResult <|
-                    Ok <|
-                        (model.translationRecords
-                            |> Array.filter (\tr -> tr.public)
-                            |> Array.Extra.reverse
-                            |> Array.Extra.sliceUntil 20
+        RequestTranslations publicOrPersonal ( maybeLowestCachedId, count ) ->
+            let
+                filterFunc =
+                    case publicOrPersonal of
+                        Public ->
+                            .public
+
+                        Personal ->
+                            case maybeUserId of
+                                Nothing ->
+                                    always False
+
+                                Just userId ->
+                                    \record -> record.fromUserId == Just userId
+
+                limit =
+                    min Config.maxNumRecordsResponse count
+
+                ( listToReturn, noMoreRecords ) =
+                    let
+                        notYetTruncated =
+                            model.translationRecords
+                                |> Array.filter filterFunc
+                                |> Array.Extra.reverse
+                                |> (case maybeLowestCachedId of
+                                        Just lowestCachedId ->
+                                            Array.toList
+                                                >> List.Extra.dropWhile
+                                                    (\record ->
+                                                        record.id >= lowestCachedId
+                                                    )
+                                                >> Array.fromList
+
+                                        Nothing ->
+                                            identity
+                                   )
+                    in
+                    if Array.length notYetTruncated > limit then
+                        ( notYetTruncated
+                            |> Array.Extra.sliceUntil limit
                             |> Array.toList
+                        , True
                         )
+
+                    else
+                        ( notYetTruncated
+                            |> Array.toList
+                        , False
+                        )
+            in
+            ( model
+            , Cmd.batch
+                [ Lamdera.sendToFrontend clientId <| RequestTranslationRecordsResult <| Ok <| listToReturn
+                , if noMoreRecords then
+                    Lamdera.sendToFrontend clientId <| NoMoreTranslationsToFetch publicOrPersonal
+
+                  else
+                    Cmd.none
+                ]
             )
 
         RequestTranslation id ->

@@ -54,3 +54,8 @@ stripeUserPortalLink =
 
     else
         Debug.todo "need real stripe user portal link"
+
+
+maxNumRecordsResponse : Int
+maxNumRecordsResponse =
+    100
