@@ -37,6 +37,7 @@ type alias FrontendModel =
     , publicConsentChecked : Bool
     , viewTranslationModel : ViewTranslationModel
     , loadingAnimationCounter : Int
+    , mobileMenuOpen : Bool
     }
 
 
@@ -78,6 +79,7 @@ type FrontendMsg
     | TriggerStripePayment Int
     | UserIntent_ActivateMembership
     | UpdateFrontendNow Time.Posix
+    | ToggleMobileMenu
 
 
 type BackendMsg

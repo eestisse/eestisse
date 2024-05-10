@@ -7,24 +7,19 @@ import Browse.View
 import Browser
 import Colors
 import CommonView exposing (..)
-import Config
-import Dict exposing (Dict)
-import Element exposing (Attribute, Element)
+import Element exposing (Element)
 import Element.Background
 import Element.Border as Border
-import Element.Events as Events
 import Element.Font as Font
 import Element.Input as Input
-import Html exposing (Html)
 import Landing.View
+import Menu
 import Responsive exposing (..)
 import Route exposing (Route)
 import Subscribe.View
-import Time
 import Translation.Types exposing (..)
 import Translation.View
 import Types exposing (..)
-import Utils
 
 
 root : FrontendModel -> Browser.Document FrontendMsg
@@ -66,15 +61,21 @@ view dProfile model =
 
             Nothing ->
                 Element.Background.color <| Colors.vibrantTeal
+        , Element.inFront <|
+            if dProfile == Mobile && model.mobileMenuOpen then
+                Menu.viewMenu dProfile model.route
+
+            else
+                Element.none
         ]
     <|
         Element.column
-            [ Element.width <| responsiveVal dProfile Element.fill (Element.fill |> Element.maximum 900)
+            [ Element.width Element.fill
             , Element.centerX
             , Element.height Element.fill
             , Font.size 16
             , Element.spacing <| responsiveVal dProfile 25 40
-            , Element.padding 10
+            , Element.paddingXY 0 10
             ]
             [ Element.column
                 [ Element.width Element.fill
@@ -84,19 +85,16 @@ view dProfile model =
                     [ Element.width Element.fill
                     ]
                     [ Element.el [ Element.width Element.fill ] <|
-                        if model.route == Route.Translate then
+                        if dProfile == Mobile then
                             Input.button
-                                [ Element.padding 10
-                                , Border.rounded 10
-                                , Element.Background.color <| Colors.lightBlue
-                                ]
-                                { onPress = Just <| GotoRouteAndAnimate Route.Landing
+                                [ Element.padding 13 ]
+                                { onPress = Just <| ToggleMobileMenu
                                 , label =
                                     Element.image
-                                        [ Element.height <| Element.px <| responsiveVal dProfile 20 30
+                                        [ Element.height <| Element.px 30
                                         ]
-                                        { src = "left-arrow-black.png"
-                                        , description = "back"
+                                        { src = "menu.png"
+                                        , description = "open menu"
                                         }
                                 }
 
@@ -113,7 +111,7 @@ view dProfile model =
                             Element.el
                                 [ Element.alignRight
                                 , Element.alignTop
-                                , Element.padding 10
+                                , responsiveVal dProfile (Element.padding 10) (Element.paddingXY 10 0)
                                 ]
                             <|
                                 signInOrAccountButton dProfile model.maybeAuthedUserInfo
@@ -127,39 +125,70 @@ view dProfile model =
                   else
                     Element.none
                 ]
-            , case model.route of
-                Route.Translate ->
-                    Translation.View.viewDoTranslatePage dProfile model.maybePublicCreditsInfo model.time_updatePerSecond model.maybeAuthedUserInfo model.doTranslateModel model.publicConsentChecked model.loadingAnimationCounter
+            , if dProfile == Mobile then
+                Element.el [ Element.paddingXY 10 0 ] <|
+                    viewPage dProfile model
 
-                Route.Landing ->
-                    Landing.View.page dProfile model.maybeAuthedUserInfo
-
-                Route.Admin ->
-                    Admin.View.page model.maybeAdminData
-
-                Route.AuthCallback _ ->
-                    Element.el [ Element.centerX ] <| Element.text "User authenticated. Redirecting..."
-
-                Route.Account ->
-                    Account.View.page dProfile model.maybeAuthedUserInfo
-
-                Route.Subscribe ->
-                    Subscribe.View.page dProfile model
-
-                Route.Browse ->
-                    Browse.View.page dProfile model.cachedTranslationRecords
-
-                Route.View id ->
-                    case getTranslationRecord id model of
-                        Just translationRecord ->
-                            Translation.View.viewTranslationPage dProfile translationRecord model.viewTranslationModel
-
-                        Nothing ->
-                            Translation.View.viewLoadingTranslationPage dProfile
-
-                Route.BadRoute ->
-                    viewBadRoute
+              else
+                let
+                    sideElWidth =
+                        200
+                in
+                Element.row
+                    [ Element.width Element.fill
+                    , Element.height Element.fill
+                    , Element.spaceEvenly
+                    ]
+                    [ Element.el [ Element.width <| Element.px sideElWidth, Element.alignTop ] <|
+                        Menu.viewMenu dProfile model.route
+                    , Element.el
+                        [ Element.width (Element.fill |> Element.maximum 900)
+                        , Element.height Element.fill
+                        ]
+                      <|
+                        viewPage dProfile model
+                    , Element.el [ Element.width <| Element.px sideElWidth ] Element.none
+                    ]
             ]
+
+
+viewPage : DisplayProfile -> FrontendModel -> Element FrontendMsg
+viewPage dProfile model =
+    case model.route of
+        Route.Translate ->
+            Translation.View.viewDoTranslatePage dProfile model.maybePublicCreditsInfo model.time_updatePerSecond model.maybeAuthedUserInfo model.doTranslateModel model.publicConsentChecked model.loadingAnimationCounter
+
+        Route.Landing ->
+            Landing.View.page dProfile model.maybeAuthedUserInfo
+
+        Route.Admin ->
+            Admin.View.page model.maybeAdminData
+
+        Route.AuthCallback _ ->
+            Element.el [ Element.centerX ] <| Element.text "User authenticated. Redirecting..."
+
+        Route.Account ->
+            Account.View.page dProfile model.maybeAuthedUserInfo
+
+        Route.Subscribe ->
+            Subscribe.View.page dProfile model
+
+        Route.Browse ->
+            Browse.View.page dProfile model.cachedTranslationRecords
+
+        Route.BrowsePersonal ->
+            Element.text "lol yeah no"
+
+        Route.View id ->
+            case getTranslationRecord id model of
+                Just translationRecord ->
+                    Translation.View.viewTranslationPage dProfile translationRecord model.viewTranslationModel
+
+                Nothing ->
+                    Translation.View.viewLoadingTranslationPage dProfile
+
+        Route.BadRoute ->
+            viewBadRoute
 
 
 signInOrAccountButton : DisplayProfile -> Maybe FrontendUserInfo -> Element FrontendMsg

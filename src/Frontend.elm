@@ -66,6 +66,7 @@ init url key =
             , publicConsentChecked = True
             , viewTranslationModel = { maybeSelectedBreakdownPartId = Nothing }
             , loadingAnimationCounter = 0
+            , mobileMenuOpen = False
             }
 
         routeCmd =
@@ -310,6 +311,11 @@ update msg model =
             , Cmd.none
             )
 
+        ToggleMobileMenu ->
+            ( { model | mobileMenuOpen = not model.mobileMenuOpen }
+            , Cmd.none
+            )
+
 
 updateFromBackend : ToFrontend -> FrontendModel -> ( FrontendModel, Cmd FrontendMsg )
 updateFromBackend msg model =
@@ -448,6 +454,7 @@ gotoRouteAndAnimate : Route -> FrontendModel -> ( FrontendModel, Cmd FrontendMsg
 gotoRouteAndAnimate route model =
     ( { model
         | route = route
+        , mobileMenuOpen = False
         , backgroundModel =
             model.backgroundModel
                 |> Maybe.map Background.fiddleAllPaths

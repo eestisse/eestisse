@@ -182,7 +182,7 @@ primaryBoxCustomColors borderColor backgroundColor extraAttributes innerEl =
         ([ Element.padding 10
          , Border.rounded 30
          , Border.shadow
-            { offset = ( -5, 5 )
+            { offset = ( 5, 5 )
             , size = 5
             , blur = 10
             , color = Element.rgba 0 0 0 0.3
@@ -220,7 +220,7 @@ scrollbarYEl attrs body =
 basicShadow : Attribute msg
 basicShadow =
     Border.shadow
-        { offset = ( -3, 3 )
+        { offset = ( 3, 3 )
         , size = 1
         , blur = 5
         , color = Element.rgb 0.8 0.8 0.8

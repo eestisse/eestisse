@@ -14,6 +14,7 @@ type Route
     | Account
     | Subscribe
     | Browse
+    | BrowsePersonal
     | View Int
     | BadRoute
 
@@ -37,6 +38,7 @@ matchRoute =
         , Parser.map AuthCallback (Parser.s "login" </> Parser.string </> Parser.s "callback")
         , Parser.map Account (Parser.s "account")
         , Parser.map Browse (Parser.s "browse")
+        , Parser.map BrowsePersonal (Parser.s "history")
         , Parser.map Subscribe (Parser.s "subscribe")
         , Parser.map View (Parser.s "view" </> Parser.int)
         ]
@@ -66,6 +68,9 @@ routeToString route =
 
             Browse ->
                 [ "browse" ]
+
+            BrowsePersonal ->
+                [ "history" ]
 
             View id ->
                 [ "view", String.fromInt id ]
