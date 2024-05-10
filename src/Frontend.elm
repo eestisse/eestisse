@@ -333,20 +333,25 @@ updateFromBackend msg model =
 
         TranslationResult inputText translationRecordResult ->
             let
-                newCachedTranslationRecords =
+                ( newCachedTranslationRecords, newDoTranslateModel ) =
                     case translationRecordResult of
                         Ok translationRecord ->
-                            model.cachedTranslationRecords
+                            ( model.cachedTranslationRecords
                                 |> Dict.insert
                                     translationRecord.id
                                     translationRecord
+                            , { input = "", state = Inputting }
+                            )
 
-                        Err _ ->
-                            model.cachedTranslationRecords
+                        Err err ->
+                            ( model.cachedTranslationRecords
+                            , { input = model.doTranslateModel.input, state = Error err }
+                            )
 
                 newModel =
                     { model
                         | cachedTranslationRecords = newCachedTranslationRecords
+                        , doTranslateModel = newDoTranslateModel
                     }
             in
             if model.route == Route.Translate && model.doTranslateModel.state == TranslateRequestSubmitted && inputText == model.doTranslateModel.input then
@@ -361,17 +366,8 @@ updateFromBackend msg model =
                                         ]
                                 )
 
-                    Err gptAssistError ->
-                        ( { newModel
-                            | doTranslateModel =
-                                let
-                                    old =
-                                        newModel.doTranslateModel
-                                in
-                                { old
-                                    | state = Error gptAssistError
-                                }
-                          }
+                    Err _ ->
+                        ( newModel
                         , plausibleEventOutCmd "translation-error"
                         )
 
