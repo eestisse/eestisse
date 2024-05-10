@@ -24,29 +24,33 @@ page dProfile model =
             , Element.padding <| responsiveVal dProfile 10 20
             , Element.spacing <| responsiveVal dProfile 15 30
             ]
-            [ Element.el
-                [ Font.size <| responsiveVal dProfile 20 26
-                , Element.centerX
-                , Font.bold
-                ]
-              <|
-                Element.text "Activate Eestisse subscription"
-            , if maybeFrontendUserHasActiveMembership model.maybeAuthedUserInfo then
-                Element.text "oh nice brudda nice wan"
+            [ if maybeFrontendUserHasActiveMembership model.maybeAuthedUserInfo then
+                susbcribeSuccessfulElement dProfile
 
               else
-                Element.column
-                    [ Element.centerX
-                    , Element.spacing <| responsiveVal dProfile 15 30
+                Element.el
+                    [ Font.size <| responsiveVal dProfile 20 26
+                    , Element.centerX
+                    , Font.bold
                     ]
-                    [ Element.el [ Element.centerX ] <| viewOffer dProfile
-                    , case model.maybeAuthedUserInfo of
+                <|
+                    Element.text "Activate Eestisse subscription"
+            , Element.column
+                [ Element.centerX
+                , Element.spacing <| responsiveVal dProfile 15 30
+                ]
+                [ Element.el [ Element.centerX ] <| viewOffer dProfile
+                , if not <| maybeFrontendUserHasActiveMembership model.maybeAuthedUserInfo then
+                    case model.maybeAuthedUserInfo of
                         Nothing ->
                             signinElement dProfile
 
                         Just userInfo ->
                             purchaseButton dProfile userInfo
-                    ]
+
+                  else
+                    Element.none
+                ]
             ]
 
 
@@ -114,3 +118,23 @@ purchaseButton dProfile userInfo =
         { onPress = Just <| TriggerStripePayment userInfo.id
         , label = Element.el [ Element.centerX ] <| Element.text "Checkout with Stripe"
         }
+
+
+susbcribeSuccessfulElement : DisplayProfile -> Element FrontendMsg
+susbcribeSuccessfulElement dProfile =
+    Element.column
+        [ Element.centerX
+        , Element.spacing 10
+        ]
+        [ Element.el
+            [ Font.size <| responsiveVal dProfile 20 26
+            , Element.centerX
+            ]
+          <|
+            Element.text "Subscription active!"
+        , Element.el [ Element.centerX ] <|
+            Element.text <|
+                responsiveVal dProfile
+                    "Use the menu button on the upper left to try out different features."
+                    "Use the menu on the left to try out different features."
+        ]
