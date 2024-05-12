@@ -1,20 +1,23 @@
 module ViewTranslationList exposing (..)
 
+import Colors
 import CommonView exposing (..)
+import Config
 import Dict exposing (Dict)
 import Element exposing (Element)
 import Element.Background
 import Element.Border as Border
 import Element.Events as Events
 import Element.Font as Font
+import Element.Input as Input
 import Responsive exposing (..)
 import Route
 import Translation.Types exposing (..)
 import Types exposing (..)
 
 
-viewTranslationList : DisplayProfile -> Dict Int TranslationRecord -> Element FrontendMsg
-viewTranslationList dProfile translationRecords =
+viewTranslationList : DisplayProfile -> Dict Int TranslationRecord -> PublicOrPersonal -> Bool -> Element FrontendMsg
+viewTranslationList dProfile translationRecords publicOrPersonal showFetchMoreButton =
     scrollbarYEl
         [ Element.padding 5
         , Border.width 1
@@ -23,15 +26,26 @@ viewTranslationList dProfile translationRecords =
         ]
     <|
         Element.column
-            [ Element.spacing <| responsiveVal dProfile 15 20
-            , Element.width Element.fill
+            [ Element.width Element.fill
             , Element.height Element.fill
+            , Element.spacing <| responsiveVal dProfile 15 20
             ]
-            (translationRecords
-                |> Dict.values
-                |> List.sortBy (.id >> negate)
-                |> List.map (viewTranslationRecordPreviewButton dProfile)
-            )
+            [ Element.column
+                [ Element.spacing <| responsiveVal dProfile 15 20
+                , Element.width Element.fill
+                , Element.height Element.fill
+                ]
+                (translationRecords
+                    |> Dict.values
+                    |> List.sortBy (.id >> negate)
+                    |> List.map (viewTranslationRecordPreviewButton dProfile)
+                )
+            , if showFetchMoreButton then
+                Element.el [ Element.centerX ] <| loadMoreButton dProfile publicOrPersonal (getLowestId translationRecords)
+
+              else
+                Element.none
+            ]
 
 
 viewTranslationRecordPreviewButton : DisplayProfile -> TranslationRecord -> Element FrontendMsg
@@ -61,3 +75,23 @@ viewTranslationRecordPreviewButton dProfile translationRecord =
         , hbreakElement
         , Element.el translatedStyles <| textWithCutoff translationRecord.translation.translatedText
         ]
+
+
+loadMoreButton : DisplayProfile -> PublicOrPersonal -> Maybe Int -> Element FrontendMsg
+loadMoreButton dProfile publicOrPersonal maybeLowestIdFetched =
+    Input.button
+        [ Element.paddingXY 20 10
+        , Element.Background.color Colors.blue
+        , Font.color Colors.white
+        , Font.bold
+        , Border.rounded 4
+        ]
+        { onPress = Just <| LoadMoreClicked publicOrPersonal ( maybeLowestIdFetched, Config.frontendFetchRecordCount )
+        , label = Element.text "Load more"
+        }
+
+
+getLowestId : Dict Int TranslationRecord -> Maybe Int
+getLowestId =
+    Dict.keys
+        >> List.head

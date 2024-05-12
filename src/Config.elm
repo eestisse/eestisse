@@ -59,3 +59,8 @@ stripeUserPortalLink =
 maxNumRecordsResponse : Int
 maxNumRecordsResponse =
     100
+
+
+frontendFetchRecordCount : Int
+frontendFetchRecordCount =
+    25

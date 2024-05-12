@@ -319,6 +319,11 @@ update msg model =
             , Cmd.none
             )
 
+        LoadMoreClicked publicOrPersonal countInfo ->
+            ( model
+            , Lamdera.sendToBackend <| RequestTranslations publicOrPersonal countInfo
+            )
+
 
 updateFromBackend : ToFrontend -> FrontendModel -> ( FrontendModel, Cmd FrontendMsg )
 updateFromBackend msg model =
@@ -520,10 +525,10 @@ arriveAtRouteCmds route model =
             Lamdera.sendToBackend <| RequestAndClearRedirectReturnPage
 
         Route.Browse ->
-            Lamdera.sendToBackend <| RequestTranslations Public
+            Lamdera.sendToBackend <| RequestTranslations Public ( Nothing, Config.frontendFetchRecordCount )
 
         Route.History ->
-            Lamdera.sendToBackend <| RequestTranslations Personal
+            Lamdera.sendToBackend <| RequestTranslations Personal ( Nothing, Config.frontendFetchRecordCount )
 
         Route.View id ->
             case getTranslationRecord id model of

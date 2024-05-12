@@ -331,13 +331,13 @@ updateFromFrontend sessionId clientId msg model =
                         ( notYetTruncated
                             |> Array.Extra.sliceUntil limit
                             |> Array.toList
-                        , True
+                        , False
                         )
 
                     else
                         ( notYetTruncated
                             |> Array.toList
-                        , False
+                        , True
                         )
             in
             ( model
@@ -354,7 +354,9 @@ updateFromFrontend sessionId clientId msg model =
         RequestTranslation id ->
             case Array.get id model.translationRecords of
                 Nothing ->
-                    ( model, Cmd.none )
+                    ( model
+                    , Lamdera.sendToFrontend clientId <| RequestTranslationRecordsResult <| Err <| "No translation at ID " ++ String.fromInt id
+                    )
 
                 Just translationRecord ->
                     let

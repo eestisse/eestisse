@@ -82,6 +82,7 @@ type FrontendMsg
     | UserIntent_ActivateMembership
     | UpdateFrontendNow Time.Posix
     | ToggleMobileMenu
+    | LoadMoreClicked PublicOrPersonal ( Maybe Int, Int )
 
 
 type BackendMsg

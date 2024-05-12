@@ -180,10 +180,10 @@ viewPage dProfile model =
             Subscribe.View.page dProfile model
 
         Route.Browse ->
-            Browse.View.page dProfile model.cachedTranslationRecords
+            Browse.View.page dProfile model.cachedTranslationRecords (not model.noMorePublicTranslationsToFetch)
 
         Route.History ->
-            History.View.page dProfile model.cachedTranslationRecords
+            History.View.page dProfile model.cachedTranslationRecords (not model.noMorePersonalTranslationsToFetch)
 
         Route.View id ->
             case getTranslationRecord id model of

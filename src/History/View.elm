@@ -9,8 +9,8 @@ import Types exposing (..)
 import ViewTranslationList exposing (viewTranslationList)
 
 
-page : DisplayProfile -> Dict Int TranslationRecord -> Element FrontendMsg
-page dProfile cachedTranslationRecords =
+page : DisplayProfile -> Dict Int TranslationRecord -> Bool -> Element FrontendMsg
+page dProfile cachedTranslationRecords showFetchMoreButton =
     let
         personalTranslationRecords =
             cachedTranslationRecords
@@ -23,4 +23,4 @@ page dProfile cachedTranslationRecords =
         [ Element.width Element.fill
         , Element.height Element.fill
         ]
-        (viewTranslationList dProfile personalTranslationRecords)
+        (viewTranslationList dProfile personalTranslationRecords Personal showFetchMoreButton)
