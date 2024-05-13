@@ -36,7 +36,7 @@ backendConfig model =
     , sendToFrontend = Lamdera.sendToFrontend
     , backendModel = model
     , loadMethod = Auth.Flow.methodLoader config.methods
-    , handleAuthSuccess = handleAuthSuccess model
+    , handleAuthSuccess = handleAuthSuccessWithAuthUserInfo model
     , isDev = Env.mode == Env.Development
     , renewSession = renewSession
     , logout = logout
@@ -48,7 +48,7 @@ renewSession _ _ model =
     ( model, Cmd.none )
 
 
-handleAuthSuccess :
+handleAuthSuccessWithAuthUserInfo :
     BackendModel
     -> Lamdera.SessionId
     -> Lamdera.ClientId
@@ -57,10 +57,20 @@ handleAuthSuccess :
     -> Maybe Auth.Common.Token
     -> Time.Posix
     -> ( BackendModel, Cmd BackendMsg )
-handleAuthSuccess backendModel sessionId clientId authUserInfo _ _ _ =
+handleAuthSuccessWithAuthUserInfo backendModel sessionId clientId authUserInfo _ _ _ =
+    handleAuthSuccess backendModel sessionId clientId authUserInfo.email
+
+
+handleAuthSuccess :
+    BackendModel
+    -> Lamdera.SessionId
+    -> Lamdera.ClientId
+    -> String
+    -> ( BackendModel, Cmd BackendMsg )
+handleAuthSuccess backendModel sessionId clientId email =
     let
         ( modelWithEmail, ( userId, userInfo ) ) =
-            addOrGetUserFromEmail authUserInfo.email backendModel
+            addOrGetUserFromEmail email backendModel
 
         existingOrNewSession =
             modelWithEmail.sessions

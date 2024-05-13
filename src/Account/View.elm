@@ -13,8 +13,8 @@ import Route
 import Types exposing (..)
 
 
-page : DisplayProfile -> Maybe FrontendUserInfo -> Element FrontendMsg
-page dProfile maybeUserInfo =
+page : DisplayProfile -> SigninModel -> Maybe FrontendUserInfo -> Element FrontendMsg
+page dProfile signinModel maybeUserInfo =
     primaryBox
         [ Element.width Element.fill
         , Element.padding <| responsiveVal dProfile 10 25
@@ -23,7 +23,7 @@ page dProfile maybeUserInfo =
         case maybeUserInfo of
             Nothing ->
                 Element.el [ Element.centerX ] <|
-                    signinElement dProfile
+                    signinElement dProfile signinModel
 
             Just userInfo ->
                 Element.column

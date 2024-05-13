@@ -175,7 +175,7 @@ viewPage dProfile model =
             Element.el [ Element.centerX ] <| Element.text "User authenticated. Redirecting..."
 
         Route.Account ->
-            Account.View.page dProfile model.maybeAuthedUserInfo
+            Account.View.page dProfile model.signinModel model.maybeAuthedUserInfo
 
         Route.Subscribe ->
             Subscribe.View.page dProfile model

@@ -11,6 +11,7 @@ import Html
 import Html.Attributes
 import Responsive exposing (..)
 import Types exposing (..)
+import Utils
 
 
 madimiFont : Attribute msg
@@ -263,13 +264,85 @@ actionLink text msg =
         Element.text text
 
 
-signinElement : DisplayProfile -> Element FrontendMsg
-signinElement dProfile =
-    Element.column
+signinElement : DisplayProfile -> SigninModel -> Element FrontendMsg
+signinElement dProfile signinModel =
+    case signinModel.emailFormMode of
+        Inactive ->
+            Element.row
+                [ Element.centerX
+                , Element.spacing 10
+                ]
+                [ googleSigninButton dProfile
+                , magicLinkButton dProfile
+                ]
+
+        InputtingEmail input ->
+            emailInputForm dProfile input
+
+        InputtingCode email input ->
+            magicCodeInputForm dProfile email input
+
+        CodeSubmitted ->
+            loadingSnake []
+
+
+emailInputForm : DisplayProfile -> String -> Element FrontendMsg
+emailInputForm dProfile input =
+    let
+        submitMsgIfEmailIsValid =
+            if Utils.isValidEmail input then
+                Just <| SubmitEmailClicked input
+
+            else
+                Nothing
+    in
+    Element.row
         [ Element.centerX
         , Element.spacing 10
         ]
-        [ googleSigninButton dProfile
+        [ Input.text
+            [ Element.width <| Element.px 100
+            ]
+            { onChange = \t -> ChangeEmailForm <| InputtingEmail t
+            , text = input
+            , placeholder = Just <| Input.placeholder [ Font.color Colors.gray ] <| Element.text "you@something.com"
+            , label = Input.labelHidden "email input"
+            }
+        , Input.button
+            []
+            { onPress = submitMsgIfEmailIsValid
+            , label = Element.text "submit"
+            }
+        ]
+
+
+magicCodeInputForm : DisplayProfile -> String -> String -> Element FrontendMsg
+magicCodeInputForm dProfile email input =
+    let
+        submitMsgIfNonempty =
+            if input == "" then
+                Nothing
+
+            else
+                Just <| SubmitCodeClicked email input
+    in
+    Element.row
+        [ Element.centerX
+        , Element.spacing 10
+        ]
+        [ Input.text
+            [ Element.width <| Element.px 100
+            ]
+            { onChange = \t -> ChangeEmailForm <| InputtingCode email t
+            , text = input
+            , placeholder = Nothing
+            , label = Input.labelHidden "code input"
+            }
+        , Input.button
+            []
+            { onPress = submitMsgIfNonempty
+            , label = Element.text "submit"
+            }
         ]
 
 
@@ -279,13 +352,26 @@ googleSigninButton dProfile =
         []
         { onPress =
             Just <|
-                AuthSigninRequested { methodId = "OAuthGoogle", username = Nothing }
+                GoogleSigninRequested
         , label =
             Element.image
                 []
                 { src = "/google-signin-button.png"
                 , description = "Google"
                 }
+        }
+
+
+magicLinkButton : DisplayProfile -> Element FrontendMsg
+magicLinkButton dProfile =
+    Input.button
+        []
+        { onPress = Just EmailSigninRequested
+        , label =
+            Element.el
+                []
+            <|
+                Element.text "Email Magic Link"
         }
 
 

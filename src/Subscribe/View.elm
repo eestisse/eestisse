@@ -43,7 +43,7 @@ page dProfile model =
                 , if not <| maybeFrontendUserHasActiveMembership model.maybeAuthedUserInfo then
                     case model.maybeAuthedUserInfo of
                         Nothing ->
-                            signinElement dProfile
+                            signinElement dProfile model.signinModel
 
                         Just userInfo ->
                             purchaseButton dProfile userInfo

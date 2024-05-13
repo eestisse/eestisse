@@ -7,6 +7,7 @@ import Browser exposing (UrlRequest)
 import Browser.Dom
 import Browser.Navigation exposing (Key)
 import Dict exposing (Dict)
+import EmailCode
 import Http
 import Lamdera exposing (ClientId, SessionId)
 import Responsive exposing (..)
@@ -24,6 +25,7 @@ type alias FrontendModel =
     , authFlow : Auth.Common.Flow
     , authRedirectBaseUrl : Url
     , maybeAuthedUserInfo : Maybe FrontendUserInfo
+    , signinModel : SigninModel
     , dProfile : Maybe DisplayProfile
     , maybeAdminData : Maybe AdminData
     , animationTime : Time.Posix
@@ -52,16 +54,22 @@ type alias BackendModel =
     , preConsentRequests : List ( Time.Posix, String, Result GptAssistError Translation )
     , translationRecords : Array TranslationRecord
     , pendingAuths : Dict Lamdera.SessionId Auth.Common.PendingAuth
+    , pendingEmailAuths : Dict String EmailCode.PendingEmailAuth
     , sessions : Dict Lamdera.SessionId SessionInfo
     , users : Dict Int UserInfo
     , nextUserId : Int
     , hangingInvoices : List PaidInvoice
+    , secretCounter : Int
     }
 
 
 type FrontendMsg
     = NoOpFrontendMsg
-    | AuthSigninRequested { methodId : Auth.Common.MethodId, username : Maybe String }
+    | GoogleSigninRequested
+    | EmailSigninRequested
+    | ChangeEmailForm EmailFormMode
+    | SubmitEmailClicked String
+    | SubmitCodeClicked String String
     | Logout
     | UrlClicked UrlRequest
     | UrlChanged Url
@@ -106,8 +114,10 @@ type ToBackend
     | DoLogout
     | RequestTranslations PublicOrPersonal ( Maybe Int, Int )
     | RequestTranslation Int
-    | SetRedirectReturnPage Route.Route
+    | SetPostAuthRedirect Route.Route
     | RequestAndClearRedirectReturnPage
+    | RequestEmailLoginCode String
+    | SubmitCodeForEmail String String
 
 
 type ToFrontend
@@ -197,13 +207,6 @@ type alias EmailAndConsents =
     }
 
 
-type SignupState
-    = Inactive
-    | Active SignupFormModel
-    | Submitting
-    | Submitted
-
-
 type alias SignupFormModel =
     { emailInput : String
     , newFeaturesConsentChecked : Bool
@@ -289,3 +292,15 @@ maybeFrontendUserHasActiveMembership maybeFrontendUserInfo =
 getTranslationRecord : Int -> FrontendModel -> Maybe TranslationRecord
 getTranslationRecord id model =
     Dict.get id model.cachedTranslationRecords
+
+
+type alias SigninModel =
+    { emailFormMode : EmailFormMode
+    }
+
+
+type EmailFormMode
+    = Inactive
+    | InputtingEmail String
+    | InputtingCode String String
+    | CodeSubmitted

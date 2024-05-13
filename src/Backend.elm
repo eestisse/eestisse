@@ -7,6 +7,7 @@ import Auth.Flow
 import Config
 import Dict exposing (Dict)
 import Dict.Extra
+import EmailCode
 import Env
 import GPTRequests
 import Http
@@ -19,6 +20,7 @@ import Stripe.Utils as Stripe
 import Task
 import Testing
 import Time
+import Time.Extra
 import Translation.Types exposing (..)
 import Types exposing (..)
 import Utils
@@ -50,6 +52,8 @@ init =
       , users = Dict.empty
       , nextUserId = 0
       , hangingInvoices = []
+      , pendingEmailAuths = Dict.empty
+      , secretCounter = 0
       }
     , Time.now
         |> Task.perform InitialTimeVal
@@ -375,7 +379,7 @@ updateFromFrontend sessionId clientId msg model =
                         Lamdera.sendToFrontend clientId <| RequestTranslationRecordsResult <| Err "You don't have permission to view that translation"
                     )
 
-        SetRedirectReturnPage route ->
+        SetPostAuthRedirect route ->
             ( { model
                 | sessions =
                     model.sessions
@@ -400,6 +404,54 @@ updateFromFrontend sessionId clientId msg model =
                         |> Maybe.andThen .redirectReturnPage
                     )
             )
+
+        RequestEmailLoginCode email ->
+            let
+                ( model1, code ) =
+                    EmailCode.getUniqueId model.nowish model
+            in
+            ( { model1
+                | pendingEmailAuths =
+                    model1.pendingEmailAuths
+                        |> Dict.insert code
+                            { email = email
+                            , expires = (Time.posixToMillis model.nowish + Config.emailCodeExpirationMillis) |> Time.millisToPosix
+                            }
+              }
+            , let
+                _ =
+                    Debug.log "would send email" ( email, code )
+              in
+              Cmd.none
+            )
+
+        SubmitCodeForEmail email code ->
+            case Dict.get code model.pendingEmailAuths of
+                Nothing ->
+                    Debug.todo ""
+
+                Just pendingAuth ->
+                    if pendingAuth.email /= email then
+                        Debug.todo ""
+
+                    else if Time.Extra.compare model.nowish pendingAuth.expires == GT then
+                        Debug.todo ""
+
+                    else
+                        let
+                            modelWithoutPendingAuth =
+                                { model
+                                    | pendingEmailAuths =
+                                        model.pendingEmailAuths
+                                            |> Dict.remove code
+                                }
+                        in
+                        Auth.handleAuthSuccess modelWithoutPendingAuth sessionId clientId email
+
+
+
+-- auth successful
+-- remove pendingEmailAuth
 
 
 handleStripeWebhook : Stripe.StripeEvent -> BackendModel -> ( Result Http.Error String, BackendModel, Cmd BackendMsg )

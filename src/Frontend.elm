@@ -48,6 +48,10 @@ init url key =
         model =
             { key = key
             , route = route
+            , authFlow = Auth.Common.Idle
+            , authRedirectBaseUrl = { url | query = Nothing, fragment = Nothing }
+            , maybeAuthedUserInfo = Nothing
+            , signinModel = { emailFormMode = Inactive }
             , dProfile = Nothing
             , maybeAdminData = Nothing
             , animationTime = Time.millisToPosix 0
@@ -56,9 +60,6 @@ init url key =
             , maybePublicCreditsInfo = Nothing
             , showCreditCounterTooltip = False
             , creditsCounterAnimationState = Nothing
-            , authFlow = Auth.Common.Idle
-            , authRedirectBaseUrl = { url | query = Nothing, fragment = Nothing }
-            , maybeAuthedUserInfo = Nothing
             , cachedTranslationRecords = Dict.empty
             , doTranslateModel =
                 { input = ""
@@ -110,16 +111,19 @@ update msg model =
         NoOpFrontendMsg ->
             ( model, Cmd.none )
 
-        AuthSigninRequested { methodId, username } ->
-            Auth.Flow.signInRequested methodId model username
+        GoogleSigninRequested ->
+            Auth.Flow.signInRequested "OAuthGoogle" model Nothing
                 |> Tuple.mapSecond (AuthToBackend >> Lamdera.sendToBackend)
                 |> Tuple.mapSecond
                     (\authCmd ->
                         Cmd.batch
-                            [ Lamdera.sendToBackend <| SetRedirectReturnPage model.route
+                            [ Lamdera.sendToBackend <| SetPostAuthRedirect model.route
                             , authCmd
                             ]
                     )
+
+        EmailSigninRequested ->
+            ( model, Cmd.none )
 
         UrlClicked urlRequest ->
             case urlRequest of
@@ -323,6 +327,27 @@ update msg model =
         LoadMoreClicked publicOrPersonal countInfo ->
             ( { model | fetchingRecords = True }
             , Lamdera.sendToBackend <| RequestTranslations publicOrPersonal countInfo
+            )
+
+        ChangeEmailForm newForm ->
+            ( { model
+                | signinModel = { emailFormMode = newForm }
+              }
+            , Cmd.none
+            )
+
+        SubmitEmailClicked email ->
+            ( { model
+                | signinModel = { emailFormMode = InputtingCode email "" }
+              }
+            , Lamdera.sendToBackend <| RequestEmailLoginCode email
+            )
+
+        SubmitCodeClicked email code ->
+            ( { model
+                | signinModel = { emailFormMode = CodeSubmitted }
+              }
+            , Lamdera.sendToBackend <| SubmitCodeForEmail email code
             )
 
 

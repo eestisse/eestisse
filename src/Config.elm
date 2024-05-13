@@ -64,3 +64,17 @@ maxNumRecordsResponse =
 frontendFetchRecordCount : Int
 frontendFetchRecordCount =
     25
+
+
+emailCodeExpirationInfo =
+    ( 1000 * 60 * 5, "5 minutes" )
+
+
+emailCodeExpirationMillis : Int
+emailCodeExpirationMillis =
+    Tuple.first emailCodeExpirationInfo
+
+
+emailCodeExpirationString : String
+emailCodeExpirationString =
+    Tuple.second emailCodeExpirationInfo
