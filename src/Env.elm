@@ -39,5 +39,10 @@ stripeApiKey =
     ""
 
 
+emailCodeSecret : String
+emailCodeSecret =
+    ""
+
+
 mode =
     Development
