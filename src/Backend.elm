@@ -449,11 +449,6 @@ updateFromFrontend sessionId clientId msg model =
                         Auth.handleAuthSuccess modelWithoutPendingAuth sessionId clientId email
 
 
-
--- auth successful
--- remove pendingEmailAuth
-
-
 handleStripeWebhook : Stripe.StripeEvent -> BackendModel -> ( Result Http.Error String, BackendModel, Cmd BackendMsg )
 handleStripeWebhook webhook model =
     let

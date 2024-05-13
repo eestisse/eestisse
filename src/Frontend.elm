@@ -123,7 +123,9 @@ update msg model =
                     )
 
         EmailSigninRequested ->
-            ( model, Cmd.none )
+            ( { model | signinModel = { emailFormMode = InputtingEmail "" } }
+            , Cmd.none
+            )
 
         UrlClicked urlRequest ->
             case urlRequest of
