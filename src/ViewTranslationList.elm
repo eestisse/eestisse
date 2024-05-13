@@ -16,8 +16,14 @@ import Translation.Types exposing (..)
 import Types exposing (..)
 
 
-viewTranslationList : DisplayProfile -> Dict Int TranslationRecord -> PublicOrPersonal -> Bool -> Element FrontendMsg
-viewTranslationList dProfile translationRecords publicOrPersonal showFetchMoreButton =
+type FetchButtonVisibility
+    = DontShow
+    | Show
+    | Loading
+
+
+viewTranslationList : DisplayProfile -> Dict Int TranslationRecord -> PublicOrPersonal -> FetchButtonVisibility -> Element FrontendMsg
+viewTranslationList dProfile translationRecords publicOrPersonal fetchButtonVisibility =
     scrollbarYEl
         [ Element.padding 5
         , Border.width 1
@@ -27,24 +33,26 @@ viewTranslationList dProfile translationRecords publicOrPersonal showFetchMoreBu
     <|
         Element.column
             [ Element.width Element.fill
-            , Element.height Element.fill
             , Element.spacing <| responsiveVal dProfile 15 20
             ]
             [ Element.column
                 [ Element.spacing <| responsiveVal dProfile 15 20
                 , Element.width Element.fill
-                , Element.height Element.fill
                 ]
                 (translationRecords
                     |> Dict.values
                     |> List.sortBy (.id >> negate)
                     |> List.map (viewTranslationRecordPreviewButton dProfile)
                 )
-            , if showFetchMoreButton then
-                Element.el [ Element.centerX ] <| loadMoreButton dProfile publicOrPersonal (getLowestId translationRecords)
+            , case fetchButtonVisibility of
+                DontShow ->
+                    Element.none
 
-              else
-                Element.none
+                Show ->
+                    Element.el [ Element.centerX ] <| loadMoreButton dProfile publicOrPersonal (getLowestId translationRecords)
+
+                Loading ->
+                    Element.el [ Element.centerX ] <| loadingSnake [ Element.height <| Element.px 50 ]
             ]
 
 

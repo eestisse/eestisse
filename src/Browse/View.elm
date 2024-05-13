@@ -6,11 +6,11 @@ import Element exposing (Element)
 import Responsive exposing (..)
 import Translation.Types exposing (..)
 import Types exposing (..)
-import ViewTranslationList exposing (viewTranslationList)
+import ViewTranslationList exposing (..)
 
 
-page : DisplayProfile -> Dict Int TranslationRecord -> Bool -> Element FrontendMsg
-page dProfile cachedTranslationRecords showFetchMoreButton =
+page : DisplayProfile -> Dict Int TranslationRecord -> FetchButtonVisibility -> Element FrontendMsg
+page dProfile cachedTranslationRecords fetchButtonVisibility =
     let
         -- prevents the user seeing their personal histories in the public list, which would imply that their translations are in the *global* public list
         publicTranslationRecords =
@@ -24,4 +24,4 @@ page dProfile cachedTranslationRecords showFetchMoreButton =
         [ Element.width Element.fill
         , Element.height Element.fill
         ]
-        (viewTranslationList dProfile publicTranslationRecords Public showFetchMoreButton)
+        (viewTranslationList dProfile publicTranslationRecords Public fetchButtonVisibility)

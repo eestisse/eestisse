@@ -40,6 +40,7 @@ type alias FrontendModel =
     , mobileMenuOpen : Bool
     , noMorePublicTranslationsToFetch : Bool
     , noMorePersonalTranslationsToFetch : Bool
+    , fetchingRecords : Bool
     }
 
 

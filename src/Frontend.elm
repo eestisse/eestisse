@@ -70,6 +70,7 @@ init url key =
             , mobileMenuOpen = False
             , noMorePublicTranslationsToFetch = False
             , noMorePersonalTranslationsToFetch = False
+            , fetchingRecords = False
             }
 
         routeCmd =
@@ -320,7 +321,7 @@ update msg model =
             )
 
         LoadMoreClicked publicOrPersonal countInfo ->
-            ( model
+            ( { model | fetchingRecords = True }
             , Lamdera.sendToBackend <| RequestTranslations publicOrPersonal countInfo
             )
 
@@ -408,11 +409,12 @@ updateFromBackend msg model =
                         _ =
                             Debug.log "error fetching translationRecord:" errStr
                     in
-                    ( model, Cmd.none )
+                    ( { model | fetchingRecords = False }, Cmd.none )
 
                 Ok translationRecords ->
                     ( { model
-                        | cachedTranslationRecords =
+                        | fetchingRecords = False
+                        , cachedTranslationRecords =
                             Dict.union
                                 (translationRecords
                                     |> List.map (\tr -> ( tr.id, tr ))

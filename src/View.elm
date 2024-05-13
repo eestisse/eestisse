@@ -21,6 +21,7 @@ import Subscribe.View
 import Translation.Types exposing (..)
 import Translation.View
 import Types exposing (..)
+import ViewTranslationList exposing (FetchButtonVisibility(..))
 
 
 root : FrontendModel -> Browser.Document FrontendMsg
@@ -180,10 +181,10 @@ viewPage dProfile model =
             Subscribe.View.page dProfile model
 
         Route.Browse ->
-            Browse.View.page dProfile model.cachedTranslationRecords (not model.noMorePublicTranslationsToFetch)
+            Browse.View.page dProfile model.cachedTranslationRecords (getFetchButtonVisibility Public model)
 
         Route.History ->
-            History.View.page dProfile model.cachedTranslationRecords (not model.noMorePersonalTranslationsToFetch)
+            History.View.page dProfile model.cachedTranslationRecords (getFetchButtonVisibility Personal model)
 
         Route.View id ->
             case getTranslationRecord id model of
@@ -195,6 +196,28 @@ viewPage dProfile model =
 
         Route.BadRoute ->
             viewBadRoute
+
+
+getFetchButtonVisibility : PublicOrPersonal -> FrontendModel -> FetchButtonVisibility
+getFetchButtonVisibility publicOrPersonal model =
+    let
+        moreToFetch =
+            case publicOrPersonal of
+                Public ->
+                    not model.noMorePublicTranslationsToFetch
+
+                Personal ->
+                    not model.noMorePersonalTranslationsToFetch
+    in
+    if moreToFetch then
+        if model.fetchingRecords then
+            Loading
+
+        else
+            Show
+
+    else
+        DontShow
 
 
 signInOrAccountButton : DisplayProfile -> Maybe FrontendUserInfo -> Element FrontendMsg
