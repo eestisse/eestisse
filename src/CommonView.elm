@@ -287,3 +287,12 @@ googleSigninButton dProfile =
                 , description = "Google"
                 }
         }
+
+
+loadingSnake : List (Attribute msg) -> Element msg
+loadingSnake attributes =
+    Element.image
+        attributes
+        { src = "/loading-snake-io.gif"
+        , description = "loading"
+        }
