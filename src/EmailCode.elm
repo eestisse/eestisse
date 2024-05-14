@@ -1,6 +1,7 @@
 module EmailCode exposing (..)
 
 import Config
+import Email.Html as Html
 import Env
 import Postmark exposing (PostmarkEmailBody)
 import Sha256
@@ -28,9 +29,10 @@ getUniqueId time model =
 
 buildEmailBody : String -> PostmarkEmailBody
 buildEmailBody code =
-    Postmark.BodyText <|
-        "Your login code is:\n\n"
-            ++ code
-            ++ "\n\nThis code will exprire in "
-            ++ Config.emailCodeExpirationString
-            ++ ".\n\nIf you are not trying to log in to eestisse.ee, you can safely ignore this email."
+    Postmark.BodyHtml <|
+        Html.div []
+            [ Html.p [] [ Html.text "Your login code is:" ]
+            , Html.h2 [] [ Html.text code ]
+            , Html.p [] [ Html.text <| "This code will expire in " ++ Config.emailCodeExpirationString ++ "." ]
+            , Html.p [] [ Html.text <| "If you are not trying to log in to eestisse.ee, you can safely ignore this email." ]
+            ]
