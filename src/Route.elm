@@ -7,8 +7,8 @@ import Url.Parser as Parser exposing ((</>), Parser)
 
 
 type Route
-    = Translate
-    | Landing
+    = Landing
+    | Translate
     | Admin
     | AuthCallback String
     | Account

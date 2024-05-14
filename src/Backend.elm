@@ -7,13 +7,14 @@ import Auth.Flow
 import Config
 import Dict exposing (Dict)
 import Dict.Extra
+import EmailAddress
 import EmailCode
 import Env
 import GPTRequests
 import Http
 import Lamdera exposing (ClientId, SessionId)
 import List.Extra
-import Result.Extra
+import Postmark exposing (PostmarkEmailBody, PostmarkSend)
 import Set
 import Stripe.Types as Stripe
 import Stripe.Utils as Stripe
@@ -231,6 +232,25 @@ update msg model =
                             , Cmd.none
                             )
 
+        LoginCodeEmailSentResponse ( emailAddress, code ) response ->
+            case response of
+                Err httpErr ->
+                    ( model
+                    , notifyAdminOfError <| "Couldn't send email for code login! email: " ++ EmailAddress.toString emailAddress ++ "; code: " ++ code ++ " - http error: " ++ Utils.httpErrorToString httpErr
+                    )
+
+                Ok _ ->
+                    ( { model
+                        | pendingEmailAuths =
+                            model.pendingEmailAuths
+                                |> Dict.insert code
+                                    { email = emailAddress |> EmailAddress.toString
+                                    , expires = (Time.posixToMillis model.nowish + Config.emailCodeExpirationMillis) |> Time.millisToPosix
+                                    }
+                      }
+                    , Cmd.none
+                    )
+
 
 updateFromFrontend : SessionId -> ClientId -> ToBackend -> BackendModel -> ( BackendModel, Cmd BackendMsg )
 updateFromFrontend sessionId clientId msg model =
@@ -405,33 +425,33 @@ updateFromFrontend sessionId clientId msg model =
                     )
             )
 
-        RequestEmailLoginCode email ->
+        RequestEmailLoginCode emailAddress ->
             let
-                ( model1, code ) =
+                ( newModel, code ) =
                     EmailCode.getUniqueId model.nowish model
             in
-            ( { model1
-                | pendingEmailAuths =
-                    model1.pendingEmailAuths
-                        |> Dict.insert code
-                            { email = email
-                            , expires = (Time.posixToMillis model.nowish + Config.emailCodeExpirationMillis) |> Time.millisToPosix
-                            }
-              }
-            , let
-                _ =
-                    Debug.log "would send email" ( email, code )
-              in
-              Cmd.none
+            ( newModel
+            , Postmark.sendEmail
+                (LoginCodeEmailSentResponse ( emailAddress, code ))
+                { from = { name = "Login", email = Config.loginCodeFromEmail }
+                , to = [ { name = "", email = emailAddress } ]
+                , subject = "Eestisse Login Code"
+                , body = EmailCode.buildEmailBody code
+                , messageStream = "outbound"
+                }
             )
 
-        SubmitCodeForEmail email code ->
+        SubmitCodeForEmail emailAddress code ->
+            let
+                emailAddressString =
+                    emailAddress |> EmailAddress.toString
+            in
             case Dict.get code model.pendingEmailAuths of
                 Nothing ->
                     Debug.todo ""
 
                 Just pendingAuth ->
-                    if pendingAuth.email /= email then
+                    if pendingAuth.email /= emailAddressString then
                         Debug.todo ""
 
                     else if Time.Extra.compare model.nowish pendingAuth.expires == GT then
@@ -446,7 +466,7 @@ updateFromFrontend sessionId clientId msg model =
                                             |> Dict.remove code
                                 }
                         in
-                        Auth.handleAuthSuccess modelWithoutPendingAuth sessionId clientId email
+                        Auth.handleAuthSuccess modelWithoutPendingAuth sessionId clientId emailAddressString
 
 
 handleStripeWebhook : Stripe.StripeEvent -> BackendModel -> ( Result Http.Error String, BackendModel, Cmd BackendMsg )

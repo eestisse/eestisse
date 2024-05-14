@@ -7,9 +7,11 @@ import Browser exposing (UrlRequest)
 import Browser.Dom
 import Browser.Navigation exposing (Key)
 import Dict exposing (Dict)
+import EmailAddress
 import EmailCode
 import Http
 import Lamdera exposing (ClientId, SessionId)
+import Postmark exposing (PostmarkSendResponse)
 import Responsive exposing (..)
 import Route exposing (Route)
 import Set exposing (Set)
@@ -68,8 +70,8 @@ type FrontendMsg
     | GoogleSigninRequested
     | EmailSigninRequested
     | ChangeEmailForm EmailFormMode
-    | SubmitEmailClicked String
-    | SubmitCodeClicked String String
+    | SubmitEmailClicked EmailAddress.EmailAddress
+    | SubmitCodeClicked EmailAddress.EmailAddress String
     | Logout
     | UrlClicked UrlRequest
     | UrlChanged Url
@@ -103,6 +105,7 @@ type BackendMsg
     | UpdateBackendNow Time.Posix
     | OnConnect SessionId ClientId
     | SubscriptionDataReceived (Result Http.Error Stripe.SubscriptionData)
+    | LoginCodeEmailSentResponse ( EmailAddress.EmailAddress, String ) (Result Http.Error PostmarkSendResponse)
 
 
 type ToBackend
@@ -116,8 +119,8 @@ type ToBackend
     | RequestTranslation Int
     | SetPostAuthRedirect Route.Route
     | RequestAndClearRedirectReturnPage
-    | RequestEmailLoginCode String
-    | SubmitCodeForEmail String String
+    | RequestEmailLoginCode EmailAddress.EmailAddress
+    | SubmitCodeForEmail EmailAddress.EmailAddress String
 
 
 type ToFrontend
@@ -302,5 +305,5 @@ type alias SigninModel =
 type EmailFormMode
     = Inactive
     | InputtingEmail String
-    | InputtingCode String String
+    | InputtingCode EmailAddress.EmailAddress String
     | CodeSubmitted

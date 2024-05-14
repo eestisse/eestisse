@@ -7,6 +7,7 @@ import Element.Border as Border
 import Element.Events as Events
 import Element.Font as Font
 import Element.Input as Input
+import EmailAddress
 import Html
 import Html.Attributes
 import Responsive exposing (..)
@@ -290,11 +291,8 @@ emailInputForm : DisplayProfile -> String -> Element FrontendMsg
 emailInputForm dProfile input =
     let
         submitMsgIfEmailIsValid =
-            if Utils.isValidEmail input then
-                Just <| SubmitEmailClicked input
-
-            else
-                Nothing
+            EmailAddress.fromString input
+                |> Maybe.map SubmitEmailClicked
     in
     Element.row
         [ Element.centerX
@@ -316,15 +314,15 @@ emailInputForm dProfile input =
         ]
 
 
-magicCodeInputForm : DisplayProfile -> String -> String -> Element FrontendMsg
-magicCodeInputForm dProfile email input =
+magicCodeInputForm : DisplayProfile -> EmailAddress.EmailAddress -> String -> Element FrontendMsg
+magicCodeInputForm dProfile emailAddress input =
     let
         submitMsgIfNonempty =
             if input == "" then
                 Nothing
 
             else
-                Just <| SubmitCodeClicked email input
+                Just <| SubmitCodeClicked emailAddress input
     in
     Element.row
         [ Element.centerX
@@ -333,7 +331,7 @@ magicCodeInputForm dProfile email input =
         [ Input.text
             [ Element.width <| Element.px 100
             ]
-            { onChange = \t -> ChangeEmailForm <| InputtingCode email t
+            { onChange = \t -> ChangeEmailForm <| InputtingCode emailAddress t
             , text = input
             , placeholder = Nothing
             , label = Input.labelHidden "code input"

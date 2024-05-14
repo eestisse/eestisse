@@ -44,5 +44,10 @@ emailCodeSecret =
     ""
 
 
+postmarkToken : String
+postmarkToken =
+    ""
+
+
 mode =
     Development

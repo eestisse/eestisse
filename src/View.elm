@@ -162,11 +162,11 @@ view dProfile model =
 viewPage : DisplayProfile -> FrontendModel -> Element FrontendMsg
 viewPage dProfile model =
     case model.route of
-        Route.Translate ->
-            Translation.View.viewDoTranslatePage dProfile model.maybePublicCreditsInfo model.time_updatePerSecond model.maybeAuthedUserInfo model.doTranslateModel model.publicConsentChecked model.loadingAnimationCounter
-
         Route.Landing ->
             Landing.View.page dProfile model.maybeAuthedUserInfo
+
+        Route.Translate ->
+            Translation.View.viewDoTranslatePage dProfile model.maybePublicCreditsInfo model.time_updatePerSecond model.maybeAuthedUserInfo model.doTranslateModel model.publicConsentChecked model.loadingAnimationCounter
 
         Route.Admin ->
             Admin.View.page model.maybeAdminData

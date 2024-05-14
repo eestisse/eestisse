@@ -1,5 +1,6 @@
 module Config exposing (..)
 
+import EmailAddress exposing (EmailAddress)
 import Env
 
 
@@ -78,3 +79,12 @@ emailCodeExpirationMillis =
 emailCodeExpirationString : String
 emailCodeExpirationString =
     Tuple.second emailCodeExpirationInfo
+
+
+loginCodeFromEmail : EmailAddress
+loginCodeFromEmail =
+    { localPart = "login"
+    , domain = "eestisse"
+    , tags = []
+    , tld = [ "ee" ]
+    }
