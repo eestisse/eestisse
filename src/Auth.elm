@@ -112,6 +112,7 @@ addOrGetUserFromEmail email model =
                 newUser =
                     { email = email
                     , stripeInfo = Nothing
+                    , consents = Nothing
                     }
             in
             ( { model

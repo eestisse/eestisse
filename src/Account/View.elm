@@ -13,91 +13,104 @@ import Route
 import Types exposing (..)
 
 
-page : DisplayProfile -> SigninModel -> Maybe FrontendUserInfo -> Element FrontendMsg
-page dProfile signinModel maybeUserInfo =
+page : DisplayProfile -> SigninModel -> Maybe ConsentsFormModel -> Maybe FrontendUserInfo -> Element FrontendMsg
+page dProfile signinModel maybeConsentsFormModel maybeUserInfo =
     primaryBox
         [ Element.width Element.fill
         , Element.padding <| responsiveVal dProfile 10 25
         ]
     <|
-        case maybeUserInfo of
-            Nothing ->
-                Element.el [ Element.centerX ] <|
-                    signinElement dProfile signinModel
+        Element.column
+            [ Element.width Element.fill
+            , Element.spacing <| responsiveVal dProfile 15 30
+            ]
+        <|
+            case maybeUserInfo of
+                Nothing ->
+                    [ Element.el [ Element.centerX ] <| signinElement dProfile signinModel ]
 
-            Just userInfo ->
-                Element.column
-                    [ Element.centerX
-                    , Element.spacing 20
-                    ]
-                    [ loggedInElement dProfile userInfo
-                    , membershipStatusElement dProfile userInfo.membershipStatus
-                    ]
+                Just userInfo ->
+                    loggedInElement dProfile userInfo
+                        :: (if not userInfo.consentsSubmitted then
+                                [ Element.el [ Element.centerX ] <| viewConsentsForm dProfile maybeConsentsFormModel ]
+
+                            else
+                                let
+                                    manageSubscriptionLink =
+                                        Element.newTabLink
+                                            linkAttributes
+                                            { url = Config.stripeUserPortalLink
+                                            , label = Element.text "Manage Subscription"
+                                            }
+                                in
+                                case userInfo.membershipStatus of
+                                    NoStripeInfo ->
+                                        [ Element.el [ Element.centerX ] <| viewOffer dProfile
+                                        , Element.el [ Element.centerX ] <| purchaseButton dProfile userInfo
+                                        ]
+
+                                    NotStarted ->
+                                        [ Element.el [ Element.centerX ] <| viewOffer dProfile
+                                        , Element.el [ Element.centerX ] <|
+                                            Element.newTabLink
+                                                linkAttributes
+                                                { url = Config.stripeUserPortalLink
+                                                , label = Element.text "Waiting for Stripe payment"
+                                                }
+                                        ]
+
+                                    MembershipActive ->
+                                        [ Element.el [ Element.centerX ] <|
+                                            membershipStatusElement
+                                                dProfile
+                                                (Element.el [ Font.color <| Element.rgb 0 0.5 0 ] <| Element.text "active")
+                                                manageSubscriptionLink
+                                        ]
+
+                                    MembershipAlmostExpired ->
+                                        [ Element.el [ Element.centerX ] <|
+                                            membershipStatusElement
+                                                dProfile
+                                                (Element.el [ Font.color <| Element.rgb 0 0.5 0 ] <| Element.text "active")
+                                                manageSubscriptionLink
+                                        ]
+
+                                    MembershipExpired ->
+                                        [ Element.el [ Element.centerX ] <|
+                                            membershipStatusElement
+                                                dProfile
+                                                (Element.el [ Font.color <| Element.rgb 0.5 0 0 ] <| Element.text "Expired")
+                                                manageSubscriptionLink
+                                        ]
+                           )
 
 
 loggedInElement : DisplayProfile -> FrontendUserInfo -> Element FrontendMsg
 loggedInElement dProfile userInfo =
-    Element.column
-        [ Element.centerX
+    Element.row
+        [ Element.width Element.fill
         , Element.spacing 10
         ]
-        [ Element.text <| "Logged in as " ++ userInfo.email
-        , Input.button
-            [ Border.rounded 4
-            , Element.Background.color Colors.blue
-            , Element.paddingXY 20 10
-            , Font.color Colors.white
-            , Font.bold
-            , Element.centerX
-            ]
-            { onPress = Just Logout
-            , label = Element.text "Logout"
-            }
+        [ Element.el [ Element.width Element.fill ] Element.none
+        , Element.el [ Element.centerX ] <| Element.text <| "Logged in as " ++ userInfo.email
+        , Element.el [ Element.width Element.fill ] <|
+            Input.button
+                [ Element.alignRight
+                , Border.rounded 4
+                , Element.Background.color Colors.white
+                , Border.width 1
+                , Border.color <| Element.rgb 0.5 0.5 1
+                , Element.paddingXY 20 10
+                , Font.bold
+                ]
+                { onPress = Just Logout
+                , label = Element.text "Logout"
+                }
         ]
 
 
-membershipStatusElement : DisplayProfile -> MembershipStatus -> Element FrontendMsg
-membershipStatusElement dProfile membershipStatus =
-    let
-        manageSubscriptionLink =
-            Element.newTabLink
-                linkAttributes
-                { url = Config.stripeUserPortalLink
-                , label = Element.text "Manage Subscription"
-                }
-
-        ( descriptionEl, actionEl ) =
-            let
-                gray =
-                    Element.rgb 0.3 0.3 0.3
-
-                activeEls =
-                    ( Element.el [ Font.color <| Element.rgb 0 0.5 0 ] <| Element.text "active"
-                    , manageSubscriptionLink
-                    )
-            in
-            case membershipStatus of
-                NoStripeInfo ->
-                    ( Element.el [ Font.color gray ] <| Element.text "Not set up"
-                    , actionLink "Activate" <| GotoRouteAndAnimate <| Route.Subscribe
-                    )
-
-                NotStarted ->
-                    ( Element.el [ Font.color gray ] <| Element.text "Not started"
-                    , actionLink "Activate" <| GotoRouteAndAnimate <| Route.Subscribe
-                    )
-
-                MembershipActive ->
-                    activeEls
-
-                MembershipAlmostExpired ->
-                    activeEls
-
-                MembershipExpired ->
-                    ( Element.el [ Font.color <| Element.rgb 0.5 0 0 ] <| Element.text "Expired"
-                    , manageSubscriptionLink
-                    )
-    in
+membershipStatusElement : DisplayProfile -> Element FrontendMsg -> Element FrontendMsg -> Element FrontendMsg
+membershipStatusElement dProfile descriptionEl actionEl =
     Element.column
         [ Element.centerX
         , Element.spacing 10
@@ -115,3 +128,114 @@ membershipStatusElement dProfile membershipStatus =
             ]
         , Element.el [ Element.centerX ] actionEl
         ]
+
+
+viewOffer : DisplayProfile -> Element FrontendMsg
+viewOffer dProfile =
+    Element.column
+        [ Element.width <| responsiveVal dProfile Element.fill (Element.px 500)
+        , Element.Background.color <| Element.rgb 0.8 1 0.8
+        , Border.rounded 15
+        , Border.width 1
+        , Border.color <| Element.rgb 0.6 0.8 0.6
+        , Element.padding 20
+        , Element.spacing 20
+        , Font.size <| responsiveVal dProfile 18 22
+        , basicShadow
+        ]
+        [ Element.row
+            [ Element.width Element.fill
+            , Element.spacing <| responsiveVal dProfile 20 30
+            ]
+            [ Element.el [ Font.bold ] <| Element.text "Super Earlybird Special"
+            , Element.el [ Element.alignRight ] <| Element.text "€3/month"
+            ]
+        , Element.paragraph
+            [ Font.size <| responsiveVal dProfile 12 14 ]
+            [ Element.row []
+                [ Element.text "This is a discounted price for early supporters. Super Earlybird subscriptions will never increase in price as long as they remain active."
+                ]
+            ]
+        , bulletPointList
+            (responsiveVal dProfile 14 18)
+            [ Element.paddingEach
+                { left = 10
+                , right = 0
+                , bottom = 0
+                , top = 0
+                }
+            , Font.size <| responsiveVal dProfile 14 18
+            ]
+            [ Element.paragraph [] [ Element.text "Unlimited* translations" ]
+            , Element.paragraph [] [ Element.text "Option to translate privately" ]
+            , Element.paragraph [] [ Element.text "Personal translation history" ]
+            , Element.paragraph [] [ Element.text "Access to all upcoming premium features" ]
+            ]
+        , Element.paragraph
+            [ Font.size <| responsiveVal dProfile 8 10
+            , Font.color <| Element.rgb 0.3 0.3 0.3
+            ]
+            [ Element.text "* Eestisse App OÜ may in the future impose some limits on translation use, if the backend cost of the service becomes prohibitive due to exploitation or unexpected use." ]
+        ]
+
+
+purchaseButton : DisplayProfile -> FrontendUserInfo -> Element FrontendMsg
+purchaseButton dProfile userInfo =
+    Input.button
+        [ Element.Background.color <| Element.rgb255 0 116 212
+        , Font.size 18
+        , Font.extraBold
+        , Font.color <| Colors.white
+        , Element.centerX
+        , Border.rounded 5
+        , Element.height <| Element.px 50
+        , Element.width <| Element.px 250
+        ]
+        { onPress = Just <| TriggerStripePayment userInfo.id
+        , label = Element.el [ Element.centerX ] <| Element.text "Checkout with Stripe"
+        }
+
+
+viewConsentsForm : DisplayProfile -> Maybe ConsentsFormModel -> Element FrontendMsg
+viewConsentsForm dProfile maybeConsentsFormModel =
+    let
+        consentsFormModel =
+            maybeConsentsFormModel
+                |> Maybe.withDefault (ConsentsFormModel False False)
+    in
+    Element.column
+        [ Element.spacing 10
+        ]
+        [ Element.el [ Font.size <| responsiveVal dProfile 18 20 ] <|
+            Element.text "I am interested in..."
+        , consentCheckbox dProfile Config.newFeaturesConsentWording consentsFormModel.features (\b -> { consentsFormModel | features = b })
+        , consentCheckbox dProfile Config.userInterviewsConsentWording consentsFormModel.interview (\b -> { consentsFormModel | interview = b })
+        , Input.button
+            []
+            { onPress = Just <| ConsentsFormSubmitClicked consentsFormModel
+            , label = Element.text "Continue"
+            }
+        ]
+
+
+consentCheckbox : DisplayProfile -> String -> Bool -> (Bool -> ConsentsFormModel) -> Element FrontendMsg
+consentCheckbox dProfile text checked formUpdater =
+    Input.checkbox
+        []
+        { onChange = formUpdater >> ConsentsFormChanged
+        , icon = Input.defaultCheckbox
+        , checked = checked
+        , label =
+            Input.labelRight
+                [ Element.paddingEach
+                    { left = 8
+                    , right = 0
+                    , bottom = 0
+                    , top = 0
+                    }
+                , Font.size <| responsiveVal dProfile 16 18
+                , Element.width Element.fill
+                ]
+            <|
+                Element.paragraph [ Element.spacing 2 ] [ Element.text text ]
+        }

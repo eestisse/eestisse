@@ -30,19 +30,23 @@ viewLoadingTranslationPage dProfile =
 
 
 viewDoTranslatePage : DisplayProfile -> Maybe PublicCreditsInfo -> Time.Posix -> Maybe FrontendUserInfo -> DoTranslateModel -> Bool -> Int -> Element FrontendMsg
-viewDoTranslatePage dProfile maybePublicCreditsInfo now maybeAuthedUserInfo doTranslateModel publicConsentChecked animationCounter =
+viewDoTranslatePage dProfile maybePublicCreditsInfo now maybeUserInfo doTranslateModel publicConsentChecked animationCounter =
     case doTranslateModel.state of
         Inputting ->
-            case maybePublicCreditsInfo of
-                Just publicCreditsInfo ->
-                    if publicCreditsInfo.current == 0 then
-                        viewNoCreditsPage dProfile publicCreditsInfo now
+            if maybeFrontendUserSignupComplete maybeUserInfo then
+                viewTranslateInputPage dProfile maybeUserInfo doTranslateModel.input publicConsentChecked
 
-                    else
-                        viewTranslateInputPage dProfile maybeAuthedUserInfo doTranslateModel.input publicConsentChecked
+            else
+                case maybePublicCreditsInfo of
+                    Just publicCreditsInfo ->
+                        if publicCreditsInfo.current == 0 then
+                            viewNoCreditsPage dProfile publicCreditsInfo now
 
-                Nothing ->
-                    viewTranslateInputPage dProfile maybeAuthedUserInfo doTranslateModel.input publicConsentChecked
+                        else
+                            viewTranslateInputPage dProfile maybeUserInfo doTranslateModel.input publicConsentChecked
+
+                    Nothing ->
+                        viewTranslateInputPage dProfile maybeUserInfo doTranslateModel.input publicConsentChecked
 
         TranslateRequestSubmitted ->
             viewWaitingForResponsePage dProfile doTranslateModel.input animationCounter
@@ -159,7 +163,7 @@ viewTranslateInputPage : DisplayProfile -> Maybe FrontendUserInfo -> String -> B
 viewTranslateInputPage dProfile maybeAuthedUserInfo input publicConsentChecked =
     let
         submitMsgIfEnabled =
-            if input /= "" && maybeFrontendUserHasActiveMembership maybeAuthedUserInfo then
+            if input /= "" && maybeFrontendUserSignupComplete maybeAuthedUserInfo then
                 Just <| SubmitText publicConsentChecked input
 
             else
@@ -235,7 +239,7 @@ viewTranslateInputPage dProfile maybeAuthedUserInfo input publicConsentChecked =
                     , Element.height <| Element.px 50
                     ]
                   <|
-                    if publicConsentChecked || maybeFrontendUserHasActiveMembership maybeAuthedUserInfo then
+                    if publicConsentChecked || maybeFrontendUserSignupComplete maybeAuthedUserInfo then
                         Element.el [ Element.centerX ] <| translateButton submitMsgIfEnabled
 
                     else

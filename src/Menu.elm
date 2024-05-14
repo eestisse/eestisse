@@ -80,9 +80,15 @@ menuOptions maybeUserInfo =
         Just _ ->
             [ MenuOption "Account" Route.Account
             , MenuOption "Translate" Route.Translate
-            , MenuOption "Your Translations" Route.History
-            , MenuOption "Public Translations" Route.Browse
             ]
+                ++ (if maybeFrontendUserSignupComplete maybeUserInfo then
+                        [ MenuOption "Your Translations" Route.History ]
+
+                    else
+                        []
+                   )
+                ++ [ MenuOption "Public Translations" Route.Browse
+                   ]
 
         Nothing ->
             [ MenuOption "Sign in / Sign up" Route.Account

@@ -72,6 +72,7 @@ init url key =
             , noMorePublicTranslationsToFetch = False
             , noMorePersonalTranslationsToFetch = False
             , fetchingRecords = False
+            , maybeConsentsFormModel = Nothing
             }
 
         routeCmd =
@@ -80,7 +81,7 @@ init url key =
     (case route of
         Route.AuthCallback methodId ->
             Auth.Flow.init
-                { model | route = Route.Subscribe }
+                { model | route = Route.Account }
                 methodId
                 url
                 key
@@ -309,7 +310,7 @@ update msg model =
             )
 
         UserIntent_ActivateMembership ->
-            gotoRouteAndAnimate Route.Subscribe model
+            gotoRouteAndAnimate Route.Account model
 
         Logout ->
             ( model
@@ -350,6 +351,19 @@ update msg model =
                 | signinModel = { emailFormMode = CodeSubmitted }
               }
             , Lamdera.sendToBackend <| SubmitCodeForEmail email code
+            )
+
+        ConsentsFormChanged newForm ->
+            ( { model
+                | maybeConsentsFormModel =
+                    Just newForm
+              }
+            , Cmd.none
+            )
+
+        ConsentsFormSubmitClicked form ->
+            ( model
+            , Lamdera.sendToBackend <| SubmitConsentsForm form
             )
 
 
@@ -478,6 +492,11 @@ updateFromBackend msg model =
 
                 Personal ->
                     { model | noMorePersonalTranslationsToFetch = True }
+            , Cmd.none
+            )
+
+        UpdateUserInfo userInfo ->
+            ( { model | maybeAuthedUserInfo = Just userInfo }
             , Cmd.none
             )
 

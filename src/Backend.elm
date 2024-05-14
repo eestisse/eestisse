@@ -240,14 +240,7 @@ update msg model =
                     )
 
                 Ok _ ->
-                    ( { model
-                        | pendingEmailAuths =
-                            model.pendingEmailAuths
-                                |> Dict.insert code
-                                    { email = emailAddress |> EmailAddress.toString
-                                    , expires = (Time.posixToMillis model.nowish + Config.emailCodeExpirationMillis) |> Time.millisToPosix
-                                    }
-                      }
+                    ( model
                     , Cmd.none
                     )
 
@@ -430,7 +423,14 @@ updateFromFrontend sessionId clientId msg model =
                 ( newModel, code ) =
                     EmailCode.getUniqueId model.nowish model
             in
-            ( newModel
+            ( { newModel
+                | pendingEmailAuths =
+                    model.pendingEmailAuths
+                        |> Dict.insert code
+                            { email = emailAddress |> EmailAddress.toString
+                            , expires = (Time.posixToMillis model.nowish + Config.emailCodeExpirationMillis) |> Time.millisToPosix
+                            }
+              }
             , Postmark.sendEmail
                 (LoginCodeEmailSentResponse ( emailAddress, code ))
                 { from = { name = "Login", email = Config.loginCodeFromEmail }
@@ -467,6 +467,31 @@ updateFromFrontend sessionId clientId msg model =
                                 }
                         in
                         Auth.handleAuthSuccess modelWithoutPendingAuth sessionId clientId emailAddressString
+
+        SubmitConsentsForm consentsForm ->
+            case maybeUserId of
+                Nothing ->
+                    Debug.todo ""
+
+                Just userId ->
+                    case Dict.get userId model.users of
+                        Nothing ->
+                            Debug.todo ""
+
+                        Just userInfo ->
+                            let
+                                newUserInfo =
+                                    { userInfo
+                                        | consents = Just <| consentsFormToConsents consentsForm
+                                    }
+                            in
+                            ( { model
+                                | users =
+                                    model.users
+                                        |> Dict.insert userId newUserInfo
+                              }
+                            , Lamdera.sendToFrontend clientId <| UpdateUserInfo <| toFrontendUserInfo ( userId, newUserInfo, Auth.userMembershipStatus model.nowish userInfo )
+                            )
 
 
 handleStripeWebhook : Stripe.StripeEvent -> BackendModel -> ( Result Http.Error String, BackendModel, Cmd BackendMsg )
@@ -649,4 +674,11 @@ clearRedirectReturnPageForSession sessionId model =
             model.sessions
                 |> Dict.update sessionId
                     (Maybe.map (\session -> { session | redirectReturnPage = Nothing }))
+    }
+
+
+consentsFormToConsents : ConsentsFormModel -> UserConsents
+consentsFormToConsents form =
+    { interview = form.interview
+    , features = form.features
     }

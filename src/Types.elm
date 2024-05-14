@@ -45,6 +45,7 @@ type alias FrontendModel =
     , noMorePublicTranslationsToFetch : Bool
     , noMorePersonalTranslationsToFetch : Bool
     , fetchingRecords : Bool
+    , maybeConsentsFormModel : Maybe ConsentsFormModel
     }
 
 
@@ -94,6 +95,8 @@ type FrontendMsg
     | UpdateFrontendNow Time.Posix
     | ToggleMobileMenu
     | LoadMoreClicked PublicOrPersonal ( Maybe Int, Int )
+    | ConsentsFormChanged ConsentsFormModel
+    | ConsentsFormSubmitClicked ConsentsFormModel
 
 
 type BackendMsg
@@ -121,12 +124,14 @@ type ToBackend
     | RequestAndClearRedirectReturnPage
     | RequestEmailLoginCode EmailAddress.EmailAddress
     | SubmitCodeForEmail EmailAddress.EmailAddress String
+    | SubmitConsentsForm ConsentsFormModel
 
 
 type ToFrontend
     = NoOpToFrontend
     | AuthToFrontend Auth.Common.ToFrontend
     | AuthSuccess FrontendUserInfo
+    | UpdateUserInfo FrontendUserInfo
     | TranslationResult String (Result GptAssistError TranslationRecord)
     | AdminDataMsg AdminData
     | GeneralDataMsg GeneralData
@@ -172,6 +177,13 @@ type alias PaidInvoice =
 type alias UserInfo =
     { email : String
     , stripeInfo : Maybe StripeInfo
+    , consents : Maybe UserConsents
+    }
+
+
+type alias UserConsents =
+    { interview : Bool -- "an offer of free credit in exchange for a 30-minute user interview"
+    , features : Bool -- "hearing about major new features for Eestisse when they come out"
     }
 
 
@@ -179,6 +191,7 @@ type alias FrontendUserInfo =
     { id : Int
     , email : String
     , membershipStatus : MembershipStatus
+    , consentsSubmitted : Bool
     }
 
 
@@ -271,25 +284,28 @@ toFrontendUserInfo ( id, userInfo, membershipStatus ) =
     { id = id
     , email = userInfo.email
     , membershipStatus = membershipStatus
+    , consentsSubmitted = userInfo.consents /= Nothing
     }
 
 
-maybeFrontendUserHasActiveMembership : Maybe FrontendUserInfo -> Bool
-maybeFrontendUserHasActiveMembership maybeFrontendUserInfo =
+maybeFrontendUserSignupComplete : Maybe FrontendUserInfo -> Bool
+maybeFrontendUserSignupComplete maybeFrontendUserInfo =
     case maybeFrontendUserInfo of
         Nothing ->
             False
 
         Just userInfo ->
-            case userInfo.membershipStatus of
-                MembershipActive ->
-                    True
+            userInfo.consentsSubmitted
+                && (case userInfo.membershipStatus of
+                        MembershipActive ->
+                            True
 
-                MembershipAlmostExpired ->
-                    True
+                        MembershipAlmostExpired ->
+                            True
 
-                _ ->
-                    False
+                        _ ->
+                            False
+                   )
 
 
 getTranslationRecord : Int -> FrontendModel -> Maybe TranslationRecord
@@ -307,3 +323,9 @@ type EmailFormMode
     | InputtingEmail String
     | InputtingCode EmailAddress.EmailAddress String
     | CodeSubmitted
+
+
+type alias ConsentsFormModel =
+    { interview : Bool
+    , features : Bool
+    }

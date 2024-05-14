@@ -112,7 +112,7 @@ futureFeaturesAndSignupElement dProfile maybeUserInfo =
                 Nothing ->
                     CommonView.makeParagraphs
                         [ Font.center ]
-                        [ [ actionLink "Sign up" <| GotoRouteAndAnimate Route.Subscribe
+                        [ [ actionLink "Sign up" <| GotoRouteAndAnimate Route.Account
                           , Element.text " or "
                           , CommonView.newTabLink [ CommonView.plausibleTrackButtonClick "discord-link-clicked" ] "https://discord.gg/HQJMbBUmna" "join the Discord"
                           , Element.text " to hear about when more features drop."

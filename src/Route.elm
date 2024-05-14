@@ -12,7 +12,7 @@ type Route
     | Admin
     | AuthCallback String
     | Account
-    | Subscribe
+    | StripeLinkback
     | Browse
     | History
     | View Int
@@ -37,9 +37,9 @@ matchRoute =
         , Parser.map Admin (Parser.s "admin")
         , Parser.map AuthCallback (Parser.s "login" </> Parser.string </> Parser.s "callback")
         , Parser.map Account (Parser.s "account")
+        , Parser.map StripeLinkback (Parser.s "stripe-linkback")
         , Parser.map Browse (Parser.s "browse")
         , Parser.map History (Parser.s "history")
-        , Parser.map Subscribe (Parser.s "subscribe")
         , Parser.map View (Parser.s "view" </> Parser.int)
         ]
 
@@ -63,8 +63,8 @@ routeToString route =
             Account ->
                 [ "account" ]
 
-            Subscribe ->
-                [ "subscribe" ]
+            StripeLinkback ->
+                [ "stripe-linkback" ]
 
             Browse ->
                 [ "browse" ]

@@ -17,7 +17,7 @@ import Landing.View
 import Menu
 import Responsive exposing (..)
 import Route exposing (Route)
-import Subscribe.View
+import StripeLinkback
 import Translation.Types exposing (..)
 import Translation.View
 import Types exposing (..)
@@ -109,7 +109,7 @@ view dProfile model =
                         , Element.height Element.fill
                         ]
                       <|
-                        if model.route /= Route.Account && model.route /= Route.Subscribe && not (Route.shouldRedirect model.route) then
+                        if model.route /= Route.Account && not (Route.shouldRedirect model.route) then
                             Element.el
                                 [ Element.alignRight
                                 , Element.alignTop
@@ -175,10 +175,10 @@ viewPage dProfile model =
             Element.el [ Element.centerX ] <| Element.text "User authenticated. Redirecting..."
 
         Route.Account ->
-            Account.View.page dProfile model.signinModel model.maybeAuthedUserInfo
+            Account.View.page dProfile model.signinModel model.maybeConsentsFormModel model.maybeAuthedUserInfo
 
-        Route.Subscribe ->
-            Subscribe.View.page dProfile model
+        Route.StripeLinkback ->
+            StripeLinkback.viewPage dProfile model.maybeAuthedUserInfo
 
         Route.Browse ->
             Browse.View.page dProfile model.cachedTranslationRecords (getFetchButtonVisibility Public model)
