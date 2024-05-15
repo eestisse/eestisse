@@ -486,12 +486,16 @@ updateFromFrontend sessionId clientId msg model =
         SubmitConsentsForm consentsForm ->
             case maybeUserId of
                 Nothing ->
-                    Debug.todo ""
+                    ( model
+                    , notifyAdminOfError "Unexpected: couldn't find user id when getting a SubmitConsentsForm"
+                    )
 
                 Just userId ->
                     case Dict.get userId model.users of
                         Nothing ->
-                            Debug.todo ""
+                            ( model
+                            , notifyAdminOfError "Unexpected: couldn't find userInfo from a userId when getting a SubmitConsentsForm"
+                            )
 
                         Just userInfo ->
                             let
