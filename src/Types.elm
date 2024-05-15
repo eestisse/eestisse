@@ -71,7 +71,7 @@ type FrontendMsg
     | GoogleSigninRequested
     | EmailSigninRequested
     | ChangeEmailForm EmailFormMode
-    | SubmitEmailClicked EmailAddress.EmailAddress
+    | SendEmailToBackendForCode EmailAddress.EmailAddress
     | SubmitCodeClicked EmailAddress.EmailAddress String
     | Logout
     | UrlClicked UrlRequest
@@ -101,6 +101,7 @@ type FrontendMsg
 
 type BackendMsg
     = NoOpBackendMsg
+    | Daily
     | InitialTimeVal Time.Posix
     | AuthBackendMsg Auth.Common.BackendMsg
     | GptResponseReceived ( SessionId, ClientId ) Bool String (Result Http.Error String)
@@ -140,6 +141,12 @@ type ToFrontend
     | NoMoreTranslationsToFetch PublicOrPersonal
     | RequestRedirectReturnPageResult (Maybe Route.Route)
     | LogoutAck
+    | LoginCodeError LoginCodeErr
+
+
+type LoginCodeErr
+    = IncorrectCode
+    | CodeExpired
 
 
 type alias SessionInfo =
@@ -321,8 +328,15 @@ type alias SigninModel =
 type EmailFormMode
     = Inactive
     | InputtingEmail String
-    | InputtingCode EmailAddress.EmailAddress String
-    | CodeSubmitted
+    | InputtingCode InputtingCodeModel
+    | CodeSubmitted EmailAddress.EmailAddress
+
+
+type alias InputtingCodeModel =
+    { emailAddress : EmailAddress.EmailAddress
+    , input : String
+    , maybeError : Maybe LoginCodeErr
+    }
 
 
 type alias ConsentsFormModel =

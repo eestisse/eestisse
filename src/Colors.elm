@@ -91,3 +91,8 @@ darkBlue =
 green : Color
 green =
     Element.rgb 0 1 0
+
+
+errorTextRed : Color
+errorTextRed =
+    Element.rgb 1 0 0

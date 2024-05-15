@@ -67,6 +67,11 @@ update msg model =
         NoOpBackendMsg ->
             ( model, Cmd.none )
 
+        Daily ->
+            ( model |> clearVeryExpiredLoginCodes
+            , Cmd.none
+            )
+
         InitialTimeVal t ->
             ( { model
                 | nowish = t
@@ -448,14 +453,24 @@ updateFromFrontend sessionId clientId msg model =
             in
             case Dict.get code model.pendingEmailAuths of
                 Nothing ->
-                    Debug.todo ""
+                    ( model
+                    , Lamdera.sendToFrontend clientId <| LoginCodeError IncorrectCode
+                    )
 
                 Just pendingAuth ->
                     if pendingAuth.email /= emailAddressString then
-                        Debug.todo ""
+                        ( model
+                        , Lamdera.sendToFrontend clientId <| LoginCodeError IncorrectCode
+                        )
 
                     else if Time.Extra.compare model.nowish pendingAuth.expires == GT then
-                        Debug.todo ""
+                        ( { model
+                            | pendingEmailAuths =
+                                model.pendingEmailAuths
+                                    |> Dict.remove code
+                          }
+                        , Lamdera.sendToFrontend clientId <| LoginCodeError CodeExpired
+                        )
 
                     else
                         let
@@ -651,15 +666,6 @@ notifyAdminOfError s =
     Cmd.none
 
 
-subscriptions : BackendModel -> Sub BackendMsg
-subscriptions _ =
-    Sub.batch
-        [ Time.every (toFloat Config.publicUsageConfig.addCreditIntervalMillis) (always AddPublicCredits)
-        , Time.every 1000 UpdateBackendNow
-        , Lamdera.onConnect OnConnect
-        ]
-
-
 sessionIdToMaybeUserId : SessionId -> BackendModel -> Maybe Int
 sessionIdToMaybeUserId sessionId model =
     model.sessions
@@ -682,3 +688,26 @@ consentsFormToConsents form =
     { interview = form.interview
     , features = form.features
     }
+
+
+clearVeryExpiredLoginCodes : BackendModel -> BackendModel
+clearVeryExpiredLoginCodes model =
+    { model
+        | pendingEmailAuths =
+            model.pendingEmailAuths
+                |> Dict.filter
+                    (\code pendingAuth ->
+                        (Time.Extra.compare model.nowish pendingAuth.expires == GT)
+                            && (Time.Extra.diff Time.Extra.Hour Time.utc pendingAuth.expires model.nowish > 1)
+                    )
+    }
+
+
+subscriptions : BackendModel -> Sub BackendMsg
+subscriptions _ =
+    Sub.batch
+        [ Time.every (toFloat Config.publicUsageConfig.addCreditIntervalMillis) (always AddPublicCredits)
+        , Time.every 1000 UpdateBackendNow
+        , Time.every (1000 * 60 * 60 * 24) (always Daily)
+        , Lamdera.onConnect OnConnect
+        ]

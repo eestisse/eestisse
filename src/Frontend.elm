@@ -339,16 +339,16 @@ update msg model =
             , Cmd.none
             )
 
-        SubmitEmailClicked email ->
+        SendEmailToBackendForCode email ->
             ( { model
-                | signinModel = { emailFormMode = InputtingCode email "" }
+                | signinModel = { emailFormMode = InputtingCode <| InputtingCodeModel email "" Nothing }
               }
             , Lamdera.sendToBackend <| RequestEmailLoginCode email
             )
 
         SubmitCodeClicked email code ->
             ( { model
-                | signinModel = { emailFormMode = CodeSubmitted }
+                | signinModel = { emailFormMode = CodeSubmitted email }
               }
             , Lamdera.sendToBackend <| SubmitCodeForEmail email code
             )
@@ -499,6 +499,18 @@ updateFromBackend msg model =
             ( { model | maybeAuthedUserInfo = Just userInfo }
             , Cmd.none
             )
+
+        LoginCodeError err ->
+            case model.signinModel.emailFormMode of
+                CodeSubmitted emailAddress ->
+                    ( { model
+                        | signinModel = { emailFormMode = InputtingCode <| InputtingCodeModel emailAddress "" (Just err) }
+                      }
+                    , Cmd.none
+                    )
+
+                _ ->
+                    ( model, Cmd.none )
 
 
 startCreditCounterAnimation : Bool -> Time.Posix -> FrontendModel -> FrontendModel

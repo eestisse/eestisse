@@ -1,6 +1,7 @@
 module CommonView exposing (..)
 
 import Colors
+import Config
 import Element exposing (Attribute, Element)
 import Element.Background
 import Element.Border as Border
@@ -298,11 +299,11 @@ signinElement dProfile signinModel =
         InputtingEmail input ->
             emailInputForm dProfile input
 
-        InputtingCode email input ->
-            magicCodeInputForm dProfile email input
+        InputtingCode inputtingCodeModel ->
+            magicCodeInputForm dProfile inputtingCodeModel
 
-        CodeSubmitted ->
-            loadingSnake []
+        CodeSubmitted email ->
+            magicCodeWaiting dProfile email
 
 
 emailInputForm : DisplayProfile -> String -> Element FrontendMsg
@@ -310,7 +311,7 @@ emailInputForm dProfile input =
     let
         submitMsgIfEmailIsValid =
             EmailAddress.fromString input
-                |> Maybe.map SubmitEmailClicked
+                |> Maybe.map SendEmailToBackendForCode
     in
     Element.column
         [ Element.spacing <| responsiveVal dProfile 20 20
@@ -348,27 +349,41 @@ emailInputForm dProfile input =
         ]
 
 
-magicCodeInputForm : DisplayProfile -> EmailAddress.EmailAddress -> String -> Element FrontendMsg
-magicCodeInputForm dProfile emailAddress input =
+magicCodeInputForm : DisplayProfile -> InputtingCodeModel -> Element FrontendMsg
+magicCodeInputForm dProfile inputtingCodeModel =
     let
         submitMsgIfNonempty =
-            if input == "" then
+            if inputtingCodeModel.input == "" then
                 Nothing
 
             else
-                Just <| SubmitCodeClicked emailAddress input
+                Just <| SubmitCodeClicked inputtingCodeModel.emailAddress inputtingCodeModel.input
     in
     Element.column
         [ Element.spacing <| responsiveVal dProfile 20 20
         , Element.centerX
         ]
-        [ Element.column
-            [ Element.spacing 5
-            , Font.size <| responsiveVal dProfile 16 18
-            ]
-            [ Element.text <| "A code has been sent to " ++ EmailAddress.toString emailAddress ++ "."
-            , Element.text "Enter it here within 5 minutes."
-            ]
+        [ magicCodeFormHeader dProfile inputtingCodeModel.emailAddress
+        , case inputtingCodeModel.maybeError of
+            Nothing ->
+                Element.none
+
+            Just IncorrectCode ->
+                Element.el
+                    [ Element.centerX
+                    , Font.color Colors.errorTextRed
+                    ]
+                <|
+                    Element.text "Code is not correct"
+
+            Just CodeExpired ->
+                Element.row
+                    [ Element.centerX
+                    , Font.color Colors.errorTextRed
+                    ]
+                    [ Element.text "Code has expired. "
+                    , actionLink "send another" <| SendEmailToBackendForCode <| inputtingCodeModel.emailAddress
+                    ]
         , Element.row
             [ Element.centerX
             , Element.spacing 10
@@ -378,13 +393,38 @@ magicCodeInputForm dProfile emailAddress input =
                 [ Element.width <| Element.px 100
                 , onEnter (submitMsgIfNonempty |> Maybe.withDefault NoOpFrontendMsg)
                 ]
-                { onChange = \t -> ChangeEmailForm <| InputtingCode emailAddress t
-                , text = input
+                { onChange = \t -> ChangeEmailForm <| InputtingCode { inputtingCodeModel | input = t }
+                , text = inputtingCodeModel.input
                 , placeholder = Nothing
                 , label = Input.labelHidden "code input"
                 }
             , blueButton dProfile [] [] "submit" submitMsgIfNonempty
             ]
+        ]
+
+
+magicCodeWaiting : DisplayProfile -> EmailAddress.EmailAddress -> Element FrontendMsg
+magicCodeWaiting dProfile email =
+    Element.column
+        [ Element.spacing <| responsiveVal dProfile 20 20
+        , Element.centerX
+        ]
+        [ magicCodeFormHeader dProfile email
+        , loadingSnake
+            [ Element.centerX
+            , Element.height <| Element.px 40
+            ]
+        ]
+
+
+magicCodeFormHeader : DisplayProfile -> EmailAddress.EmailAddress -> Element FrontendMsg
+magicCodeFormHeader dProfile emailAddress =
+    Element.column
+        [ Element.spacing 5
+        , Font.size <| responsiveVal dProfile 16 18
+        ]
+        [ Element.text <| "A code has been sent to " ++ EmailAddress.toString emailAddress ++ "."
+        , Element.text <| "Enter it here within " ++ Config.emailCodeExpirationString ++ "."
         ]
 
 
