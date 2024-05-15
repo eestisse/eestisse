@@ -31,7 +31,7 @@ newFeaturesConsentWording =
 
 userInterviewsConsentWording : String
 userInterviewsConsentWording =
-    "an offer of free credit in exchange for a 30-minute user interview"
+    "a 30-minute user interview call in exchange for free credit"
 
 
 stripePaymentLinkBaseUrl : String

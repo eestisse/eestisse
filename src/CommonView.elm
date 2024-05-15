@@ -312,15 +312,14 @@ emailInputForm dProfile input =
         [ Element.centerX
         , Element.spacing 10
         ]
-        [ Input.text
-            [ Element.width <| Element.px 100
-            ]
+        [ sleekTextInput dProfile
+            [ Element.width <| Element.px 180 ]
             { onChange = \t -> ChangeEmailForm <| InputtingEmail t
             , text = input
             , placeholder = Just <| Input.placeholder [ Font.color Colors.gray ] <| Element.text "you@something.com"
             , label = Input.labelHidden "email input"
             }
-        , blueButton dProfile [] [] "submit" submitMsgIfEmailIsValid
+        , blueButton dProfile [] [] "send code" submitMsgIfEmailIsValid
         ]
 
 
@@ -338,9 +337,9 @@ magicCodeInputForm dProfile emailAddress input =
         [ Element.centerX
         , Element.spacing 10
         ]
-        [ Input.text
-            [ Element.width <| Element.px 100
-            ]
+        [ sleekTextInput
+            dProfile
+            [ Element.width <| Element.px 100 ]
             { onChange = \t -> ChangeEmailForm <| InputtingCode emailAddress t
             , text = input
             , placeholder = Nothing
@@ -391,3 +390,18 @@ loadingSnake attributes =
 noSelectText : Attribute msg
 noSelectText =
     Html.Attributes.class "noselect" |> Element.htmlAttribute
+
+
+sleekTextInput :
+    DisplayProfile
+    -> List (Attribute msg)
+    -> { onChange : String -> msg, text : String, placeholder : Maybe (Input.Placeholder msg), label : Input.Label msg }
+    -> Element msg
+sleekTextInput dProfile extraAttributes buttonStuff =
+    Input.text
+        ([ Element.height <| Element.px <| responsiveVal dProfile 32 36
+         , Element.padding <| responsiveVal dProfile 5 7
+         ]
+            ++ extraAttributes
+        )
+        buttonStuff

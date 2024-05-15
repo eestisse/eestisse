@@ -87,26 +87,36 @@ page dProfile signinModel maybeConsentsFormModel maybeUserInfo =
 
 loggedInElement : DisplayProfile -> FrontendUserInfo -> Element FrontendMsg
 loggedInElement dProfile userInfo =
-    Element.row
-        [ Element.width Element.fill
-        , Element.spacing 10
-        ]
-        [ Element.el [ Element.width Element.fill ] Element.none
-        , Element.el [ Element.centerX ] <| Element.text <| "Logged in as " ++ userInfo.email
-        , Element.el [ Element.width Element.fill ] <|
-            Input.button
-                [ Element.alignRight
-                , Border.rounded 4
-                , Element.Background.color Colors.white
-                , Border.width 1
-                , Border.color <| Element.rgb 0.5 0.5 1
-                , Element.paddingXY 20 10
-                , Font.bold
+    case dProfile of
+        Mobile ->
+            Element.row
+                [ Element.width Element.fill ]
+                [ Element.column
+                    []
+                    [ Element.text "Logged in:"
+                    , Element.text userInfo.email
+                    ]
+                , lightBlueButton dProfile [ Element.alignRight ] [] "Logout" (Just Logout)
                 ]
-                { onPress = Just Logout
-                , label = Element.text "Logout"
-                }
-        ]
+
+        Desktop ->
+            Element.row
+                [ Element.width Element.fill
+                , Element.spacing 10
+                ]
+                [ Element.el [ Element.width Element.fill ] Element.none
+                , Element.row
+                    [ Element.centerX ]
+                    [ Element.text "Logged in: "
+                    , Element.text userInfo.email
+                    ]
+                , Element.el [ Element.width Element.fill ] <|
+                    lightBlueButton dProfile
+                        [ Element.alignRight ]
+                        []
+                        "Logout"
+                        (Just Logout)
+                ]
 
 
 membershipStatusElement : DisplayProfile -> Element FrontendMsg -> Element FrontendMsg -> Element FrontendMsg
@@ -205,16 +215,28 @@ viewConsentsForm dProfile maybeConsentsFormModel =
     in
     Element.column
         [ Element.spacing 10
+        , Element.padding <| responsiveVal dProfile 5 10
+        , Element.Background.color <| Element.rgb 0.95 0.95 1
+        , Border.shadow
+            { offset = ( 0, 0 )
+            , size = 0
+            , blur = 8
+            , color = Element.rgb 0.8 0.8 0.8
+            }
+        , Border.width 1
+        , Border.color <| Element.rgb 0.7 0.7 1
+        , Border.rounded 5
         ]
         [ Element.el [ Font.size <| responsiveVal dProfile 18 20 ] <|
             Element.text "I am interested in..."
         , consentCheckbox dProfile Config.newFeaturesConsentWording consentsFormModel.features (\b -> { consentsFormModel | features = b })
         , consentCheckbox dProfile Config.userInterviewsConsentWording consentsFormModel.interview (\b -> { consentsFormModel | interview = b })
-        , Input.button
+        , blueButton
+            dProfile
+            [ Element.centerX ]
             []
-            { onPress = Just <| ConsentsFormSubmitClicked consentsFormModel
-            , label = Element.text "Continue"
-            }
+            "Continue"
+            (Just <| ConsentsFormSubmitClicked consentsFormModel)
         ]
 
 

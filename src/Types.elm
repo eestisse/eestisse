@@ -182,8 +182,8 @@ type alias UserInfo =
 
 
 type alias UserConsents =
-    { interview : Bool -- "an offer of free credit in exchange for a 30-minute user interview"
-    , features : Bool -- "hearing about major new features for Eestisse when they come out"
+    { interview : Bool -- "a 30-minute user interview call in exchange for free credit"
+    , features : Bool -- "an offer of free credit in exchange for a 30-minute user interview"
     }
 
 
