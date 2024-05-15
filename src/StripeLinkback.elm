@@ -61,9 +61,10 @@ susbcribeSuccessfulElement dProfile =
             ]
           <|
             Element.text "Subscription active!"
-        , Element.el [ Element.centerX ] <|
-            Element.text <|
+        , Element.paragraph [ Element.centerX ]
+            [ Element.text <|
                 responsiveVal dProfile
                     "Use the menu button on the upper left to try out different features."
                     "Use the menu on the left to try out different features."
+            ]
         ]
