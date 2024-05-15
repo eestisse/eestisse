@@ -10,6 +10,8 @@ import Element.Input as Input
 import EmailAddress
 import Html
 import Html.Attributes
+import Html.Events
+import Json.Decode
 import Responsive exposing (..)
 import Types exposing (..)
 import Utils
@@ -283,7 +285,9 @@ signinElement : DisplayProfile -> SigninModel -> Element FrontendMsg
 signinElement dProfile signinModel =
     case signinModel.emailFormMode of
         Inactive ->
-            Element.row
+            responsiveVal dProfile
+                Element.column
+                Element.row
                 [ Element.centerX
                 , Element.spacing 10
                 ]
@@ -308,18 +312,39 @@ emailInputForm dProfile input =
             EmailAddress.fromString input
                 |> Maybe.map SubmitEmailClicked
     in
-    Element.row
-        [ Element.centerX
-        , Element.spacing 10
+    Element.column
+        [ Element.spacing <| responsiveVal dProfile 20 20
+        , Element.centerX
         ]
-        [ sleekTextInput dProfile
-            [ Element.width <| Element.px 180 ]
-            { onChange = \t -> ChangeEmailForm <| InputtingEmail t
-            , text = input
-            , placeholder = Just <| Input.placeholder [ Font.color Colors.gray ] <| Element.text "you@something.com"
-            , label = Input.labelHidden "email input"
-            }
-        , blueButton dProfile [] [] "send code" submitMsgIfEmailIsValid
+        [ Element.column
+            [ Element.spacing 5
+            , Font.size <| responsiveVal dProfile 16 18
+            ]
+            (case dProfile of
+                Mobile ->
+                    [ Element.text "Enter your email."
+                    , Element.text "We'll send you a code to login."
+                    ]
+
+                Desktop ->
+                    [ Element.text "Enter your email, and we'll send you a code to login."
+                    ]
+            )
+        , Element.row
+            [ Element.centerX
+            , Element.spacing 10
+            ]
+            [ sleekTextInput dProfile
+                [ Element.width <| Element.px 180
+                , onEnter (submitMsgIfEmailIsValid |> Maybe.withDefault NoOpFrontendMsg)
+                ]
+                { onChange = \t -> ChangeEmailForm <| InputtingEmail t
+                , text = input
+                , placeholder = Just <| Input.placeholder [ Font.color Colors.gray ] <| Element.text "you@something.com"
+                , label = Input.labelHidden "email input"
+                }
+            , blueButton dProfile [] [] "send code" submitMsgIfEmailIsValid
+            ]
         ]
 
 
@@ -333,19 +358,33 @@ magicCodeInputForm dProfile emailAddress input =
             else
                 Just <| SubmitCodeClicked emailAddress input
     in
-    Element.row
-        [ Element.centerX
-        , Element.spacing 10
+    Element.column
+        [ Element.spacing <| responsiveVal dProfile 20 20
+        , Element.centerX
         ]
-        [ sleekTextInput
-            dProfile
-            [ Element.width <| Element.px 100 ]
-            { onChange = \t -> ChangeEmailForm <| InputtingCode emailAddress t
-            , text = input
-            , placeholder = Nothing
-            , label = Input.labelHidden "code input"
-            }
-        , blueButton dProfile [] [] "submit" submitMsgIfNonempty
+        [ Element.column
+            [ Element.spacing 5
+            , Font.size <| responsiveVal dProfile 16 18
+            ]
+            [ Element.text <| "A code has been sent to " ++ EmailAddress.toString emailAddress ++ "."
+            , Element.text "Enter it here within 5 minutes."
+            ]
+        , Element.row
+            [ Element.centerX
+            , Element.spacing 10
+            ]
+            [ sleekTextInput
+                dProfile
+                [ Element.width <| Element.px 100
+                , onEnter (submitMsgIfNonempty |> Maybe.withDefault NoOpFrontendMsg)
+                ]
+                { onChange = \t -> ChangeEmailForm <| InputtingCode emailAddress t
+                , text = input
+                , placeholder = Nothing
+                , label = Input.labelHidden "code input"
+                }
+            , blueButton dProfile [] [] "submit" submitMsgIfNonempty
+            ]
         ]
 
 
@@ -368,13 +407,26 @@ googleSigninButton dProfile =
 magicLinkButton : DisplayProfile -> Element FrontendMsg
 magicLinkButton dProfile =
     Input.button
-        []
+        [ Element.height <| Element.px 40
+        , Element.Background.color Colors.white
+        , Border.width 1
+        , Border.color <| Element.rgb 0.4 0.4 0.4
+        , Border.rounded 4
+        , Element.paddingXY 13 0
+        , Font.size 14
+        , Font.bold
+        ]
         { onPress = Just EmailSigninRequested
         , label =
-            Element.el
-                []
-            <|
-                Element.text "Email Magic Link"
+            Element.row
+                [ Element.spacing 10 ]
+                [ Element.image
+                    [ Element.height <| Element.px 26 ]
+                    { src = "/email.png"
+                    , description = "email"
+                    }
+                , Element.text "Email Magic Link"
+                ]
         }
 
 
@@ -405,3 +457,20 @@ sleekTextInput dProfile extraAttributes buttonStuff =
             ++ extraAttributes
         )
         buttonStuff
+
+
+onEnter : msg -> Element.Attribute msg
+onEnter msg =
+    Element.htmlAttribute
+        (Html.Events.on "keyup"
+            (Json.Decode.field "key" Json.Decode.string
+                |> Json.Decode.andThen
+                    (\key ->
+                        if key == "Enter" then
+                            Json.Decode.succeed msg
+
+                        else
+                            Json.Decode.fail "Not the enter key"
+                    )
+            )
+        )

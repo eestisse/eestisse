@@ -1,5 +1,6 @@
 module Testing exposing (..)
 
+import EmailAddress
 import Time
 import Translation.Types exposing (..)
 import Types exposing (..)
@@ -53,4 +54,13 @@ publicTranslationRecordWithId id =
     , time = Time.millisToPosix (id * 1000 * 10)
     , input = String.fromInt id ++ " minu nimi on Logan"
     , translation = translationWithIdInText id
+    }
+
+
+email : EmailAddress.EmailAddress
+email =
+    { localPart = "aperson"
+    , domain = "asite"
+    , tags = []
+    , tld = [ "wow" ]
     }
