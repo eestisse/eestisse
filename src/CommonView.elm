@@ -2,7 +2,7 @@ module CommonView exposing (..)
 
 import Colors
 import Element exposing (Attribute, Element)
-import Element.Background as Background
+import Element.Background
 import Element.Border as Border
 import Element.Events as Events
 import Element.Font as Font
@@ -37,41 +37,55 @@ plausibleTrackButtonClick nameForPlausible =
         Html.Attributes.class weirdClassName
 
 
-mainActionButton : String -> Maybe FrontendMsg -> Element FrontendMsg
-mainActionButton labelText maybeMsg =
-    Input.button
-        [ Element.paddingXY 30 8
-        , Background.color <|
-            case maybeMsg of
-                Just _ ->
-                    Element.rgb 0 0 1
+basicButton : DisplayProfile -> List (Attribute msg) -> List (Attribute msg) -> String -> Maybe msg -> ( Element.Color, Element.Color ) -> Element msg
+basicButton dProfile extraAttributes extraInnerElAttributes labelText maybeMsg ( bgColorIfActive, textColorIfActive ) =
+    Element.el
+        ([ Element.paddingXY 15 8
+         , Font.size <| responsiveVal dProfile 16 18
+         , robotoFont
+         , Border.rounded 4
+         , noSelectText
+         ]
+            ++ (case maybeMsg of
+                    Just msg ->
+                        [ Element.Background.color bgColorIfActive
+                        , Font.color textColorIfActive
+                        , Element.pointer
+                        , Events.onClick msg
+                        ]
 
-                _ ->
-                    Element.rgb 0.5 0.5 0.5
-        , Font.color <| Element.rgb 1 1 1
-        , Font.size 26
-        , Border.rounded 10
-        , madimiFont
-        ]
-        { onPress = maybeMsg
-        , label = Element.text labelText
-        }
+                    Nothing ->
+                        [ Element.Background.color <| Element.rgb 0.5 0.5 0.5
+                        , Font.color Colors.white
+                        ]
+               )
+            ++ extraAttributes
+        )
+    <|
+        Element.el extraInnerElAttributes <|
+            Element.text labelText
 
 
-minorActionButton : String -> Maybe FrontendMsg -> Element FrontendMsg
-minorActionButton labelText maybeMsg =
-    Input.button
-        [ Element.paddingXY 15 8
-        , Border.width 1
-        , Border.color <| Element.rgb 0.5 0.5 1
-        , Background.color Colors.lightBlue
-        , Font.size 24
-        , Font.color <| Element.rgb 0 0 0.5
-        , Border.rounded 10
-        ]
-        { onPress = maybeMsg
-        , label = Element.el [ Element.centerX, Element.centerY ] <| Element.text labelText
-        }
+blueButton : DisplayProfile -> List (Attribute msg) -> List (Attribute msg) -> String -> Maybe msg -> Element msg
+blueButton dProfile extraAttribtues extraInnerElAttributes labelText maybeMsg =
+    basicButton
+        dProfile
+        extraAttribtues
+        extraInnerElAttributes
+        labelText
+        maybeMsg
+        ( Colors.blue, Colors.white )
+
+
+lightBlueButton : DisplayProfile -> List (Attribute msg) -> List (Attribute msg) -> String -> Maybe msg -> Element msg
+lightBlueButton dProfile extraAttributes extraInnerElAttributes labelText maybeMsg =
+    basicButton
+        dProfile
+        ([ Border.width 1, Border.color <| Element.rgb 0.7 0.7 1 ] ++ extraAttributes)
+        extraInnerElAttributes
+        labelText
+        maybeMsg
+        ( Colors.lightBlue, Colors.black )
 
 
 hbreakElement : Element FrontendMsg
@@ -99,7 +113,7 @@ breakElement isVertical =
                 Element.el
                     [ Element.height <| Element.fillPortion 6
                     , Element.width <| Element.px 2
-                    , Background.color <| Element.rgb 0.7 0.7 1
+                    , Element.Background.color <| Element.rgb 0.7 0.7 1
                     ]
                     Element.none
 
@@ -107,7 +121,7 @@ breakElement isVertical =
                 Element.el
                     [ Element.width <| Element.fillPortion 6
                     , Element.height <| Element.px 3
-                    , Background.color <| Element.rgb 0.7 0.7 1
+                    , Element.Background.color <| Element.rgb 0.7 0.7 1
                     ]
                 <|
                     Element.none
@@ -191,7 +205,7 @@ primaryBoxCustomColors borderColor backgroundColor extraAttributes innerEl =
             }
          , Border.color borderColor
          , Border.width 10
-         , Background.color backgroundColor
+         , Element.Background.color backgroundColor
          ]
             ++ extraAttributes
         )
@@ -306,11 +320,7 @@ emailInputForm dProfile input =
             , placeholder = Just <| Input.placeholder [ Font.color Colors.gray ] <| Element.text "you@something.com"
             , label = Input.labelHidden "email input"
             }
-        , Input.button
-            []
-            { onPress = submitMsgIfEmailIsValid
-            , label = Element.text "submit"
-            }
+        , blueButton dProfile [] [] "submit" submitMsgIfEmailIsValid
         ]
 
 
@@ -336,11 +346,7 @@ magicCodeInputForm dProfile emailAddress input =
             , placeholder = Nothing
             , label = Input.labelHidden "code input"
             }
-        , Input.button
-            []
-            { onPress = submitMsgIfNonempty
-            , label = Element.text "submit"
-            }
+        , blueButton dProfile [] [] "submit" submitMsgIfNonempty
         ]
 
 
@@ -380,3 +386,8 @@ loadingSnake attributes =
         { src = "/loading-snake-io.gif"
         , description = "loading"
         }
+
+
+noSelectText : Attribute msg
+noSelectText =
+    Html.Attributes.class "noselect" |> Element.htmlAttribute

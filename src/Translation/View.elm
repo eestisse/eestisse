@@ -70,7 +70,7 @@ viewTranslateErrorPage dProfile input gptAssistError =
             [ translationInputTextElement input
             , hbreakElement
             , viewGptAssistError gptAssistError
-            , editOrNewButtonsRow input
+            , editOrNewButtonsRow dProfile input
             ]
 
 
@@ -121,7 +121,7 @@ viewWaitingForResponsePage dProfile input animationCounter =
                 , loadingEmojiAnimation animationCounter
                 , hbreakElement
                 ]
-            , abortButton input
+            , abortButton dProfile input
             ]
 
 
@@ -135,9 +135,9 @@ translationInputTextElement inputText =
             [ Element.text inputText ]
 
 
-abortButton : String -> Element FrontendMsg
-abortButton inputText =
-    minorActionButton "Abort and Edit" (Just <| EditTranslation inputText)
+abortButton : DisplayProfile -> String -> Element FrontendMsg
+abortButton dProfile inputText =
+    lightBlueButton dProfile [] [] "Abort and Edit" (Just <| EditTranslation inputText)
 
 
 loadingEmojiAnimation : Int -> Element FrontendMsg
@@ -163,7 +163,7 @@ viewTranslateInputPage : DisplayProfile -> Maybe FrontendUserInfo -> String -> B
 viewTranslateInputPage dProfile maybeAuthedUserInfo input publicConsentChecked =
     let
         submitMsgIfEnabled =
-            if input /= "" && maybeFrontendUserSignupComplete maybeAuthedUserInfo then
+            if input /= "" then
                 Just <| SubmitText publicConsentChecked input
 
             else
@@ -240,7 +240,7 @@ viewTranslateInputPage dProfile maybeAuthedUserInfo input publicConsentChecked =
                     ]
                   <|
                     if publicConsentChecked || maybeFrontendUserSignupComplete maybeAuthedUserInfo then
-                        Element.el [ Element.centerX ] <| translateButton submitMsgIfEnabled
+                        Element.el [ Element.centerX ] <| translateButton dProfile submitMsgIfEnabled
 
                     else
                         Element.column
@@ -304,19 +304,19 @@ viewTranslationPage dProfile translationRecord viewTranslationModel =
 
                             Nothing ->
                                 clickOnPartsHint dProfile
-            , editOrNewButtonsRow translationRecord.input
+            , editOrNewButtonsRow dProfile translationRecord.input
             ]
 
 
-editOrNewButtonsRow : String -> Element FrontendMsg
-editOrNewButtonsRow input =
+editOrNewButtonsRow : DisplayProfile -> String -> Element FrontendMsg
+editOrNewButtonsRow dProfile input =
     Element.row
         [ Element.alignBottom
         , Element.width Element.fill
         , Element.spacing 20
         ]
-        [ Element.el [ Element.alignLeft ] <| modifyTextButton input
-        , Element.el [ Element.alignRight ] <| newTranslationButton
+        [ Element.el [ Element.alignLeft ] <| modifyTextButton dProfile input
+        , Element.el [ Element.alignRight ] <| newTranslationButton dProfile
         ]
 
 
@@ -469,23 +469,32 @@ clickOnPartsHint dProfile =
         ]
 
 
-modifyTextButton : String -> Element FrontendMsg
-modifyTextButton inputText =
-    minorActionButton
+modifyTextButton : DisplayProfile -> String -> Element FrontendMsg
+modifyTextButton dProfile inputText =
+    lightBlueButton
+        dProfile
+        []
+        []
         "Edit"
         (Just <| EditTranslation inputText)
 
 
-newTranslationButton : Element FrontendMsg
-newTranslationButton =
-    minorActionButton
+newTranslationButton : DisplayProfile -> Element FrontendMsg
+newTranslationButton dProfile =
+    lightBlueButton
+        dProfile
+        []
+        []
         "New"
         (Just <| EditTranslation "")
 
 
-translateButton : Maybe FrontendMsg -> Element FrontendMsg
-translateButton maybeSubmitMsg =
-    mainActionButton
+translateButton : DisplayProfile -> Maybe FrontendMsg -> Element FrontendMsg
+translateButton dProfile maybeSubmitMsg =
+    blueButton
+        dProfile
+        [ Element.paddingXY 30 8 ]
+        [ Font.size <| responsiveVal dProfile 20 24 ]
         "Translate"
         maybeSubmitMsg
 
