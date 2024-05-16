@@ -221,14 +221,30 @@ update msg model =
                     in
                     case maybeMatchingUserIdAndStripeInfo of
                         Just ( userId, stripeInfo ) ->
-                            ( { model
-                                | users =
+                            let
+                                newUsers =
                                     model.users
                                         |> Dict.update userId
                                             (Maybe.map (updateUserStripeInfo { stripeInfo | paidUntil = Just paidInvoice.paidUntil }))
-                              }
-                            , Cmd.none
-                            )
+
+                                numUsersWhoHavePaid =
+                                    newUsers
+                                        |> Dict.filter
+                                            (\_ userInfo ->
+                                                (userInfo.stripeInfo |> Maybe.andThen .paidUntil) /= Nothing
+                                            )
+                                        |> Dict.toList
+                                        |> List.length
+                            in
+                            { model
+                                | users = newUsers
+                            }
+                                |> (if Config.numEarlybirdOffersTotal - numUsersWhoHavePaid >= Config.earlybirdOffersLeftAlertThreshold then
+                                        notifyAdminOfError <| "Look out! Only " ++ String.fromInt (Config.numEarlybirdOffersTotal - numUsersWhoHavePaid) ++ " earlybird specials left!"
+
+                                    else
+                                        \m -> ( m, Cmd.none )
+                                   )
 
                         Nothing ->
                             ( { model

@@ -102,13 +102,21 @@ serverEmail =
 
 adminEmail : EmailAddress
 adminEmail =
-    { localPart = "admin"
-    , domain = "eestisse"
+    { localPart = "coinop.logan"
+    , domain = "gmail"
     , tags = []
-    , tld = [ "ee" ]
+    , tld = [ "com" ]
     }
 
 
 intervalWaitBetweenAdminErrorEmails : ( Time.Extra.Interval, Int )
 intervalWaitBetweenAdminErrorEmails =
     ( Time.Extra.Hour, 3 )
+
+
+numEarlybirdOffersTotal =
+    20
+
+
+earlybirdOffersLeftAlertThreshold =
+    5
