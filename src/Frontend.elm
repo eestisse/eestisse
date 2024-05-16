@@ -562,20 +562,23 @@ getViewportCmd =
 
 subscriptions : FrontendModel -> Sub FrontendMsg
 subscriptions model =
-    Sub.batch
-        [ case ( model.route, model.doTranslateModel.state ) of
-            ( Route.Translate, TranslateRequestSubmitted ) ->
-                Sub.batch
-                    [ Time.every 900 (always CycleLoadingAnimation)
-                    , Time.every 900 FiddleRandomBackroundPath
-                    ]
+    Sub.none
 
-            _ ->
-                Sub.none
-        , Browser.Events.onAnimationFrame Animate
-        , Browser.Events.onResize Types.Resize
-        , Time.every 1000 UpdateFrontendNow
-        ]
+
+
+-- Sub.batch
+--     [ case ( model.route, model.doTranslateModel.state ) of
+--         ( Route.Translate, TranslateRequestSubmitted ) ->
+--             Sub.batch
+--                 [ Time.every 900 (always CycleLoadingAnimation)
+--                 , Time.every 900 FiddleRandomBackroundPath
+--                 ]
+--         _ ->
+--             Sub.none
+--     , Browser.Events.onAnimationFrame Animate
+--     , Browser.Events.onResize Types.Resize
+--     , Time.every 1000 UpdateFrontendNow
+--     ]
 
 
 arriveAtRouteCmds : Route -> FrontendModel -> Cmd FrontendMsg
