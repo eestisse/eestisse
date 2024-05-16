@@ -12,6 +12,7 @@ import Element.Background
 import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input
+import Feedback.View
 import History.View
 import Landing.View
 import Menu
@@ -193,6 +194,9 @@ viewPage dProfile model =
 
                 Nothing ->
                     Translation.View.viewLoadingTranslationPage dProfile
+
+        Route.Feedback ->
+            Feedback.View.page dProfile model.maybeAuthedUserInfo model.feedbackFormModel
 
         Route.BadRoute routeStr ->
             viewBadRoute dProfile routeStr

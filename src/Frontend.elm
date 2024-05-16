@@ -73,6 +73,7 @@ init url key =
             , noMorePersonalTranslationsToFetch = False
             , fetchingRecords = False
             , maybeConsentsFormModel = Nothing
+            , feedbackFormModel = blankFeedbackFormModel
             }
 
         routeCmd =
@@ -372,6 +373,25 @@ update msg model =
             , Lamdera.sendToBackend <| SubmitConsentsForm form
             )
 
+        FeedbackFormChanged newForm ->
+            ( { model | feedbackFormModel = newForm }
+            , Cmd.none
+            )
+
+        TriggerSubmitFeedback isUser maybeEmail text ->
+            ( { model
+                | feedbackFormModel =
+                    let
+                        old =
+                            model.feedbackFormModel
+                    in
+                    { old
+                        | submitStatus = SubmitWaiting
+                    }
+              }
+            , Lamdera.sendToBackend <| UserFeedback isUser maybeEmail text
+            )
+
 
 updateFromBackend : ToFrontend -> FrontendModel -> ( FrontendModel, Cmd FrontendMsg )
 updateFromBackend msg model =
@@ -518,6 +538,17 @@ updateFromBackend msg model =
 
                 _ ->
                     ( model, Cmd.none )
+
+        AckUserFeedback ->
+            ( { model
+                | feedbackFormModel =
+                    { textInput = ""
+                    , emailInput = ""
+                    , submitStatus = Complete
+                    }
+              }
+            , Cmd.none
+            )
 
 
 startCreditCounterAnimation : Bool -> Time.Posix -> FrontendModel -> FrontendModel

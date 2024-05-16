@@ -110,19 +110,19 @@ futureFeaturesAndSignupElement dProfile maybeUserInfo =
                 ]
             , case maybeUserInfo of
                 Nothing ->
-                    CommonView.makeParagraphs
+                    makeParagraphs
                         [ Font.center ]
                         [ [ actionLink "Sign up" <| GotoRouteAndAnimate Route.Account
                           , Element.text " or "
-                          , CommonView.newTabLink [ CommonView.plausibleTrackButtonClick "discord-link-clicked" ] "https://discord.gg/HQJMbBUmna" "join the Discord"
+                          , joinDiscordLink "join the Discord"
                           , Element.text " to hear about when more features drop."
                           ]
                         ]
 
                 Just _ ->
-                    CommonView.makeParagraphs
+                    makeParagraphs
                         [ Font.center, Element.width Element.fill ]
-                        [ [ CommonView.newTabLink [ CommonView.plausibleTrackButtonClick "discord-link-clicked" ] "https://discord.gg/HQJMbBUmna" "Join the Discord"
+                        [ [ joinDiscordLink "join the Discord"
                           , Element.text " if you have questions or comments."
                           ]
                         ]

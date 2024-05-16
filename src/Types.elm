@@ -46,6 +46,7 @@ type alias FrontendModel =
     , noMorePersonalTranslationsToFetch : Bool
     , fetchingRecords : Bool
     , maybeConsentsFormModel : Maybe ConsentsFormModel
+    , feedbackFormModel : FeedbackFormModel
     }
 
 
@@ -99,6 +100,8 @@ type FrontendMsg
     | LoadMoreClicked PublicOrPersonal ( Maybe Int, Int )
     | ConsentsFormChanged ConsentsFormModel
     | ConsentsFormSubmitClicked ConsentsFormModel
+    | FeedbackFormChanged FeedbackFormModel
+    | TriggerSubmitFeedback Bool (Maybe String) String
 
 
 type BackendMsg
@@ -129,6 +132,7 @@ type ToBackend
     | SubmitCodeForEmail EmailAddress.EmailAddress String
     | SubmitConsentsForm ConsentsFormModel
     | PublicTranslateCheck Bool
+    | UserFeedback Bool (Maybe String) String
 
 
 type ToFrontend
@@ -145,6 +149,7 @@ type ToFrontend
     | RequestRedirectReturnPageResult (Maybe Route.Route)
     | LogoutAck
     | LoginCodeError LoginCodeErr
+    | AckUserFeedback
 
 
 type TranslationRecordFetchError
@@ -364,3 +369,20 @@ type alias ConsentsFormModel =
     { interview : Bool
     , features : Bool
     }
+
+
+type alias FeedbackFormModel =
+    { textInput : String
+    , emailInput : String
+    , submitStatus : SubmitStatus
+    }
+
+
+type SubmitStatus
+    = NotSubmitted
+    | SubmitWaiting
+    | Complete
+
+
+blankFeedbackFormModel =
+    FeedbackFormModel "" "" NotSubmitted

@@ -88,12 +88,14 @@ menuOptions maybeUserInfo =
                         []
                    )
                 ++ [ MenuOption "Public Translations" Route.Browse
+                   , MenuOption "Feedback/Issues" Route.Feedback
                    ]
 
         Nothing ->
             [ MenuOption "Sign in / Sign up" Route.Account
             , MenuOption "Translate" Route.Translate
             , MenuOption "Public Translations" Route.Browse
+            , MenuOption "Feedback/Issues" Route.Feedback
             ]
 
 

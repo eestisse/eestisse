@@ -236,15 +236,15 @@ update msg model =
                                         |> Dict.toList
                                         |> List.length
                             in
-                            { model
+                            ( { model
                                 | users = newUsers
-                            }
-                                |> (if Config.numEarlybirdOffersTotal - numUsersWhoHavePaid >= Config.earlybirdOffersLeftAlertThreshold then
-                                        notifyAdminOfError <| "Look out! Only " ++ String.fromInt (Config.numEarlybirdOffersTotal - numUsersWhoHavePaid) ++ " earlybird specials left!"
+                              }
+                            , if Config.numEarlybirdOffersTotal - numUsersWhoHavePaid >= Config.earlybirdOffersLeftAlertThreshold then
+                                sendAdminEmailCmd "shit's getting good!" ("Look out! Only " ++ String.fromInt (Config.numEarlybirdOffersTotal - numUsersWhoHavePaid) ++ " earlybird specials left!")
 
-                                    else
-                                        \m -> ( m, Cmd.none )
-                                   )
+                              else
+                                Cmd.none
+                            )
 
                         Nothing ->
                             ( { model
@@ -545,6 +545,29 @@ updateFromFrontend sessionId clientId msg model =
                       }
                     , Cmd.none
                     )
+
+        UserFeedback isUser maybeEmail feedbackText ->
+            let
+                subject =
+                    "user feedback from " ++ (maybeEmail |> Maybe.withDefault "anon")
+
+                body =
+                    "This just in "
+                        ++ (if isUser then
+                                "from a signed up user"
+
+                            else
+                                "from a non-signed-up user"
+                           )
+                        ++ ":\n\n"
+                        ++ feedbackText
+            in
+            ( model
+            , Cmd.batch
+                [ sendAdminEmailCmd subject body
+                , Lamdera.sendToFrontend sessionId AckUserFeedback
+                ]
+            )
 
 
 handleStripeWebhook : Stripe.StripeEvent -> BackendModel -> ( Result Http.Error String, BackendModel, Cmd BackendMsg )

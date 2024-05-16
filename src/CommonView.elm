@@ -335,18 +335,23 @@ emailInputForm dProfile input =
             [ Element.centerX
             , Element.spacing 10
             ]
-            [ sleekTextInput dProfile
-                [ Element.width <| Element.px 180
-                , onEnter (submitMsgIfEmailIsValid |> Maybe.withDefault NoOpFrontendMsg)
-                ]
-                { onChange = \t -> ChangeEmailForm <| InputtingEmail t
-                , text = input
-                , placeholder = Just <| Input.placeholder [ Font.color Colors.gray ] <| Element.text "you@something.com"
-                , label = Input.labelHidden "email input"
-                }
+            [ emailInput dProfile (Just "you@somewhere.cool") input submitMsgIfEmailIsValid (\t -> ChangeEmailForm <| InputtingEmail t)
             , blueButton dProfile [] [] "send code" submitMsgIfEmailIsValid
             ]
         ]
+
+
+emailInput : DisplayProfile -> Maybe String -> String -> Maybe FrontendMsg -> (String -> FrontendMsg) -> Element FrontendMsg
+emailInput dProfile maybePlaceholderText input maybeOnEnterMsg onChangeMsg =
+    sleekTextInput dProfile
+        [ Element.width <| Element.px 180
+        , onEnter (maybeOnEnterMsg |> Maybe.withDefault NoOpFrontendMsg)
+        ]
+        { onChange = onChangeMsg
+        , text = input
+        , placeholder = maybePlaceholderText |> Maybe.map (\t -> Input.placeholder [ Font.color Colors.gray ] <| Element.text t)
+        , label = Input.labelHidden "email input"
+        }
 
 
 magicCodeInputForm : DisplayProfile -> InputtingCodeModel -> Element FrontendMsg
@@ -514,3 +519,8 @@ onEnter msg =
                     )
             )
         )
+
+
+joinDiscordLink : String -> Element FrontendMsg
+joinDiscordLink text =
+    newTabLink [ plausibleTrackButtonClick "discord-link-clicked" ] "https://discord.gg/HQJMbBUmna" text

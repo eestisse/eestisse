@@ -16,6 +16,7 @@ type Route
     | Browse
     | History
     | View Int
+    | Feedback
     | BadRoute String
 
 
@@ -41,6 +42,7 @@ matchRoute =
         , Parser.map Browse (Parser.s "browse")
         , Parser.map History (Parser.s "history")
         , Parser.map View (Parser.s "view" </> Parser.int)
+        , Parser.map Feedback (Parser.s "feedback")
         ]
 
 
@@ -74,6 +76,9 @@ routeToString route =
 
             View id ->
                 [ "view", String.fromInt id ]
+
+            Feedback ->
+                [ "feedback" ]
 
             BadRoute _ ->
                 [ "badroute" ]
