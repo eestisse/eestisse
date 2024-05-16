@@ -49,23 +49,6 @@ map3TupleTo f ( a, b, c ) =
     f a b c
 
 
-onEnter : msg -> Element.Attribute msg
-onEnter msg =
-    Element.htmlAttribute
-        (Html.Events.on "keyup"
-            (Json.Decode.field "key" Json.Decode.string
-                |> Json.Decode.andThen
-                    (\key ->
-                        if key == "Enter" then
-                            Json.Decode.succeed msg
-
-                        else
-                            Json.Decode.fail "Not the enter key"
-                    )
-            )
-        )
-
-
 elementColorToRgb : Element.Color -> RGB
 elementColorToRgb elColor =
     let
