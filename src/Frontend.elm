@@ -562,9 +562,9 @@ getViewportCmd =
 
 subscriptions : FrontendModel -> Sub FrontendMsg
 subscriptions model =
-    -- Sub.none
     Sub.batch
-        [ case ( model.route, model.doTranslateModel.state ) of
+        [ Sub.none
+        , case ( model.route, model.doTranslateModel.state ) of
             ( Route.Translate, TranslateRequestSubmitted ) ->
                 Sub.batch
                     [ Time.every 900 (always CycleLoadingAnimation)
@@ -573,7 +573,8 @@ subscriptions model =
 
             _ ->
                 Sub.none
-        , Browser.Events.onAnimationFrame Animate
+
+        -- , Browser.Events.onAnimationFrame Animate
         , Browser.Events.onResize Types.Resize
         , Time.every 1000 UpdateFrontendNow
         ]
