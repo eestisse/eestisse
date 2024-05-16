@@ -139,11 +139,26 @@ type ToFrontend
     | AdminDataMsg AdminData
     | GeneralDataMsg GeneralData
     | CreditsInfoUpdated PublicCreditsInfo
-    | RequestTranslationRecordsResult (Result String (List TranslationRecord))
+    | RequestTranslationRecordsResult (Result TranslationRecordFetchError (List TranslationRecord))
     | NoMoreTranslationsToFetch PublicOrPersonal
     | RequestRedirectReturnPageResult (Maybe Route.Route)
     | LogoutAck
     | LoginCodeError LoginCodeErr
+
+
+type TranslationRecordFetchError
+    = InvalidTranslationRecordId
+    | IncorrectPermissionForTranslationRecord
+
+
+trFetchErrorToString : TranslationRecordFetchError -> String
+trFetchErrorToString err =
+    case err of
+        InvalidTranslationRecordId ->
+            "Invalid translation ID"
+
+        IncorrectPermissionForTranslationRecord ->
+            "User doesn't have permission to view that record"
 
 
 type LoginCodeErr

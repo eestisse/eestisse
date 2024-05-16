@@ -77,8 +77,10 @@ viewTranslateErrorPage dProfile input gptAssistError =
 viewGptAssistError : GptAssistError -> Element FrontendMsg
 viewGptAssistError gptAssistError =
     Element.paragraph
-        [ Element.width Element.fill
-        , Font.color <| Element.rgb 1 0 0
+        [ Font.color <| Element.rgb 1 0 0
+        , Element.width Element.fill
+        , Element.height <| Element.px 400
+        , Element.scrollbarY
         ]
         [ Element.text <| gptAssistErrorToString gptAssistError ]
 

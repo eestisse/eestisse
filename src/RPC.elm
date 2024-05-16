@@ -43,14 +43,15 @@ stripeWebhookHandler _ model headers bodyString =
 
         ( Err error, _ ) ->
             let
-                _ =
-                    Debug.log "awwwW" error
-
                 errorText =
-                    "Failed to decode webhook: "
+                    "Failed to decode stripe webhook: "
                         ++ Json.Decode.errorToString error
             in
-            ( Err (Http.BadBody errorText), model, Cmd.none )
+            model
+                |> Backend.notifyAdminOfError errorText
+                |> (\( m, c ) ->
+                        ( Err (Http.BadBody errorText), m, c )
+                   )
 
         ( Ok webhook, True ) ->
             Backend.handleStripeWebhook webhook model
@@ -71,22 +72,10 @@ checkStripeHeaderSignature bodyString headers endpointSecret receivedTimestamp =
     in
     case boolResult of
         Err s ->
-            let
-                _ =
-                    Debug.log "error checking stripe signature:" s
-            in
             False
 
         Ok False ->
-            let
-                _ =
-                    Debug.log "signature invalid" ""
-            in
             False
 
         Ok True ->
-            let
-                _ =
-                    Debug.log "sig right!" ""
-            in
             True

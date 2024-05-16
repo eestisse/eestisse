@@ -102,6 +102,7 @@ init url key =
                     , Lamdera.sendToBackend RequestGeneralData
                     , maybeAuthCmd
                     , routeCmd
+                    , fakeConsoleLogCmd
                     ]
             )
 
@@ -445,12 +446,10 @@ updateFromBackend msg model =
 
         RequestTranslationRecordsResult translationRecordsResult ->
             case translationRecordsResult of
-                Err errStr ->
-                    let
-                        _ =
-                            Debug.log "error fetching translationRecord:" errStr
-                    in
-                    ( { model | fetchingRecords = False }, Cmd.none )
+                Err trFetchError ->
+                    ( { model | fetchingRecords = False }
+                    , consoleErr <| trFetchErrorToString trFetchError
+                    )
 
                 Ok translationRecords ->
                     ( { model
@@ -603,3 +602,17 @@ arriveAtRouteCmds route model =
 
 
 port plausible_event_out : String -> Cmd msg
+
+
+port consoleLog : String -> Cmd msg
+
+
+fakeConsoleLogCmd =
+    if False then
+        consoleLog "just doing this to keep the port alive"
+
+    else
+        Cmd.none
+
+
+port consoleErr : String -> Cmd msg

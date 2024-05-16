@@ -395,7 +395,7 @@ updateFromFrontend sessionId clientId msg model =
             case Array.get id model.translationRecords of
                 Nothing ->
                     ( model
-                    , Lamdera.sendToFrontend clientId <| RequestTranslationRecordsResult <| Err <| "No translation at ID " ++ String.fromInt id
+                    , Lamdera.sendToFrontend clientId <| RequestTranslationRecordsResult <| Err <| InvalidTranslationRecordId
                     )
 
                 Just translationRecord ->
@@ -412,7 +412,7 @@ updateFromFrontend sessionId clientId msg model =
                                         translationRecord
 
                       else
-                        Lamdera.sendToFrontend clientId <| RequestTranslationRecordsResult <| Err "You don't have permission to view that translation"
+                        Lamdera.sendToFrontend clientId <| RequestTranslationRecordsResult <| Err <| IncorrectPermissionForTranslationRecord
                     )
 
         SetPostAuthRedirect route ->
