@@ -268,15 +268,15 @@ update msg model =
         Animate time ->
             ( { model
                 | animationTime = time
-                , backgroundModel =
-                    case model.backgroundModel of
-                        Nothing ->
-                            Just <| Background.init time
 
-                        Just bgModel ->
-                            Just <|
-                                Background.clearFinishedAnimations <|
-                                    { bgModel | animationTime = time }
+                -- , backgroundModel =
+                --     case model.backgroundModel of
+                --         Nothing ->
+                --             Just <| Background.init time
+                --         Just bgModel ->
+                --             Just <|
+                --                 Background.clearFinishedAnimations <|
+                --                     { bgModel | animationTime = time }
               }
             , Cmd.none
             )
@@ -563,8 +563,7 @@ getViewportCmd =
 subscriptions : FrontendModel -> Sub FrontendMsg
 subscriptions model =
     Sub.batch
-        [ Sub.none
-        , case ( model.route, model.doTranslateModel.state ) of
+        [ case ( model.route, model.doTranslateModel.state ) of
             ( Route.Translate, TranslateRequestSubmitted ) ->
                 Sub.batch
                     [ Time.every 900 (always CycleLoadingAnimation)
@@ -573,8 +572,7 @@ subscriptions model =
 
             _ ->
                 Sub.none
-
-        -- , Browser.Events.onAnimationFrame Animate
+        , Browser.Events.onAnimationFrame Animate
         , Browser.Events.onResize Types.Resize
         , Time.every 1000 UpdateFrontendNow
         ]
