@@ -38,7 +38,8 @@ stripeWebhookHandler :
 stripeWebhookHandler _ model headers bodyString =
     case ( Json.Decode.decodeString Stripe.stripeEventDecoder bodyString, checkStripeHeaderSignature bodyString headers Env.stripeWebhookSecret model.nowish ) of
         ( _, False ) ->
-            ( Err (Http.BadBody "invalid stripe signature"), model, Backend.notifyAdminOfError "invalid stripe signature" )
+            (model |> Backend.notifyAdminOfError "invalid stripe signature")
+                |> (\( m, c ) -> ( Err (Http.BadBody "invalid stripe signature"), m, c ))
 
         ( Err error, _ ) ->
             let

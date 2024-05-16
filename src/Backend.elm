@@ -55,6 +55,8 @@ init =
       , hangingInvoices = []
       , pendingEmailAuths = Dict.empty
       , secretCounter = 0
+      , adminMessages = []
+      , lastAdminAlertEmailSent = Time.millisToPosix 0
       }
     , Time.now
         |> Task.perform InitialTimeVal
@@ -190,7 +192,7 @@ update msg model =
         SubscriptionDataReceived result ->
             case result of
                 Err httpErr ->
-                    ( model, notifyAdminOfError <| "Http error when fetching subscription data: " ++ Utils.httpErrorToString httpErr )
+                    model |> notifyAdminOfError ("Http error when fetching subscription data: " ++ Utils.httpErrorToString httpErr)
 
                 Ok subscriptionData ->
                     let
@@ -240,9 +242,9 @@ update msg model =
         LoginCodeEmailSentResponse ( emailAddress, code ) response ->
             case response of
                 Err httpErr ->
-                    ( model
-                    , notifyAdminOfError <| "Couldn't send email for code login! email: " ++ EmailAddress.toString emailAddress ++ "; code: " ++ code ++ " - http error: " ++ Utils.httpErrorToString httpErr
-                    )
+                    model
+                        |> notifyAdminOfError
+                            ("Couldn't send email for code login! email: " ++ EmailAddress.toString emailAddress ++ "; code: " ++ code ++ " - http error: " ++ Utils.httpErrorToString httpErr)
 
                 Ok _ ->
                     ( model
@@ -486,16 +488,12 @@ updateFromFrontend sessionId clientId msg model =
         SubmitConsentsForm consentsForm ->
             case maybeUserId of
                 Nothing ->
-                    ( model
-                    , notifyAdminOfError "Unexpected: couldn't find user id when getting a SubmitConsentsForm"
-                    )
+                    model |> notifyAdminOfError "Unexpected: couldn't find user id when getting a SubmitConsentsForm"
 
                 Just userId ->
                     case Dict.get userId model.users of
                         Nothing ->
-                            ( model
-                            , notifyAdminOfError "Unexpected: couldn't find userInfo from a userId when getting a SubmitConsentsForm"
-                            )
+                            model |> notifyAdminOfError "Unexpected: couldn't find userInfo from a userId when getting a SubmitConsentsForm"
 
                         Just userInfo ->
                             let
@@ -528,13 +526,25 @@ handleStripeWebhook webhook model =
         Stripe.CheckoutSessionCompleted stripeSessionData ->
             case ( stripeSessionData.clientReferenceId, stripeSessionData.subscriptionId, stripeSessionData.customerId ) of
                 ( Nothing, _, _ ) ->
-                    ( okResponse, model, notifyAdminOfError <| "no clientReferenceId in StripeSessionCompleted. Session ID: " ++ stripeSessionData.id )
+                    model
+                        |> (notifyAdminOfError <| "no clientReferenceId in StripeSessionCompleted. Session ID: " ++ stripeSessionData.id)
+                        |> (\( m, cmd ) ->
+                                ( okResponse, m, cmd )
+                           )
 
                 ( _, Nothing, _ ) ->
-                    ( okResponse, model, notifyAdminOfError <| "no subscriptionId in StripeSessionCompleted. Session ID: " ++ stripeSessionData.id )
+                    model
+                        |> (notifyAdminOfError <| "no subscriptionId in StripeSessionCompleted. Session ID: " ++ stripeSessionData.id)
+                        |> (\( m, cmd ) ->
+                                ( okResponse, m, cmd )
+                           )
 
                 ( _, _, Nothing ) ->
-                    ( okResponse, model, notifyAdminOfError <| "no customerId in StripeSessionCompleted. Session ID: " ++ stripeSessionData.id )
+                    model
+                        |> (notifyAdminOfError <| "no customerId in StripeSessionCompleted. Session ID: " ++ stripeSessionData.id)
+                        |> (\( m, cmd ) ->
+                                ( okResponse, m, cmd )
+                           )
 
                 ( Just userId, Just subscriptionId, Just customerId ) ->
                     let
@@ -571,35 +581,20 @@ handleStripeWebhook webhook model =
         Stripe.InvoicePaid invoiceData ->
             case ( invoiceData.customerId, invoiceData.subscriptionId ) of
                 ( Nothing, _ ) ->
-                    ( okResponse, model, notifyAdminOfError <| "no customerId in InvoicePaid. Session ID: " ++ invoiceData.id )
+                    model
+                        |> (notifyAdminOfError <| "no customerId in InvoicePaid. Session ID: " ++ invoiceData.id)
+                        |> (\( m, c ) -> ( okResponse, m, c ))
 
                 ( _, Nothing ) ->
-                    ( okResponse, model, notifyAdminOfError <| "no subscrptionId in InvoicePaid. Session ID: " ++ invoiceData.id )
+                    model
+                        |> (notifyAdminOfError <| "no subscrptionId in InvoicePaid. Session ID: " ++ invoiceData.id)
+                        |> (\( m, c ) -> ( okResponse, m, c ))
 
                 ( Just _, Just subscriptionId ) ->
                     ( okResponse
                     , model
                     , Stripe.getSubscriptionData subscriptionId SubscriptionDataReceived
                     )
-
-
-signupFormToEmailAndConsets : SignupFormModel -> EmailAndConsents
-signupFormToEmailAndConsets signupForm =
-    { email = signupForm.emailInput
-    , consentsGiven =
-        List.concat
-            [ if signupForm.newFeaturesConsentChecked then
-                [ Config.newFeaturesConsentWording ]
-
-              else
-                []
-            , if signupForm.userInterviewsConsentChecked then
-                [ Config.userInterviewsConsentWording ]
-
-              else
-                []
-            ]
-    }
 
 
 
@@ -661,13 +656,46 @@ modifyCreditBalanceAndBroadcast newCredits model =
     )
 
 
-notifyAdminOfError : String -> Cmd BackendMsg
-notifyAdminOfError s =
+notifyAdminOfError : String -> BackendModel -> ( BackendModel, Cmd BackendMsg )
+notifyAdminOfError s model =
     let
-        _ =
-            Debug.log "hey admin! Error: " s
+        emailNeeded =
+            Time.Extra.diff
+                (Tuple.first Config.intervalWaitBetweenAdminErrorEmails)
+                Time.utc
+                model.lastAdminAlertEmailSent
+                model.nowish
+                >= Tuple.second Config.intervalWaitBetweenAdminErrorEmails
     in
-    Cmd.none
+    ( { model
+        | adminMessages =
+            model.adminMessages
+                ++ [ ( model.nowish, s ) ]
+        , lastAdminAlertEmailSent =
+            if emailNeeded then
+                model.nowish
+
+            else
+                model.lastAdminAlertEmailSent
+      }
+    , if emailNeeded then
+        sendAdminEmailCmd "EESTISSE ERROR" s
+
+      else
+        Cmd.none
+    )
+
+
+sendAdminEmailCmd : String -> String -> Cmd BackendMsg
+sendAdminEmailCmd subject bodyString =
+    Postmark.sendEmail
+        (always NoOpBackendMsg)
+        { from = { name = "Eestisse Server", email = Config.serverEmail }
+        , to = [ { name = "", email = Config.adminEmail } ]
+        , subject = subject
+        , body = Postmark.BodyText bodyString
+        , messageStream = "outbound"
+        }
 
 
 sessionIdToMaybeUserId : SessionId -> BackendModel -> Maybe Int

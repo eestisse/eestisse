@@ -2,6 +2,7 @@ module Config exposing (..)
 
 import EmailAddress exposing (EmailAddress)
 import Env
+import Time.Extra
 
 
 type alias PublicUsageConfig =
@@ -88,3 +89,26 @@ loginCodeFromEmail =
     , tags = []
     , tld = [ "ee" ]
     }
+
+
+serverEmail : EmailAddress
+serverEmail =
+    { localPart = "server"
+    , domain = "eestisse"
+    , tags = []
+    , tld = [ "ee" ]
+    }
+
+
+adminEmail : EmailAddress
+adminEmail =
+    { localPart = "admin"
+    , domain = "eestisse"
+    , tags = []
+    , tld = [ "ee" ]
+    }
+
+
+intervalWaitBetweenAdminErrorEmails : ( Time.Extra.Interval, Int )
+intervalWaitBetweenAdminErrorEmails =
+    ( Time.Extra.Hour, 3 )

@@ -63,6 +63,8 @@ type alias BackendModel =
     , nextUserId : Int
     , hangingInvoices : List PaidInvoice
     , secretCounter : Int
+    , adminMessages : List ( Time.Posix, String )
+    , lastAdminAlertEmailSent : Time.Posix
     }
 
 
