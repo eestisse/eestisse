@@ -268,15 +268,17 @@ update msg model =
         Animate time ->
             ( { model
                 | animationTime = time
+                , backgroundModel =
+                    case model.backgroundModel of
+                        Nothing ->
+                            Just <| Background.init time
 
-                -- , backgroundModel =
-                --     case model.backgroundModel of
-                --         Nothing ->
-                --             Just <| Background.init time
-                --         Just bgModel ->
-                --             Just <|
-                --                 Background.clearFinishedAnimations <|
-                --                     { bgModel | animationTime = time }
+                        Just bgModel ->
+                            Just bgModel
+
+                -- Just <|
+                --     Background.clearFinishedAnimations <|
+                --         { bgModel | animationTime = time }
               }
             , Cmd.none
             )
