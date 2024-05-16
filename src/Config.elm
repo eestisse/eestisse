@@ -45,7 +45,7 @@ stripePaymentLinkId =
         "test_dR66sbe114VB69G7st"
 
     else
-        Debug.todo "need real payment link id"
+        "test_dR66sbe114VB69G7st"
 
 
 stripeUserPortalLink : String
@@ -54,7 +54,7 @@ stripeUserPortalLink =
         "https://billing.stripe.com/p/login/test_dR66pse1idd55cAdQQ"
 
     else
-        Debug.todo "need real stripe user portal link"
+        "https://billing.stripe.com/p/login/test_dR66pse1idd55cAdQQ"
 
 
 maxNumRecordsResponse : Int
