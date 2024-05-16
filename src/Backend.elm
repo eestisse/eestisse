@@ -534,14 +534,14 @@ handleStripeWebhook webhook model =
 
                 ( _, Nothing, _ ) ->
                     model
-                        |> (notifyAdminOfError <| "no subscriptionId in StripeSessionCompleted. Session ID: " ++ stripeSessionData.id)
+                        |> (notifyAdminOfError <| "Unexpected: no subscriptionId in StripeSessionCompleted. Session ID: " ++ stripeSessionData.id)
                         |> (\( m, cmd ) ->
                                 ( okResponse, m, cmd )
                            )
 
                 ( _, _, Nothing ) ->
                     model
-                        |> (notifyAdminOfError <| "no customerId in StripeSessionCompleted. Session ID: " ++ stripeSessionData.id)
+                        |> (notifyAdminOfError <| "Unexpected: no customerId in StripeSessionCompleted. Session ID: " ++ stripeSessionData.id)
                         |> (\( m, cmd ) ->
                                 ( okResponse, m, cmd )
                            )
