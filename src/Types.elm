@@ -128,6 +128,7 @@ type ToBackend
     | RequestEmailLoginCode EmailAddress.EmailAddress
     | SubmitCodeForEmail EmailAddress.EmailAddress String
     | SubmitConsentsForm ConsentsFormModel
+    | PublicTranslateCheck Bool
 
 
 type ToFrontend
@@ -202,6 +203,7 @@ type alias UserInfo =
     { email : String
     , stripeInfo : Maybe StripeInfo
     , consents : Maybe UserConsents
+    , publicChecked : Bool
     }
 
 
@@ -216,6 +218,7 @@ type alias FrontendUserInfo =
     , email : String
     , membershipStatus : MembershipStatus
     , consentsSubmitted : Bool
+    , publicConsentChecked : Bool
     }
 
 
@@ -309,6 +312,7 @@ toFrontendUserInfo ( id, userInfo, membershipStatus ) =
     , email = userInfo.email
     , membershipStatus = membershipStatus
     , consentsSubmitted = userInfo.consents /= Nothing
+    , publicConsentChecked = userInfo.publicChecked
     }
 
 

@@ -184,7 +184,12 @@ update msg model =
             ( { model
                 | publicConsentChecked = flag
               }
-            , Cmd.none
+            , case model.maybeAuthedUserInfo of
+                Nothing ->
+                    Cmd.none
+
+                Just _ ->
+                    Lamdera.sendToBackend <| PublicTranslateCheck flag
             )
 
         SubmitText publicConsentChecked inputText ->
@@ -378,7 +383,10 @@ updateFromBackend msg model =
             Auth.updateFromBackend authToFrontendMsg model
 
         AuthSuccess frontendUserInfo ->
-            ( { model | maybeAuthedUserInfo = Just frontendUserInfo }
+            ( { model
+                | maybeAuthedUserInfo = Just frontendUserInfo
+                , publicConsentChecked = frontendUserInfo.publicConsentChecked
+              }
             , Cmd.none
             )
 

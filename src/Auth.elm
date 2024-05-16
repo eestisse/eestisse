@@ -113,6 +113,7 @@ addOrGetUserFromEmail email model =
                     { email = email
                     , stripeInfo = Nothing
                     , consents = Nothing
+                    , publicChecked = False
                     }
             in
             ( { model

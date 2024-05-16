@@ -526,6 +526,26 @@ updateFromFrontend sessionId clientId msg model =
                             , Lamdera.sendToFrontend clientId <| UpdateUserInfo <| toFrontendUserInfo ( userId, newUserInfo, Auth.userMembershipStatus model.nowish userInfo )
                             )
 
+        PublicTranslateCheck flag ->
+            case maybeUserId of
+                Nothing ->
+                    ( model, Cmd.none )
+
+                Just userId ->
+                    ( { model
+                        | users =
+                            model.users
+                                |> Dict.update
+                                    userId
+                                    (Maybe.map
+                                        (\userInfo ->
+                                            { userInfo | publicChecked = flag }
+                                        )
+                                    )
+                      }
+                    , Cmd.none
+                    )
+
 
 handleStripeWebhook : Stripe.StripeEvent -> BackendModel -> ( Result Http.Error String, BackendModel, Cmd BackendMsg )
 handleStripeWebhook webhook model =
