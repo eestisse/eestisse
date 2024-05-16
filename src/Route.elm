@@ -16,7 +16,7 @@ type Route
     | Browse
     | History
     | View Int
-    | BadRoute
+    | BadRoute String
 
 
 parseUrl : Url -> Route
@@ -26,7 +26,7 @@ parseUrl url =
             route
 
         Nothing ->
-            BadRoute
+            BadRoute <| Url.toString url
 
 
 matchRoute : Parser (Route -> a) a
@@ -75,7 +75,7 @@ routeToString route =
             View id ->
                 [ "view", String.fromInt id ]
 
-            BadRoute ->
+            BadRoute _ ->
                 [ "badroute" ]
         )
         []

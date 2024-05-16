@@ -194,8 +194,8 @@ viewPage dProfile model =
                 Nothing ->
                     Translation.View.viewLoadingTranslationPage dProfile
 
-        Route.BadRoute ->
-            viewBadRoute
+        Route.BadRoute routeStr ->
+            viewBadRoute dProfile routeStr
 
 
 getFetchButtonVisibility : PublicOrPersonal -> FrontendModel -> FetchButtonVisibility
@@ -356,11 +356,22 @@ routeLinkElement text color route =
         }
 
 
-viewHistoryPage : Element FrontendMsg
-viewHistoryPage =
-    Element.text "history page"
-
-
-viewBadRoute : Element FrontendMsg
-viewBadRoute =
-    Element.text "bad route page"
+viewBadRoute : DisplayProfile -> String -> Element FrontendMsg
+viewBadRoute dProfile routeStr =
+    primaryBox
+        [ Element.width Element.fill
+        , Element.padding 20
+        ]
+    <|
+        Element.el [ Element.centerX ] <|
+            Element.paragraph
+                [ Element.width Element.fill
+                , Element.centerY
+                , Font.size <| responsiveVal dProfile 18 26
+                ]
+            <|
+                [ Element.text <|
+                    "Bad url \""
+                        ++ routeStr
+                        ++ "\""
+                ]
