@@ -40,6 +40,7 @@ init : ( BackendModel, Cmd BackendMsg )
 init =
     ( { nowish = Time.millisToPosix 0
       , publicCreditsInfo =
+            -- dummy value - replaced below in response to InitialTimeVal
             { current = 0
             , nextRefresh = Time.millisToPosix 0
             , refreshAmount = Config.publicUsageConfig.addCreditAmount
@@ -78,7 +79,7 @@ update msg model =
             ( { model
                 | nowish = t
                 , publicCreditsInfo =
-                    { current = 0
+                    { current = 10
                     , nextRefresh =
                         Time.posixToMillis t
                             + Config.publicUsageConfig.addCreditIntervalMillis
@@ -95,7 +96,7 @@ update msg model =
             )
 
         OnConnect sessionId clientId ->
-            case Dict.get sessionId model.sessions of
+            (case Dict.get sessionId model.sessions of
                 Nothing ->
                     ( { model
                         | sessions =
@@ -125,6 +126,15 @@ update msg model =
                             )
                         |> Maybe.withDefault Cmd.none
                     )
+            )
+                |> (\( m, c ) ->
+                        ( m
+                        , Cmd.batch
+                            [ c
+                            , Lamdera.sendToFrontend clientId <| GeneralDataMsg <| getGeneralDataFromModel m
+                            ]
+                        )
+                   )
 
         AuthBackendMsg authMsg ->
             Auth.Flow.backendUpdate (Auth.backendConfig model) authMsg
@@ -315,9 +325,7 @@ updateFromFrontend sessionId clientId msg model =
 
         RequestGeneralData ->
             ( model
-            , Lamdera.sendToFrontend clientId <|
-                GeneralDataMsg <|
-                    GeneralData model.publicCreditsInfo
+            , Lamdera.sendToFrontend clientId <| GeneralDataMsg <| getGeneralDataFromModel model
             )
 
         DoLogout ->

@@ -21,7 +21,7 @@ type Role
 
 translateFromEstonian : String -> Request
 translateFromEstonian estonianString =
-    { modelString = "gpt-4-turbo-preview"
+    { modelString = "gpt-4o"
     , systemMessage = """You are helping me learn Estonian, by translating between Estonian and English, and explaining the resulting translation. Here's the structure I want you to output, after I send you a piece of English or Estonian text:
 
 {
@@ -184,6 +184,10 @@ encode : Request -> Json.Encode.Value
 encode request =
     Json.Encode.object
         [ ( "model", Json.Encode.string request.modelString )
+        , ( "response_format"
+          , Json.Encode.object
+                [ ( "type", Json.Encode.string "json_object" ) ]
+          )
         , ( "messages"
           , Json.Encode.list Json.Encode.object <|
                 [ ( "role", Json.Encode.string "system" )

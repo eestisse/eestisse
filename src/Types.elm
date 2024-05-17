@@ -249,6 +249,11 @@ type alias GeneralData =
     { publicCreditsInfo : PublicCreditsInfo }
 
 
+getGeneralDataFromModel : BackendModel -> GeneralData
+getGeneralDataFromModel model =
+    GeneralData model.publicCreditsInfo
+
+
 type alias EmailAndConsents =
     { email : String
     , consentsGiven : List String
