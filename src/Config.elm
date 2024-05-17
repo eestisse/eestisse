@@ -100,8 +100,8 @@ serverEmail =
     }
 
 
-adminEmail : EmailAddress
-adminEmail =
+mainAdminEmail : EmailAddress
+mainAdminEmail =
     { localPart = "coinop.logan"
     , domain = "gmail"
     , tags = []
@@ -109,9 +109,20 @@ adminEmail =
     }
 
 
+adminEmails : List EmailAddress
+adminEmails =
+    [ mainAdminEmail
+    , { localPart = "syriven"
+      , domain = "gmail"
+      , tags = []
+      , tld = [ "com" ]
+      }
+    ]
+
+
 intervalWaitBetweenAdminErrorEmails : ( Time.Extra.Interval, Int )
 intervalWaitBetweenAdminErrorEmails =
-    ( Time.Extra.Hour, 3 )
+    ( Time.Extra.Minute, 1 )
 
 
 numEarlybirdOffersTotal =

@@ -8,6 +8,7 @@
     "elm-version": "0.19.1",
     "dependencies": {
         "direct": {
+            "CoderDennis/elm-time-format": "1.0.0",
             "NoRedInk/elm-json-decode-pipeline": "1.0.1",
             "TSFoster/elm-sha1": "2.1.1",
             "billstclair/elm-sha256": "1.0.9",

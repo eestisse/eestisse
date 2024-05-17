@@ -96,7 +96,7 @@ init url key =
                 Cmd.batch
                     [ getViewportCmd
                     , if route == Route.Admin then
-                        Lamdera.sendToBackend RequestImportantNumber
+                        Lamdera.sendToBackend RequestAdminData
 
                       else
                         Cmd.none
@@ -269,7 +269,7 @@ update msg model =
 
         FetchImportantNumber ->
             ( model
-            , Lamdera.sendToBackend RequestImportantNumber
+            , Lamdera.sendToBackend RequestAdminData
             )
 
         Animate time ->
@@ -390,6 +390,11 @@ update msg model =
                     }
               }
             , Lamdera.sendToBackend <| UserFeedback isUser maybeEmail text
+            )
+
+        MarkAdminMessagesRead t ->
+            ( model
+            , Lamdera.sendToBackend <| MarkAdminMessagesReadToBackend t
             )
 
 

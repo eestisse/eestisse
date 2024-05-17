@@ -1,17 +1,21 @@
 module Admin.View exposing (..)
 
 import Colors
-import CommonView
+import CommonView exposing (..)
 import Element exposing (Element)
 import Element.Background
 import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input
+import Responsive exposing (..)
+import Time
+import Time.Format
+import Time.Format.Config.Config_en_us exposing (config)
 import Types exposing (..)
 
 
-page : Maybe AdminData -> Element FrontendMsg
-page maybeNumbers =
+page : DisplayProfile -> Maybe AdminData -> Element FrontendMsg
+page dProfile maybeNumbers =
     CommonView.primaryBox
         [ Element.centerX
         , Element.centerY
@@ -51,4 +55,43 @@ page maybeNumbers =
                         |> Element.column
                             [ Element.spacing 40
                             ]
+                    , Element.column
+                        [ Element.spacing 10
+                        ]
+                        [ case maybeTimeOfMostRecentMessage adminData.adminMessages of
+                            Just timeOfMostRecentMessage ->
+                                blueButton dProfile [] [] "mark as read" <| Just <| MarkAdminMessagesRead <| timeOfMostRecentMessage
+
+                            Nothing ->
+                                Element.none
+                        , Element.column
+                            [ Element.spacing 5
+                            , Font.size 18
+                            ]
+                            (adminData.adminMessages
+                                |> List.map
+                                    (\( time, message ) ->
+                                        Element.row
+                                            [ Element.spacing 10
+                                            , Border.width 1
+                                            , Border.color Colors.gray
+                                            , Element.height (Element.shrink |> Element.maximum 400)
+                                            ]
+                                            [ Element.el [ Element.width <| Element.px 200, Element.alignTop ] <|
+                                                Element.text <|
+                                                    Time.Format.format config "%Y.%m.%d %H:%M:%S" Time.utc time
+                                            , Element.paragraph [ Element.height Element.fill, Element.scrollbarY ] [ Element.text message ]
+                                            ]
+                                    )
+                            )
+                        ]
                     ]
+
+
+maybeTimeOfMostRecentMessage : List ( Time.Posix, String ) -> Maybe Time.Posix
+maybeTimeOfMostRecentMessage messages =
+    messages
+        |> List.sortBy (Tuple.first >> Time.posixToMillis)
+        |> List.reverse
+        |> List.head
+        |> Maybe.map Tuple.first

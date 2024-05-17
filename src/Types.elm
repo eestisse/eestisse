@@ -66,6 +66,7 @@ type alias BackendModel =
     , secretCounter : Int
     , adminMessages : List ( Time.Posix, String )
     , lastAdminAlertEmailSent : Time.Posix
+    , timeOfLastAdminMessageRead : Time.Posix
     }
 
 
@@ -102,6 +103,7 @@ type FrontendMsg
     | ConsentsFormSubmitClicked ConsentsFormModel
     | FeedbackFormChanged FeedbackFormModel
     | TriggerSubmitFeedback Bool (Maybe String) String
+    | MarkAdminMessagesRead Time.Posix
 
 
 type BackendMsg
@@ -121,7 +123,7 @@ type ToBackend
     = NoOpToBackend
     | AuthToBackend Auth.Common.ToBackend
     | SubmitTextForTranslation Bool String
-    | RequestImportantNumber
+    | RequestAdminData
     | RequestGeneralData
     | DoLogout
     | RequestTranslations PublicOrPersonal ( Maybe Int, Int )
@@ -133,6 +135,7 @@ type ToBackend
     | SubmitConsentsForm ConsentsFormModel
     | PublicTranslateCheck Bool
     | UserFeedback Bool (Maybe String) String
+    | MarkAdminMessagesReadToBackend Time.Posix
 
 
 type ToFrontend
@@ -236,6 +239,7 @@ type alias StripeInfo =
 
 type alias AdminData =
     { emailsAndConsents : List ( String, Int )
+    , adminMessages : List ( Time.Posix, String )
     }
 
 

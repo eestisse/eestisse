@@ -170,7 +170,7 @@ viewPage dProfile model =
             Translation.View.viewDoTranslatePage dProfile model.maybePublicCreditsInfo model.time_updatePerSecond model.maybeAuthedUserInfo model.doTranslateModel model.publicConsentChecked model.loadingAnimationCounter
 
         Route.Admin ->
-            Admin.View.page model.maybeAdminData
+            Admin.View.page dProfile model.maybeAdminData
 
         Route.AuthCallback _ ->
             Element.el [ Element.centerX ] <| Element.text "User authenticated. Redirecting..."

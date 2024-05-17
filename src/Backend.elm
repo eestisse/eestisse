@@ -58,6 +58,7 @@ init =
       , secretCounter = 0
       , adminMessages = []
       , lastAdminAlertEmailSent = Time.millisToPosix 0
+      , timeOfLastAdminMessageRead = Time.millisToPosix 0
       }
     , Time.now
         |> Task.perform InitialTimeVal
@@ -305,23 +306,47 @@ updateFromFrontend sessionId clientId msg model =
                 , Lamdera.sendToFrontend clientId <| TranslationResult input (Err OutOfCredits)
                 )
 
-        RequestImportantNumber ->
-            ( model
-            , Lamdera.sendToFrontend clientId <|
-                AdminDataMsg <|
-                    { emailsAndConsents =
-                        model.emailsWithConsents
-                            |> List.map
-                                (\emailWithConsents ->
-                                    emailWithConsents.consentsGiven
-                                        |> List.map (\consent -> ( emailWithConsents.email, consent ))
+        RequestAdminData ->
+            case maybeUserId of
+                Just userId ->
+                    case Dict.get userId model.users of
+                        Just userInfo ->
+                            if
+                                Config.adminEmails
+                                    |> List.map EmailAddress.toString
+                                    |> List.member userInfo.email
+                            then
+                                ( model
+                                , Lamdera.sendToFrontend clientId <|
+                                    AdminDataMsg <|
+                                        { emailsAndConsents =
+                                            model.emailsWithConsents
+                                                |> List.map
+                                                    (\emailWithConsents ->
+                                                        emailWithConsents.consentsGiven
+                                                            |> List.map (\consent -> ( emailWithConsents.email, consent ))
+                                                    )
+                                                |> List.concat
+                                                |> List.Extra.unique
+                                                |> List.map Tuple.second
+                                                |> List.Extra.frequencies
+                                        , adminMessages =
+                                            model.adminMessages
+                                                |> List.filter
+                                                    (\( t, _ ) ->
+                                                        Time.Extra.compare t model.timeOfLastAdminMessageRead == GT
+                                                    )
+                                        }
                                 )
-                            |> List.concat
-                            |> List.Extra.unique
-                            |> List.map Tuple.second
-                            |> List.Extra.frequencies
-                    }
-            )
+
+                            else
+                                ( model, Cmd.none )
+
+                        Nothing ->
+                            ( model, Cmd.none )
+
+                Nothing ->
+                    notifyAdminOfError "test error" model
 
         RequestGeneralData ->
             ( model
@@ -577,6 +602,11 @@ updateFromFrontend sessionId clientId msg model =
                 ]
             )
 
+        MarkAdminMessagesReadToBackend time ->
+            ( { model | timeOfLastAdminMessageRead = time }
+            , Cmd.none
+            )
+
 
 handleStripeWebhook : Stripe.StripeEvent -> BackendModel -> ( Result Http.Error String, BackendModel, Cmd BackendMsg )
 handleStripeWebhook webhook model =
@@ -733,6 +763,24 @@ notifyAdminOfError s model =
                 model.lastAdminAlertEmailSent
                 model.nowish
                 >= Tuple.second Config.intervalWaitBetweenAdminErrorEmails
+
+        subject =
+            "EESTISSE ERROR"
+                ++ (let
+                        numAdditionalMessagesCached =
+                            model.adminMessages
+                                |> List.filter
+                                    (\( t, _ ) ->
+                                        Time.Extra.compare t model.lastAdminAlertEmailSent == GT
+                                    )
+                                |> List.length
+                    in
+                    if numAdditionalMessagesCached == 0 then
+                        ""
+
+                    else
+                        " (+ " ++ String.fromInt numAdditionalMessagesCached ++ " more errors cached)"
+                   )
     in
     ( { model
         | adminMessages =
@@ -746,7 +794,7 @@ notifyAdminOfError s model =
                 model.lastAdminAlertEmailSent
       }
     , if emailNeeded then
-        sendAdminEmailCmd "EESTISSE ERROR" s
+        sendAdminEmailCmd subject s
 
       else
         Cmd.none
@@ -758,7 +806,7 @@ sendAdminEmailCmd subject bodyString =
     Postmark.sendEmail
         (always NoOpBackendMsg)
         { from = { name = "Eestisse Server", email = Config.serverEmail }
-        , to = [ { name = "", email = Config.adminEmail } ]
+        , to = [ { name = "", email = Config.mainAdminEmail } ]
         , subject = subject
         , body = Postmark.BodyText bodyString
         , messageStream = "outbound"
