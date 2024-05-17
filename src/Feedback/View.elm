@@ -8,12 +8,13 @@ import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input
 import EmailAddress
+import Maybe.Extra as Maybe
 import Responsive exposing (..)
 import Types exposing (..)
 
 
-page : DisplayProfile -> Maybe FrontendUserInfo -> FeedbackFormModel -> Element FrontendMsg
-page dProfile maybeUserInfo feedbackFormModel =
+page : DisplayProfile -> Maybe (Maybe FrontendUserInfo) -> FeedbackFormModel -> Element FrontendMsg
+page dProfile maybeMaybeUserInfo feedbackFormModel =
     primaryBox
         [ Element.width Element.fill
         , Element.height Element.fill
@@ -26,7 +27,7 @@ page dProfile maybeUserInfo feedbackFormModel =
             , Element.spacing <| responsiveVal dProfile 15 30
             ]
             [ textHeaderEl dProfile
-            , viewMainForm dProfile maybeUserInfo feedbackFormModel
+            , viewMainForm dProfile (Maybe.join maybeMaybeUserInfo) feedbackFormModel
             ]
 
 

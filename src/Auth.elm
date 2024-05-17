@@ -88,7 +88,7 @@ handleAuthSuccess backendModel sessionId clientId email =
     ( { modelWithEmail
         | sessions = newSessions
       }
-    , Lamdera.sendToFrontend clientId <| AuthSuccess <| toFrontendUserInfo ( userId, userInfo, userMembershipStatus modelWithEmail.nowish userInfo )
+    , Lamdera.sendToFrontend clientId <| AuthSuccess <| toFrontendUserInfo userId userInfo modelWithEmail.nowish
     )
 
 
@@ -152,25 +152,3 @@ updateFromBackend authToFrontendMsg model =
 
         Auth.Common.AuthSessionChallenge _ ->
             ( model, Cmd.none )
-
-
-userMembershipStatus : Time.Posix -> UserInfo -> MembershipStatus
-userMembershipStatus nowish user =
-    case user.stripeInfo of
-        Nothing ->
-            NoStripeInfo
-
-        Just stripeInfo ->
-            case stripeInfo.paidUntil of
-                Nothing ->
-                    NotStarted
-
-                Just paidUntil ->
-                    if Time.Extra.compare paidUntil nowish == GT then
-                        MembershipActive
-
-                    else if Time.Extra.diff Time.Extra.Day Time.utc paidUntil nowish <= 2 then
-                        MembershipAlmostExpired
-
-                    else
-                        MembershipExpired

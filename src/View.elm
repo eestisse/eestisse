@@ -15,6 +15,7 @@ import Element.Input as Input
 import Feedback.View
 import History.View
 import Landing.View
+import Maybe.Extra as Maybe
 import Menu
 import Responsive exposing (..)
 import Route exposing (Route)
@@ -66,7 +67,7 @@ view dProfile model =
                 Element.Background.color <| Colors.vibrantTeal
         , Element.inFront <|
             if dProfile == Mobile && model.mobileMenuOpen then
-                Menu.viewMenu dProfile model.maybeAuthedUserInfo model.route
+                Menu.viewMenu dProfile (Maybe.join model.maybeAuthedUserInfo) model.route
 
             else
                 Element.none
@@ -148,7 +149,7 @@ view dProfile model =
                     , Element.spaceEvenly
                     ]
                     [ Element.el [ Element.width <| Element.px sideElWidth, Element.alignTop ] <|
-                        Menu.viewMenu dProfile model.maybeAuthedUserInfo model.route
+                        Menu.viewMenu dProfile (Maybe.join model.maybeAuthedUserInfo) model.route
                     , Element.el
                         [ Element.width (Element.fill |> Element.maximum 900)
                         , Element.height Element.fill
@@ -224,10 +225,13 @@ getFetchButtonVisibility publicOrPersonal model =
         DontShow
 
 
-signInOrAccountButton : DisplayProfile -> Maybe FrontendUserInfo -> Element FrontendMsg
-signInOrAccountButton dProfile maybeUserInfo =
-    case maybeUserInfo of
+signInOrAccountButton : DisplayProfile -> Maybe (Maybe FrontendUserInfo) -> Element FrontendMsg
+signInOrAccountButton dProfile maybeMaybeUserInfo =
+    case maybeMaybeUserInfo of
         Nothing ->
+            Element.none
+
+        Just Nothing ->
             Input.button
                 [ responsiveVal dProfile
                     (Element.paddingXY 18 8)
@@ -242,7 +246,7 @@ signInOrAccountButton dProfile maybeUserInfo =
                 , label = Element.text "Sign In"
                 }
 
-        Just userInfo ->
+        Just (Just userInfo) ->
             Input.button
                 [ Border.rounded 200 -- easy way to make a circle! :D
                 , Element.width <| Element.px 40

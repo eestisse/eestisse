@@ -13,8 +13,8 @@ import Route
 import Types exposing (..)
 
 
-page : DisplayProfile -> SigninModel -> Maybe ConsentsFormModel -> Maybe FrontendUserInfo -> Element FrontendMsg
-page dProfile signinModel maybeConsentsFormModel maybeUserInfo =
+page : DisplayProfile -> SigninModel -> Maybe ConsentsFormModel -> Maybe (Maybe FrontendUserInfo) -> Element FrontendMsg
+page dProfile signinModel maybeConsentsFormModel maybeMaybeUserInfo =
     primaryBox
         [ Element.width Element.fill
         , Element.padding <| responsiveVal dProfile 10 25
@@ -25,11 +25,14 @@ page dProfile signinModel maybeConsentsFormModel maybeUserInfo =
             , Element.spacing <| responsiveVal dProfile 15 30
             ]
         <|
-            case maybeUserInfo of
+            case maybeMaybeUserInfo of
                 Nothing ->
+                    [ Element.el [ Element.centerX ] <| Element.text "Loading..." ]
+
+                Just Nothing ->
                     [ Element.el [ Element.centerX ] <| signinElement dProfile signinModel ]
 
-                Just userInfo ->
+                Just (Just userInfo) ->
                     loggedInElement dProfile userInfo
                         :: (if not userInfo.consentsSubmitted then
                                 [ Element.el [ Element.centerX ] <| viewConsentsForm dProfile maybeConsentsFormModel ]

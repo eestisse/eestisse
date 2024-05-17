@@ -9,21 +9,22 @@ import Element.Border as Border
 import Element.Events as Events
 import Element.Font as Font
 import Element.Input as Input
+import Maybe.Extra as Maybe
 import Responsive exposing (..)
 import Route
 import Types exposing (..)
 import Utils
 
 
-page : DisplayProfile -> Maybe FrontendUserInfo -> Element FrontendMsg
-page dProfile maybeUserInfo =
+page : DisplayProfile -> Maybe (Maybe FrontendUserInfo) -> Element FrontendMsg
+page dProfile maybeMaybeUserInfo =
     Element.column
         [ Element.width Element.fill
         , Element.height Element.fill
         , Element.spacing 25
         ]
         [ mainExplainer dProfile
-        , futureFeaturesAndSignupElement dProfile maybeUserInfo
+        , futureFeaturesAndSignupElement dProfile (Maybe.join maybeMaybeUserInfo)
         ]
 
 

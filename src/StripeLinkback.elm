@@ -9,21 +9,24 @@ import Route
 import Types exposing (..)
 
 
-viewPage : DisplayProfile -> Maybe FrontendUserInfo -> Element FrontendMsg
-viewPage dProfile maybeUserInfo =
+viewPage : DisplayProfile -> Maybe (Maybe FrontendUserInfo) -> Element FrontendMsg
+viewPage dProfile maybeMaybeUserInfo =
     primaryBox
         [ Element.width Element.fill
         , Element.padding <| responsiveVal dProfile 10 25
         ]
     <|
-        case maybeUserInfo of
+        case maybeMaybeUserInfo of
             Nothing ->
+                Element.el [ Element.centerX ] <| Element.text "Loading..."
+
+            Just Nothing ->
                 Element.row [ Element.centerX ]
                     [ Element.text "Can't find your user id. Try "
                     , actionLink "logging in again" <| GotoRouteAndAnimate Route.Account
                     ]
 
-            Just userInfo ->
+            Just (Just userInfo) ->
                 let
                     nonSuccessEl text =
                         Element.paragraph [ Element.centerX ] [ Element.text text ]

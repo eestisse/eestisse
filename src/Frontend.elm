@@ -409,7 +409,7 @@ updateFromBackend msg model =
 
         AuthSuccess frontendUserInfo ->
             ( { model
-                | maybeAuthedUserInfo = Just frontendUserInfo
+                | maybeAuthedUserInfo = Just (Just frontendUserInfo)
                 , publicConsentChecked = frontendUserInfo.publicConsentChecked
               }
             , Cmd.none
@@ -509,13 +509,6 @@ updateFromBackend msg model =
 
                 _ ->
                     ( model, Cmd.none )
-
-        LogoutAck ->
-            ( { model
-                | maybeAuthedUserInfo = Nothing
-              }
-            , Cmd.none
-            )
 
         NoMoreTranslationsToFetch publicOrPersonal ->
             ( case publicOrPersonal of

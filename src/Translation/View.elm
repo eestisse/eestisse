@@ -9,6 +9,7 @@ import Element.Events as Events
 import Element.Font as Font
 import Element.Input as Input
 import List.Extra
+import Maybe.Extra as Maybe
 import Responsive exposing (..)
 import Route
 import Time
@@ -29,8 +30,12 @@ viewLoadingTranslationPage dProfile =
             Element.text "Fetching translation..."
 
 
-viewDoTranslatePage : DisplayProfile -> Maybe PublicCreditsInfo -> Time.Posix -> Maybe FrontendUserInfo -> DoTranslateModel -> Bool -> Int -> Element FrontendMsg
-viewDoTranslatePage dProfile maybePublicCreditsInfo now maybeUserInfo doTranslateModel publicConsentChecked animationCounter =
+viewDoTranslatePage : DisplayProfile -> Maybe PublicCreditsInfo -> Time.Posix -> Maybe (Maybe FrontendUserInfo) -> DoTranslateModel -> Bool -> Int -> Element FrontendMsg
+viewDoTranslatePage dProfile maybePublicCreditsInfo now maybeMaybeUserInfo doTranslateModel publicConsentChecked animationCounter =
+    let
+        maybeUserInfo =
+            Maybe.join maybeMaybeUserInfo
+    in
     case doTranslateModel.state of
         Inputting ->
             if maybeFrontendUserSignupComplete maybeUserInfo then

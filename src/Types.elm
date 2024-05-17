@@ -17,6 +17,7 @@ import Route exposing (Route)
 import Set exposing (Set)
 import Stripe.Types as Stripe
 import Time
+import Time.Extra
 import Translation.Types exposing (..)
 import Url exposing (Url)
 
@@ -26,7 +27,7 @@ type alias FrontendModel =
     , route : Route
     , authFlow : Auth.Common.Flow
     , authRedirectBaseUrl : Url
-    , maybeAuthedUserInfo : Maybe FrontendUserInfo
+    , maybeAuthedUserInfo : Maybe (Maybe FrontendUserInfo)
     , signinModel : SigninModel
     , dProfile : Maybe DisplayProfile
     , maybeAdminData : Maybe AdminData
@@ -142,7 +143,7 @@ type ToFrontend
     = NoOpToFrontend
     | AuthToFrontend Auth.Common.ToFrontend
     | AuthSuccess FrontendUserInfo
-    | UpdateUserInfo FrontendUserInfo
+    | UpdateUserInfo (Maybe FrontendUserInfo)
     | TranslationResult String (Result GptAssistError TranslationRecord)
     | AdminDataMsg AdminData
     | GeneralDataMsg GeneralData
@@ -150,7 +151,6 @@ type ToFrontend
     | RequestTranslationRecordsResult (Result TranslationRecordFetchError (List TranslationRecord))
     | NoMoreTranslationsToFetch PublicOrPersonal
     | RequestRedirectReturnPageResult (Maybe Route.Route)
-    | LogoutAck
     | LoginCodeError LoginCodeErr
     | AckUserFeedback
 
@@ -320,8 +320,12 @@ type MembershipStatus
     | MembershipExpired
 
 
-toFrontendUserInfo : ( Int, UserInfo, MembershipStatus ) -> FrontendUserInfo
-toFrontendUserInfo ( id, userInfo, membershipStatus ) =
+toFrontendUserInfo : Int -> UserInfo -> Time.Posix -> FrontendUserInfo
+toFrontendUserInfo id userInfo now =
+    let
+        membershipStatus =
+            userMembershipStatus now userInfo
+    in
     { id = id
     , email = userInfo.email
     , membershipStatus = membershipStatus
@@ -395,3 +399,25 @@ type SubmitStatus
 
 blankFeedbackFormModel =
     FeedbackFormModel "" "" NotSubmitted
+
+
+userMembershipStatus : Time.Posix -> UserInfo -> MembershipStatus
+userMembershipStatus nowish user =
+    case user.stripeInfo of
+        Nothing ->
+            NoStripeInfo
+
+        Just stripeInfo ->
+            case stripeInfo.paidUntil of
+                Nothing ->
+                    NotStarted
+
+                Just paidUntil ->
+                    if Time.Extra.compare paidUntil nowish == GT then
+                        MembershipActive
+
+                    else if Time.Extra.diff Time.Extra.Day Time.utc paidUntil nowish <= 2 then
+                        MembershipAlmostExpired
+
+                    else
+                        MembershipExpired

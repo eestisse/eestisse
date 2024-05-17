@@ -97,45 +97,53 @@ update msg model =
             )
 
         OnConnect sessionId clientId ->
-            (case Dict.get sessionId model.sessions of
-                Nothing ->
-                    ( { model
-                        | sessions =
-                            model.sessions
+            let
+                ( newSessions, sessionInfo ) =
+                    case Dict.get sessionId model.sessions of
+                        Nothing ->
+                            ( model.sessions
                                 |> Dict.insert
                                     sessionId
                                     blankSession
-                      }
-                    , Cmd.none
-                    )
-
-                Just sessionInfo ->
-                    let
-                        maybeUserIdAndInfo =
-                            sessionInfo.maybeAuthedUserId
-                                |> Maybe.andThen
-                                    (\userId ->
-                                        Dict.get userId model.users
-                                            |> Maybe.map (Tuple.pair userId)
-                                    )
-                    in
-                    ( model
-                    , maybeUserIdAndInfo
-                        |> Maybe.map
-                            (\( userId, userInfo ) ->
-                                Lamdera.sendToFrontend clientId <| AuthSuccess <| toFrontendUserInfo ( userId, userInfo, Auth.userMembershipStatus model.nowish userInfo )
+                            , blankSession
                             )
-                        |> Maybe.withDefault Cmd.none
-                    )
+
+                        Just session ->
+                            ( model.sessions
+                            , session
+                            )
+
+                maybeUserIdAndInfo =
+                    sessionInfo.maybeAuthedUserId
+                        |> Maybe.andThen
+                            (\id ->
+                                model.users
+                                    |> Dict.get id
+                                    |> Maybe.map (Tuple.pair id)
+                            )
+
+                userInfoUpdateCmd =
+                    case maybeUserIdAndInfo of
+                        Nothing ->
+                            Lamdera.sendToFrontend clientId <| UpdateUserInfo Nothing
+
+                        Just ( userId, userInfo ) ->
+                            Lamdera.sendToFrontend clientId <| AuthSuccess <| toFrontendUserInfo userId userInfo model.nowish
+
+                newModel =
+                    { model
+                        | sessions = newSessions
+                    }
+
+                generalDataCmd =
+                    Lamdera.sendToFrontend clientId <| GeneralDataMsg <| getGeneralDataFromModel newModel
+            in
+            ( newModel
+            , Cmd.batch
+                [ userInfoUpdateCmd
+                , generalDataCmd
+                ]
             )
-                |> (\( m, c ) ->
-                        ( m
-                        , Cmd.batch
-                            [ c
-                            , Lamdera.sendToFrontend clientId <| GeneralDataMsg <| getGeneralDataFromModel m
-                            ]
-                        )
-                   )
 
         AuthBackendMsg authMsg ->
             Auth.Flow.backendUpdate (Auth.backendConfig model) authMsg
@@ -359,7 +367,7 @@ updateFromFrontend sessionId clientId msg model =
                     (\cmd ->
                         Cmd.batch
                             [ cmd
-                            , Lamdera.sendToFrontend clientId LogoutAck
+                            , Lamdera.sendToFrontend clientId <| UpdateUserInfo <| Nothing
                             ]
                     )
 
@@ -556,7 +564,7 @@ updateFromFrontend sessionId clientId msg model =
                                     model.users
                                         |> Dict.insert userId newUserInfo
                               }
-                            , Lamdera.sendToFrontend clientId <| UpdateUserInfo <| toFrontendUserInfo ( userId, newUserInfo, Auth.userMembershipStatus model.nowish userInfo )
+                            , Lamdera.sendToFrontend clientId <| UpdateUserInfo <| Just <| toFrontendUserInfo userId newUserInfo model.nowish
                             )
 
         PublicTranslateCheck flag ->
