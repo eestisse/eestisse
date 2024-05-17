@@ -266,22 +266,21 @@ update msg model =
             )
 
         Animate time ->
-            ( { model
-                | animationTime = time
-                , backgroundModel =
-                    case model.backgroundModel of
-                        Nothing ->
-                            Just <| Background.init time
+            case model.backgroundModel of
+                Just _ ->
+                    ( { model
+                        | animationTime = time
+                      }
+                    , Cmd.none
+                    )
 
-                        Just bgModel ->
-                            Just bgModel
-
-                -- Just <|
-                --     Background.clearFinishedAnimations <|
-                --         { bgModel | animationTime = time }
-              }
-            , Cmd.none
-            )
+                Nothing ->
+                    ( { model
+                        | animationTime = time
+                        , backgroundModel = Just <| Background.init time
+                      }
+                    , Cmd.none
+                    )
 
         FiddleRandomBackroundPath _ ->
             case model.backgroundModel of
