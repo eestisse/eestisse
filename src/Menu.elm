@@ -36,7 +36,7 @@ viewMenu dProfile maybeUserInfo currentRoute =
             { offset = ( 3, 0 )
             , size = 0
             , blur = 15
-            , color = Element.rgba 0 0 0 0.3
+            , color = Element.rgba 0 0 0 0.1
             }
         , Font.size <| responsiveVal dProfile 18 24
         ]
