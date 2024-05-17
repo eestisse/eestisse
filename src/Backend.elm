@@ -346,7 +346,7 @@ updateFromFrontend sessionId clientId msg model =
                             ( model, Cmd.none )
 
                 Nothing ->
-                    notifyAdminOfError "test error" model
+                    ( model, Cmd.none )
 
         RequestGeneralData ->
             ( model
