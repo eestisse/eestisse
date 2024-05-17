@@ -28,28 +28,9 @@ view dProfile time model =
                 [ Svg.Attributes.height "100%" ]
                 (Svg.defs
                     []
-                    [ shadowFilterSvg ]
+                    []
                     :: List.map (renderPath dProfile time) model.pathsAcross
                 )
-
-
-shadowFilterSvg : Svg FrontendMsg
-shadowFilterSvg =
-    Svg.filter
-        [ Svg.Attributes.id "shadow" ]
-        [ Svg.node "feDropShadow"
-            [ Svg.Attributes.dx "-5"
-            , Svg.Attributes.dy "-5"
-            , Svg.Attributes.stdDeviation "5"
-            , Svg.Attributes.floodOpacity "0.5"
-            ]
-            []
-        ]
-
-
-useShadowSvgAttribute : Svg.Attribute FrontendMsg
-useShadowSvgAttribute =
-    Svg.Attributes.style "filter:url(#shadow)"
 
 
 renderPath : DisplayProfile -> Time.Posix -> ( PathAcross, Maybe PathAcrossAnimationState ) -> Svg FrontendMsg
@@ -88,7 +69,6 @@ renderPath dProfile animationTime ( path, maybeAnimationState ) =
         , Svg.Attributes.fill <| rgbToSvgString pathToRender.color
         , Svg.Attributes.stroke <| colorToSvgString Config.pathColor
         , Svg.Attributes.strokeWidth <| String.fromInt Config.pathThickness
-        , useShadowSvgAttribute
         ]
         []
 
