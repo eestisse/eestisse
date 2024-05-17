@@ -694,23 +694,6 @@ handleStripeWebhook webhook model =
                     )
 
 
-
--- requestClaudeTranslationCmd : ClientId -> String -> Cmd BackendMsg
--- requestClaudeTranslationCmd clientId inputText =
---     Http.request
---         { method = "POST"
---         , headers =
---             [ Http.header "x-api-key" Env.anthropicApiKey
---             , Http.header "anthropic-version" "2023-06-01"
---             ]
---         , url = "https://api.anthropic.com/v1/messages"
---         , body = Http.jsonBody <| ClaudeRequests.encode <| ClaudeRequests.translateFromEstonian inputText
---         , expect = Http.expectJson (GptResponseReceived clientId inputText) ClaudeRequests.apiResponseDecoder
---         , timeout = Nothing
---         , tracker = Nothing
---         }
-
-
 requestGptTranslationCmd : ( SessionId, ClientId ) -> Bool -> String -> Cmd BackendMsg
 requestGptTranslationCmd sessionAndClientId publicConsentChecked inputText =
     Http.request
