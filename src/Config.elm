@@ -46,7 +46,7 @@ stripePaymentLinkId =
         "test_dR66sbe114VB69G7st"
 
     else
-        "test_dR66sbe114VB69G7st"
+        "9AQ03s2Pse595u8dQS"
 
 
 stripeUserPortalLink : String
@@ -55,7 +55,7 @@ stripeUserPortalLink =
         "https://billing.stripe.com/p/login/test_dR66pse1idd55cAdQQ"
 
     else
-        "https://billing.stripe.com/p/login/test_dR66pse1idd55cAdQQ"
+        "https://billing.stripe.com/p/login/dR64j00us6ZA0Za3cc"
 
 
 maxNumRecordsResponse : Int
