@@ -37,13 +37,13 @@ translateFromEstonian estonianString =
 
 The field "translated to" should be either "estonian" or "english" depending on which translation you performed.
 
-The breakdown should consist of at most 10 items, each of which examines a section of the text (either a word or phrase). The explanation should be a list of 3 items: the Estonian chunk, a direct approximate translation of the chunk, and an explanation (null otherwise).
+The breakdown should be a list of items, each of which examines a word of the text. The explanation should be a list of 3 items: the Estonian chunk, a direct approximate translation of the chunk, and an explanation if needed (null otherwise).
 
 Make sure that the breakdown covers the full input text without missing any words.
 
 If you are unable to complete the request, instead create a json object with "error" set to true and "error_text" set to a string explanation of what seems wrong with the request. Assume a playful tone with the explanation, but make sure it's clear enough to be understood.
 
-In the case of explicit messages, if the messsage features clear communication, do not refuse to translate it. If on the other hand it uses terms that are overly explicit or dirty, deny that request (again, with a clear if playful explanation of why)"""
+In the case of explicit messages, if the messsage is centered around clear communication, do not refuse to translate it. If on the other hand it uses terms that are overly explicit or dirty, deny that request (again, with a clear if playful explanation of why)"""
     , messages =
         [ ( User, """Mind on treenitud kosmoseõpilasi abistama""" )
         , ( Assistant, """{
@@ -142,8 +142,13 @@ In the case of explicit messages, if the messsage features clear communication, 
     "translated to": "english",
     "breakdown": [
         [
-            "ma tahan",
-            "I want",
+            "ma",
+            "I",
+            null
+        ],
+        [
+            "tahan",
+            "want",
             "first person singular present indicative of \\"tahtma,\\" meaning \\"to want\\"."
         ],
         [
@@ -162,14 +167,24 @@ In the case of explicit messages, if the messsage features clear communication, 
             "infinitive form of \\"seksima\\", meaning \\"to have sex\\"."
         ],
         [
-            "kas sul on",
-            "do you have",
-            "\\"kas\\" introduces a question, \\"sul on\\" is the form of \\"to have\\" for \\"you\\"."
+            "kas",
+            "do",
+            "Introduces a question."
         ],
         [
-            "kondoome on?",
-            "are there condoms?",
-            "\\"kondoome\\" is the partitive plural of \\"kondoom\\", meaning \\"condoms\\", and \\"on\\" is \\"are\\"."
+            "sul on",
+            "you have"
+            "\\"sul\\" is a form of \\"sina\\" (you) in the adessive case, used with the verb \\"on\\" (have) to indicate possession."
+        ],
+        [
+            "kondoome",
+            "condoms",
+            "Partitive plural of "kondoom", indicating an indefinite quantity or asking about the existence of something."
+        ]
+        [
+            "on?",
+            "is/are?"
+            "A repetition likely made in error. The correct sentence would simply be \\"Kas sul on kondoome?\\""
         ]
     ]
 }""" )
