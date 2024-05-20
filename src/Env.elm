@@ -50,4 +50,4 @@ postmarkToken =
 
 
 mode =
-    Production
+    Development
