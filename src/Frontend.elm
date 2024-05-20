@@ -385,6 +385,11 @@ update msg model =
             , Lamdera.sendToBackend <| TB_SetAdminMessagesLastRead t
             )
 
+        TestAdminError ->
+            ( model
+            , Lamdera.sendToBackend <| TB_TestAdminError "wowow"
+            )
+
 
 updateFromBackend : ToFrontend -> FrontendModel -> ( FrontendModel, Cmd FrontendMsg )
 updateFromBackend msg model =

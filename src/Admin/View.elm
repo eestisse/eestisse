@@ -38,6 +38,7 @@ page dProfile maybeNumbers =
                         [ Element.text "Number of paying users:"
                         , Element.text <| String.fromInt adminData.numPaidUsers
                         ]
+                    , blueButton dProfile [] [] "Test admin error" <| Just TestAdminError
                     , adminData.emailsAndConsents
                         |> List.map
                             (\( label, number ) ->

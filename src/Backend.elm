@@ -603,6 +603,9 @@ updateFromFrontend sessionId clientId msg model =
                 , Cmd.none
                 )
 
+        TB_TestAdminError s ->
+            notifyAdminOfError ("Test error: " ++ s) model
+
 
 handleStripeWebhook : Stripe.StripeEvent -> BackendModel -> ( Result Http.Error String, BackendModel, Cmd BackendMsg )
 handleStripeWebhook webhook model =
