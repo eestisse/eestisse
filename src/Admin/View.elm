@@ -32,7 +32,13 @@ page dProfile maybeNumbers =
                     , Element.spacing 40
                     , Font.size 40
                     ]
-                    [ adminData.emailsAndConsents
+                    [ Element.row
+                        [ Element.spacing 5
+                        ]
+                        [ Element.text "Number of paying users:"
+                        , Element.text <| String.fromInt adminData.numPaidUsers
+                        ]
+                    , adminData.emailsAndConsents
                         |> List.map
                             (\( label, number ) ->
                                 Element.row

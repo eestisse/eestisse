@@ -246,20 +246,14 @@ update msg model =
                                         |> Dict.update userId
                                             (Maybe.map (updateUserStripeInfo { stripeInfo | paidUntil = Just paidInvoice.paidUntil }))
 
-                                numUsersWhoHavePaid =
-                                    newUsers
-                                        |> Dict.filter
-                                            (\_ userInfo ->
-                                                (userInfo.stripeInfo |> Maybe.andThen .paidUntil) /= Nothing
-                                            )
-                                        |> Dict.toList
-                                        |> List.length
+                                numPayingUsers =
+                                    countPaidUsers newUsers
                             in
                             ( { model
                                 | users = newUsers
                               }
-                            , if Config.numEarlybirdOffersTotal - numUsersWhoHavePaid >= Config.earlybirdOffersLeftAlertThreshold then
-                                sendAdminEmailCmd "shit's getting good!" ("Look out! Only " ++ String.fromInt (Config.numEarlybirdOffersTotal - numUsersWhoHavePaid) ++ " earlybird specials left!")
+                            , if Config.numEarlybirdOffersTotal - numPayingUsers >= Config.earlybirdOffersLeftAlertThreshold then
+                                sendAdminEmailCmd "shit's getting good!" ("Look out! Only " ++ String.fromInt (Config.numEarlybirdOffersTotal - numPayingUsers) ++ " earlybird specials left!")
 
                               else
                                 Cmd.none
@@ -336,6 +330,8 @@ updateFromFrontend sessionId clientId msg model =
                                     (\( t, _ ) ->
                                         Time.Extra.compare t model.timeOfLastAdminMessageRead == GT
                                     )
+                        , numPaidUsers =
+                            countPaidUsers model.users
                         }
                 )
 
@@ -858,3 +854,14 @@ maybeUserIdIsAdmin maybeUserId model =
 
         Nothing ->
             False
+
+
+countPaidUsers : Dict Int UserInfo -> Int
+countPaidUsers users =
+    users
+        |> Dict.filter
+            (\_ userInfo ->
+                (userInfo.stripeInfo |> Maybe.andThen .paidUntil) /= Nothing
+            )
+        |> Dict.toList
+        |> List.length
