@@ -94,7 +94,7 @@ loadMoreButton dProfile publicOrPersonal maybeLowestIdFetched =
         , Font.bold
         , Border.rounded 4
         ]
-        { onPress = Just <| LoadMoreClicked publicOrPersonal ( maybeLowestIdFetched, Config.frontendFetchRecordCount )
+        { onPress = Just <| FetchMoreTranslations publicOrPersonal ( maybeLowestIdFetched, Config.frontendFetchRecordCount )
         , label = Element.text "Load more"
         }
 

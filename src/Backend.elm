@@ -38,7 +38,7 @@ app =
 
 init : ( BackendModel, Cmd BackendMsg )
 init =
-    ( { nowish = Time.millisToPosix 0
+    ( { time_bySecond = Time.millisToPosix 0
       , publicCreditsInfo =
             -- dummy value - replaced below in response to InitialTimeVal
             { current = 0
@@ -68,7 +68,7 @@ init =
 update : BackendMsg -> BackendModel -> ( BackendModel, Cmd BackendMsg )
 update msg model =
     case msg of
-        NoOpBackendMsg ->
+        B_NoOp ->
             ( model, Cmd.none )
 
         Daily ->
@@ -78,7 +78,7 @@ update msg model =
 
         InitialTimeVal t ->
             ( { model
-                | nowish = t
+                | time_bySecond = t
                 , publicCreditsInfo =
                     { current = 10
                     , nextRefresh =
@@ -91,8 +91,8 @@ update msg model =
             , Cmd.none
             )
 
-        UpdateBackendNow time ->
-            ( { model | nowish = time }
+        UpdateBackendNow_BySecond time ->
+            ( { model | time_bySecond = time }
             , Cmd.none
             )
 
@@ -125,10 +125,10 @@ update msg model =
                 userInfoUpdateCmd =
                     case maybeUserIdAndInfo of
                         Nothing ->
-                            Lamdera.sendToFrontend clientId <| UpdateUserInfo Nothing
+                            Lamdera.sendToFrontend clientId <| TF_UserInfo Nothing
 
                         Just ( userId, userInfo ) ->
-                            Lamdera.sendToFrontend clientId <| AuthSuccess <| toFrontendUserInfo userId userInfo model.nowish
+                            Lamdera.sendToFrontend clientId <| TF_AuthSuccess <| toFrontendUserInfo userId userInfo model.time_bySecond
 
                 newModel =
                     { model
@@ -136,7 +136,7 @@ update msg model =
                     }
 
                 generalDataCmd =
-                    Lamdera.sendToFrontend clientId <| GeneralDataMsg <| getGeneralDataFromModel newModel
+                    Lamdera.sendToFrontend clientId <| TF_GeneralData <| getGeneralDataFromModel newModel
             in
             ( newModel
             , Cmd.batch
@@ -153,7 +153,7 @@ update msg model =
                 translationRecordResult =
                     GPTRequests.processGptResponse fetchResult
                         |> Result.map
-                            (TranslationRecord (Array.length model.translationRecords) (sessionIdToMaybeUserId sessionId model) publicConsentChecked model.nowish input)
+                            (TranslationRecord (Array.length model.translationRecords) (sessionIdToMaybeUserId sessionId model) publicConsentChecked model.time_bySecond input)
 
                 newTranslationRecords =
                     case translationRecordResult of
@@ -180,7 +180,7 @@ update msg model =
             ( newModel
             , Cmd.batch
                 [ Lamdera.sendToFrontend clientId
-                    (TranslationResult input <| translationRecordResult)
+                    (TF_TranslationResult input <| translationRecordResult)
                 , bcastCmd
                 ]
             )
@@ -195,7 +195,7 @@ update msg model =
                 newPublicCreditsInfo =
                     { current = newPublicCredits
                     , nextRefresh =
-                        Time.posixToMillis model.nowish
+                        Time.posixToMillis model.time_bySecond
                             + Config.publicUsageConfig.addCreditIntervalMillis
                             |> Time.millisToPosix
                     , refreshAmount = Config.publicUsageConfig.addCreditAmount
@@ -205,7 +205,7 @@ update msg model =
                 | publicCreditsInfo =
                     newPublicCreditsInfo
               }
-            , Lamdera.broadcast <| CreditsInfoUpdated newPublicCreditsInfo
+            , Lamdera.broadcast <| TF_CreditsInfo newPublicCreditsInfo
             )
 
         SubscriptionDataReceived result ->
@@ -294,13 +294,13 @@ updateFromFrontend sessionId clientId msg model =
             sessionIdToMaybeUserId sessionId model
     in
     case msg of
-        NoOpToBackend ->
+        TB_NoOp ->
             ( model, Cmd.none )
 
-        AuthToBackend authToBackend ->
+        TB_AuthMsg authToBackend ->
             Auth.Flow.updateFromFrontend (Auth.backendConfig model) clientId sessionId authToBackend model
 
-        SubmitTextForTranslation publicConsentChecked input ->
+        TB_TextForTranslation publicConsentChecked input ->
             if model.publicCreditsInfo.current > 0 then
                 model
                     |> deductOneCreditAndBroadcast
@@ -311,67 +311,53 @@ updateFromFrontend sessionId clientId msg model =
 
             else
                 ( model
-                , Lamdera.sendToFrontend clientId <| TranslationResult input (Err OutOfCredits)
+                , Lamdera.sendToFrontend clientId <| TF_TranslationResult input (Err OutOfCredits)
                 )
 
-        RequestAdminData ->
-            case maybeUserId of
-                Just userId ->
-                    case Dict.get userId model.users of
-                        Just userInfo ->
-                            if
-                                Config.adminEmails
-                                    |> List.map EmailAddress.toString
-                                    |> List.member userInfo.email
-                            then
-                                ( model
-                                , Lamdera.sendToFrontend clientId <|
-                                    AdminDataMsg <|
-                                        { emailsAndConsents =
-                                            model.emailsWithConsents
-                                                |> List.map
-                                                    (\emailWithConsents ->
-                                                        emailWithConsents.consentsGiven
-                                                            |> List.map (\consent -> ( emailWithConsents.email, consent ))
-                                                    )
-                                                |> List.concat
-                                                |> List.Extra.unique
-                                                |> List.map Tuple.second
-                                                |> List.Extra.frequencies
-                                        , adminMessages =
-                                            model.adminMessages
-                                                |> List.filter
-                                                    (\( t, _ ) ->
-                                                        Time.Extra.compare t model.timeOfLastAdminMessageRead == GT
-                                                    )
-                                        }
-                                )
+        R_AdminData ->
+            if maybeUserIdIsAdmin maybeUserId model then
+                ( model
+                , Lamdera.sendToFrontend clientId <|
+                    TF_AdminData <|
+                        { emailsAndConsents =
+                            model.emailsWithConsents
+                                |> List.map
+                                    (\emailWithConsents ->
+                                        emailWithConsents.consentsGiven
+                                            |> List.map (\consent -> ( emailWithConsents.email, consent ))
+                                    )
+                                |> List.concat
+                                |> List.Extra.unique
+                                |> List.map Tuple.second
+                                |> List.Extra.frequencies
+                        , adminMessages =
+                            model.adminMessages
+                                |> List.filter
+                                    (\( t, _ ) ->
+                                        Time.Extra.compare t model.timeOfLastAdminMessageRead == GT
+                                    )
+                        }
+                )
 
-                            else
-                                ( model, Cmd.none )
+            else
+                ( model, Cmd.none )
 
-                        Nothing ->
-                            ( model, Cmd.none )
-
-                Nothing ->
-                    ( model, Cmd.none )
-
-        RequestGeneralData ->
+        R_GeneralData ->
             ( model
-            , Lamdera.sendToFrontend clientId <| GeneralDataMsg <| getGeneralDataFromModel model
+            , Lamdera.sendToFrontend clientId <| TF_GeneralData <| getGeneralDataFromModel model
             )
 
-        DoLogout ->
+        TB_Logout ->
             Auth.logout sessionId clientId model
                 |> Tuple.mapSecond
                     (\cmd ->
                         Cmd.batch
                             [ cmd
-                            , Lamdera.sendToFrontend clientId <| UpdateUserInfo <| Nothing
+                            , Lamdera.sendToFrontend clientId <| TF_UserInfo <| Nothing
                             ]
                     )
 
-        RequestTranslations publicOrPersonal ( maybeLowestCachedId, count ) ->
+        R_TranslationRecords publicOrPersonal ( maybeLowestCachedId, count ) ->
             let
                 filterFunc =
                     case publicOrPersonal of
@@ -423,20 +409,20 @@ updateFromFrontend sessionId clientId msg model =
             in
             ( model
             , Cmd.batch
-                [ Lamdera.sendToFrontend clientId <| RequestTranslationRecordsResult <| Ok <| listToReturn
+                [ Lamdera.sendToFrontend clientId <| TF_TranslationRecordsRequestResult <| Ok <| listToReturn
                 , if noMoreRecords then
-                    Lamdera.sendToFrontend clientId <| NoMoreTranslationsToFetch publicOrPersonal
+                    Lamdera.sendToFrontend clientId <| TF_NoMoreTranslationsToFetch publicOrPersonal
 
                   else
                     Cmd.none
                 ]
             )
 
-        RequestTranslation id ->
+        R_SingleTranslationRecord id ->
             case Array.get id model.translationRecords of
                 Nothing ->
                     ( model
-                    , Lamdera.sendToFrontend clientId <| RequestTranslationRecordsResult <| Err <| InvalidTranslationRecordId
+                    , Lamdera.sendToFrontend clientId <| TF_TranslationRecordsRequestResult <| Err <| InvalidTranslationRecordId
                     )
 
                 Just translationRecord ->
@@ -447,16 +433,16 @@ updateFromFrontend sessionId clientId msg model =
                     ( model
                     , if hasPermission then
                         Lamdera.sendToFrontend clientId <|
-                            RequestTranslationRecordsResult <|
+                            TF_TranslationRecordsRequestResult <|
                                 Ok <|
                                     List.singleton <|
                                         translationRecord
 
                       else
-                        Lamdera.sendToFrontend clientId <| RequestTranslationRecordsResult <| Err <| IncorrectPermissionForTranslationRecord
+                        Lamdera.sendToFrontend clientId <| TF_TranslationRecordsRequestResult <| Err <| IncorrectPermissionForTranslationRecord
                     )
 
-        SetPostAuthRedirect route ->
+        TB_SetPostAuthRedirect route ->
             ( { model
                 | sessions =
                     model.sessions
@@ -472,27 +458,27 @@ updateFromFrontend sessionId clientId msg model =
             , Cmd.none
             )
 
-        RequestAndClearRedirectReturnPage ->
+        R_AndClearRedirectReturnPage ->
             ( model |> clearRedirectReturnPageForSession sessionId
             , Lamdera.sendToFrontend clientId <|
-                RequestRedirectReturnPageResult
+                TF_RedirectReturnPage
                     (model.sessions
                         |> Dict.get sessionId
                         |> Maybe.andThen .redirectReturnPage
                     )
             )
 
-        RequestEmailLoginCode emailAddress ->
+        R_EmailLoginCode emailAddress ->
             let
                 ( newModel, code ) =
-                    EmailCode.getUniqueId model.nowish model
+                    EmailCode.getUniqueId model.time_bySecond model
             in
             ( { newModel
                 | pendingEmailAuths =
                     model.pendingEmailAuths
                         |> Dict.insert code
                             { email = emailAddress |> EmailAddress.toString
-                            , expires = (Time.posixToMillis model.nowish + Config.emailCodeExpirationMillis) |> Time.millisToPosix
+                            , expires = (Time.posixToMillis model.time_bySecond + Config.emailCodeExpirationMillis) |> Time.millisToPosix
                             }
               }
             , Postmark.sendEmail
@@ -505,7 +491,7 @@ updateFromFrontend sessionId clientId msg model =
                 }
             )
 
-        SubmitCodeForEmail emailAddress code ->
+        TB_EmailSigninCode emailAddress code ->
             let
                 emailAddressString =
                     emailAddress |> EmailAddress.toString
@@ -513,22 +499,22 @@ updateFromFrontend sessionId clientId msg model =
             case Dict.get code model.pendingEmailAuths of
                 Nothing ->
                     ( model
-                    , Lamdera.sendToFrontend clientId <| LoginCodeError IncorrectCode
+                    , Lamdera.sendToFrontend clientId <| TF_LoginCodeError IncorrectCode
                     )
 
                 Just pendingAuth ->
                     if pendingAuth.email /= emailAddressString then
                         ( model
-                        , Lamdera.sendToFrontend clientId <| LoginCodeError IncorrectCode
+                        , Lamdera.sendToFrontend clientId <| TF_LoginCodeError IncorrectCode
                         )
 
-                    else if Time.Extra.compare model.nowish pendingAuth.expires == GT then
+                    else if Time.Extra.compare model.time_bySecond pendingAuth.expires == GT then
                         ( { model
                             | pendingEmailAuths =
                                 model.pendingEmailAuths
                                     |> Dict.remove code
                           }
-                        , Lamdera.sendToFrontend clientId <| LoginCodeError CodeExpired
+                        , Lamdera.sendToFrontend clientId <| TF_LoginCodeError CodeExpired
                         )
 
                     else
@@ -542,7 +528,7 @@ updateFromFrontend sessionId clientId msg model =
                         in
                         Auth.handleAuthSuccess modelWithoutPendingAuth sessionId clientId emailAddressString
 
-        SubmitConsentsForm consentsForm ->
+        TB_Consents consentsForm ->
             case maybeUserId of
                 Nothing ->
                     model |> notifyAdminOfError "Unexpected: couldn't find user id when getting a SubmitConsentsForm"
@@ -564,10 +550,10 @@ updateFromFrontend sessionId clientId msg model =
                                     model.users
                                         |> Dict.insert userId newUserInfo
                               }
-                            , Lamdera.sendToFrontend clientId <| UpdateUserInfo <| Just <| toFrontendUserInfo userId newUserInfo model.nowish
+                            , Lamdera.sendToFrontend clientId <| TF_UserInfo <| Just <| toFrontendUserInfo userId newUserInfo model.time_bySecond
                             )
 
-        PublicTranslateCheck flag ->
+        TB_SetPublicTranslateChecked flag ->
             case maybeUserId of
                 Nothing ->
                     ( model, Cmd.none )
@@ -587,7 +573,7 @@ updateFromFrontend sessionId clientId msg model =
                     , Cmd.none
                     )
 
-        UserFeedback isUser maybeEmail feedbackText ->
+        TB_UserFeedback isUser maybeEmail feedbackText ->
             let
                 subject =
                     "user feedback from " ++ (maybeEmail |> Maybe.withDefault "anon")
@@ -606,14 +592,20 @@ updateFromFrontend sessionId clientId msg model =
             ( model
             , Cmd.batch
                 [ sendAdminEmailCmd subject body
-                , Lamdera.sendToFrontend sessionId AckUserFeedback
+                , Lamdera.sendToFrontend sessionId TF_AckUserFeedback
                 ]
             )
 
-        MarkAdminMessagesReadToBackend time ->
-            ( { model | timeOfLastAdminMessageRead = time }
-            , Cmd.none
-            )
+        TB_SetAdminMessagesLastRead time ->
+            if maybeUserIdIsAdmin maybeUserId model then
+                ( { model | timeOfLastAdminMessageRead = time }
+                , Cmd.none
+                )
+
+            else
+                ( model
+                , Cmd.none
+                )
 
 
 handleStripeWebhook : Stripe.StripeEvent -> BackendModel -> ( Result Http.Error String, BackendModel, Cmd BackendMsg )
@@ -740,7 +732,7 @@ modifyCreditBalanceAndBroadcast newCredits model =
     ( { model
         | publicCreditsInfo = newPublicCreditsInfo
       }
-    , Lamdera.broadcast <| CreditsInfoUpdated newPublicCreditsInfo
+    , Lamdera.broadcast <| TF_CreditsInfo newPublicCreditsInfo
     )
 
 
@@ -752,7 +744,7 @@ notifyAdminOfError s model =
                 (Tuple.first Config.intervalWaitBetweenAdminErrorEmails)
                 Time.utc
                 model.lastAdminAlertEmailSent
-                model.nowish
+                model.time_bySecond
                 >= Tuple.second Config.intervalWaitBetweenAdminErrorEmails
 
         subject =
@@ -776,10 +768,10 @@ notifyAdminOfError s model =
     ( { model
         | adminMessages =
             model.adminMessages
-                ++ [ ( model.nowish, s ) ]
+                ++ [ ( model.time_bySecond, s ) ]
         , lastAdminAlertEmailSent =
             if emailNeeded then
-                model.nowish
+                model.time_bySecond
 
             else
                 model.lastAdminAlertEmailSent
@@ -795,7 +787,7 @@ notifyAdminOfError s model =
 sendAdminEmailCmd : String -> String -> Cmd BackendMsg
 sendAdminEmailCmd subject bodyString =
     Postmark.sendEmail
-        (always NoOpBackendMsg)
+        (always B_NoOp)
         { from = { name = "Eestisse Server", email = Config.serverEmail }
         , to = [ { name = "", email = Config.mainAdminEmail } ]
         , subject = subject
@@ -835,8 +827,8 @@ clearVeryExpiredLoginCodes model =
             model.pendingEmailAuths
                 |> Dict.filter
                     (\code pendingAuth ->
-                        (Time.Extra.compare model.nowish pendingAuth.expires == GT)
-                            && (Time.Extra.diff Time.Extra.Hour Time.utc pendingAuth.expires model.nowish > 1)
+                        (Time.Extra.compare model.time_bySecond pendingAuth.expires == GT)
+                            && (Time.Extra.diff Time.Extra.Hour Time.utc pendingAuth.expires model.time_bySecond > 1)
                     )
     }
 
@@ -845,7 +837,24 @@ subscriptions : BackendModel -> Sub BackendMsg
 subscriptions _ =
     Sub.batch
         [ Time.every (toFloat Config.publicUsageConfig.addCreditIntervalMillis) (always AddPublicCredits)
-        , Time.every 1000 UpdateBackendNow
+        , Time.every 1000 UpdateBackendNow_BySecond
         , Time.every (1000 * 60 * 60 * 24) (always Daily)
         , Lamdera.onConnect OnConnect
         ]
+
+
+maybeUserIdIsAdmin : Maybe Int -> BackendModel -> Bool
+maybeUserIdIsAdmin maybeUserId model =
+    case maybeUserId of
+        Just userId ->
+            case Dict.get userId model.users of
+                Just userInfo ->
+                    Config.adminEmails
+                        |> List.map EmailAddress.toString
+                        |> List.member userInfo.email
+
+                Nothing ->
+                    False
+
+        Nothing ->
+            False

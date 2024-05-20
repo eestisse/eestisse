@@ -204,7 +204,7 @@ purchaseButton dProfile userInfo =
         , Element.height <| Element.px 50
         , Element.width <| Element.px 250
         ]
-        { onPress = Just <| TriggerStripePayment userInfo.id
+        { onPress = Just <| StartStripePayment userInfo.id
         , label = Element.el [ Element.centerX ] <| Element.text "Checkout with Stripe"
         }
 
@@ -239,7 +239,7 @@ viewConsentsForm dProfile maybeConsentsFormModel =
             [ Element.centerX ]
             []
             "Continue"
-            (Just <| ConsentsFormSubmitClicked consentsFormModel)
+            (Just <| SubmitConsentsForm consentsFormModel)
         ]
 
 
@@ -247,7 +247,7 @@ consentCheckbox : DisplayProfile -> String -> Bool -> (Bool -> ConsentsFormModel
 consentCheckbox dProfile text checked formUpdater =
     Input.checkbox
         []
-        { onChange = formUpdater >> ConsentsFormChanged
+        { onChange = formUpdater >> ChangeConsentsForm
         , icon = Input.defaultCheckbox
         , checked = checked
         , label =

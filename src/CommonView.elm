@@ -311,7 +311,7 @@ emailInputForm dProfile input =
     let
         submitMsgIfEmailIsValid =
             EmailAddress.fromString input
-                |> Maybe.map SendEmailToBackendForCode
+                |> Maybe.map SubmitEmailForSignin
     in
     Element.column
         [ Element.spacing <| responsiveVal dProfile 20 20
@@ -345,7 +345,7 @@ emailInput : DisplayProfile -> Maybe String -> String -> Maybe FrontendMsg -> (S
 emailInput dProfile maybePlaceholderText input maybeOnEnterMsg onChangeMsg =
     sleekTextInput dProfile
         [ Element.width <| Element.px 180
-        , onEnter (maybeOnEnterMsg |> Maybe.withDefault NoOpFrontendMsg)
+        , onEnter (maybeOnEnterMsg |> Maybe.withDefault F_NoOp)
         ]
         { onChange = onChangeMsg
         , text = input
@@ -362,7 +362,7 @@ magicCodeInputForm dProfile inputtingCodeModel =
                 Nothing
 
             else
-                Just <| SubmitCodeClicked inputtingCodeModel.emailAddress inputtingCodeModel.input
+                Just <| SubmitEmailSigninCode inputtingCodeModel.emailAddress inputtingCodeModel.input
     in
     Element.column
         [ Element.spacing <| responsiveVal dProfile 20 20
@@ -387,7 +387,7 @@ magicCodeInputForm dProfile inputtingCodeModel =
                     , Font.color Colors.errorTextRed
                     ]
                     [ Element.text "Code has expired. "
-                    , actionLink "send another" <| SendEmailToBackendForCode <| inputtingCodeModel.emailAddress
+                    , actionLink "send another" <| SubmitEmailForSignin <| inputtingCodeModel.emailAddress
                     ]
         , Element.row
             [ Element.centerX
@@ -396,7 +396,7 @@ magicCodeInputForm dProfile inputtingCodeModel =
             [ sleekTextInput
                 dProfile
                 [ Element.width <| Element.px 100
-                , onEnter (submitMsgIfNonempty |> Maybe.withDefault NoOpFrontendMsg)
+                , onEnter (submitMsgIfNonempty |> Maybe.withDefault F_NoOp)
                 ]
                 { onChange = \t -> ChangeEmailForm <| InputtingCode { inputtingCodeModel | input = t }
                 , text = inputtingCodeModel.input
@@ -439,7 +439,7 @@ googleSigninButton dProfile =
         []
         { onPress =
             Just <|
-                GoogleSigninRequested
+                StartGoogleSignin
         , label =
             Element.image
                 []
@@ -461,7 +461,7 @@ magicLinkButton dProfile =
         , Font.size 14
         , Font.bold
         ]
-        { onPress = Just EmailSigninRequested
+        { onPress = Just StartEmailSignin
         , label =
             Element.row
                 [ Element.spacing 10 ]

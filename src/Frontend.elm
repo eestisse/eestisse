@@ -55,11 +55,9 @@ init url key =
             , dProfile = Nothing
             , maybeAdminData = Nothing
             , animationTime = Time.millisToPosix 0
-            , time_updatePerSecond = Time.millisToPosix 0
+            , time_bySecond = Time.millisToPosix 0
             , backgroundModel = Nothing
             , maybePublicCreditsInfo = Nothing
-            , showCreditCounterTooltip = False
-            , creditsCounterAnimationState = Nothing
             , cachedTranslationRecords = Dict.empty
             , doTranslateModel =
                 { input = ""
@@ -86,7 +84,7 @@ init url key =
                 methodId
                 url
                 key
-                (\msg -> Lamdera.sendToBackend (AuthToBackend msg))
+                (\msg -> Lamdera.sendToBackend (TB_AuthMsg msg))
 
         _ ->
             ( model, Cmd.none )
@@ -96,11 +94,11 @@ init url key =
                 Cmd.batch
                     [ getViewportCmd
                     , if route == Route.Admin then
-                        Lamdera.sendToBackend RequestAdminData
+                        Lamdera.sendToBackend R_AdminData
 
                       else
                         Cmd.none
-                    , Lamdera.sendToBackend RequestGeneralData
+                    , Lamdera.sendToBackend R_GeneralData
                     , maybeAuthCmd
                     , routeCmd
                     , fakeConsoleLogCmd
@@ -111,21 +109,21 @@ init url key =
 update : FrontendMsg -> FrontendModel -> ( FrontendModel, Cmd FrontendMsg )
 update msg model =
     case msg of
-        NoOpFrontendMsg ->
+        F_NoOp ->
             ( model, Cmd.none )
 
-        GoogleSigninRequested ->
+        StartGoogleSignin ->
             Auth.Flow.signInRequested "OAuthGoogle" model Nothing
-                |> Tuple.mapSecond (AuthToBackend >> Lamdera.sendToBackend)
+                |> Tuple.mapSecond (TB_AuthMsg >> Lamdera.sendToBackend)
                 |> Tuple.mapSecond
                     (\authCmd ->
                         Cmd.batch
-                            [ Lamdera.sendToBackend <| SetPostAuthRedirect model.route
+                            [ Lamdera.sendToBackend <| TB_SetPostAuthRedirect model.route
                             , authCmd
                             ]
                     )
 
-        EmailSigninRequested ->
+        StartEmailSignin ->
             ( { model | signinModel = { emailFormMode = InputtingEmail "" } }
             , Cmd.none
             )
@@ -167,7 +165,7 @@ update msg model =
             , Cmd.none
             )
 
-        TranslationInputChanged s ->
+        ChangeTranslationInput s ->
             ( { model
                 | doTranslateModel =
                     let
@@ -181,7 +179,7 @@ update msg model =
             , Cmd.none
             )
 
-        PublicConsentChecked flag ->
+        ChangePublicConsentChecked flag ->
             ( { model
                 | publicConsentChecked = flag
               }
@@ -190,10 +188,10 @@ update msg model =
                     Cmd.none
 
                 Just _ ->
-                    Lamdera.sendToBackend <| PublicTranslateCheck flag
+                    Lamdera.sendToBackend <| TB_SetPublicTranslateChecked flag
             )
 
-        SubmitText publicConsentChecked inputText ->
+        SubmitTextForTranslation publicConsentChecked inputText ->
             ( { model
                 | doTranslateModel =
                     { input = inputText
@@ -201,12 +199,12 @@ update msg model =
                     }
               }
             , Cmd.batch
-                [ Lamdera.sendToBackend <| SubmitTextForTranslation publicConsentChecked inputText
+                [ Lamdera.sendToBackend <| TB_TextForTranslation publicConsentChecked inputText
                 , plausibleEventOutCmd "translation-requested"
                 ]
             )
 
-        ShowExplanation breakdownPartId ->
+        ShowBreakdown breakdownPartId ->
             ( { model
                 | viewTranslationModel =
                     let
@@ -233,7 +231,7 @@ update msg model =
             , Cmd.none
             )
 
-        EditTranslation input ->
+        GotoTranslateForm input ->
             { model
                 | doTranslateModel =
                     { input = input
@@ -267,11 +265,6 @@ update msg model =
                             ]
                     )
 
-        FetchImportantNumber ->
-            ( model
-            , Lamdera.sendToBackend RequestAdminData
-            )
-
         Animate time ->
             ( { model
                 | animationTime = time
@@ -300,12 +293,7 @@ update msg model =
                     , Cmd.none
                     )
 
-        ShowCreditCounterTooltip flag ->
-            ( { model | showCreditCounterTooltip = flag }
-            , Cmd.none
-            )
-
-        TriggerStripePayment userId ->
+        StartStripePayment userId ->
             let
                 targetLink =
                     Url.Builder.crossOrigin Config.stripePaymentLinkBaseUrl
@@ -321,11 +309,11 @@ update msg model =
 
         Logout ->
             ( model
-            , Lamdera.sendToBackend DoLogout
+            , Lamdera.sendToBackend TB_Logout
             )
 
-        UpdateFrontendNow now ->
-            ( { model | time_updatePerSecond = now }
+        UpdateFrontendNow_BySecond now ->
+            ( { model | time_bySecond = now }
             , Cmd.none
             )
 
@@ -334,9 +322,9 @@ update msg model =
             , Cmd.none
             )
 
-        LoadMoreClicked publicOrPersonal countInfo ->
+        FetchMoreTranslations publicOrPersonal countInfo ->
             ( { model | fetchingRecords = True }
-            , Lamdera.sendToBackend <| RequestTranslations publicOrPersonal countInfo
+            , Lamdera.sendToBackend <| R_TranslationRecords publicOrPersonal countInfo
             )
 
         ChangeEmailForm newForm ->
@@ -346,21 +334,21 @@ update msg model =
             , Cmd.none
             )
 
-        SendEmailToBackendForCode email ->
+        SubmitEmailForSignin email ->
             ( { model
                 | signinModel = { emailFormMode = InputtingCode <| InputtingCodeModel email "" Nothing }
               }
-            , Lamdera.sendToBackend <| RequestEmailLoginCode email
+            , Lamdera.sendToBackend <| R_EmailLoginCode email
             )
 
-        SubmitCodeClicked email code ->
+        SubmitEmailSigninCode email code ->
             ( { model
                 | signinModel = { emailFormMode = CodeSubmitted email }
               }
-            , Lamdera.sendToBackend <| SubmitCodeForEmail email code
+            , Lamdera.sendToBackend <| TB_EmailSigninCode email code
             )
 
-        ConsentsFormChanged newForm ->
+        ChangeConsentsForm newForm ->
             ( { model
                 | maybeConsentsFormModel =
                     Just newForm
@@ -368,17 +356,17 @@ update msg model =
             , Cmd.none
             )
 
-        ConsentsFormSubmitClicked form ->
+        SubmitConsentsForm form ->
             ( model
-            , Lamdera.sendToBackend <| SubmitConsentsForm form
+            , Lamdera.sendToBackend <| TB_Consents form
             )
 
-        FeedbackFormChanged newForm ->
+        ChangeFeedbackForm newForm ->
             ( { model | feedbackFormModel = newForm }
             , Cmd.none
             )
 
-        TriggerSubmitFeedback isUser maybeEmail text ->
+        SubmitFeedback isUser maybeEmail text ->
             ( { model
                 | feedbackFormModel =
                     let
@@ -389,25 +377,25 @@ update msg model =
                         | submitStatus = SubmitWaiting
                     }
               }
-            , Lamdera.sendToBackend <| UserFeedback isUser maybeEmail text
+            , Lamdera.sendToBackend <| TB_UserFeedback isUser maybeEmail text
             )
 
         MarkAdminMessagesRead t ->
             ( model
-            , Lamdera.sendToBackend <| MarkAdminMessagesReadToBackend t
+            , Lamdera.sendToBackend <| TB_SetAdminMessagesLastRead t
             )
 
 
 updateFromBackend : ToFrontend -> FrontendModel -> ( FrontendModel, Cmd FrontendMsg )
 updateFromBackend msg model =
     case msg of
-        NoOpToFrontend ->
+        TF_NoOp ->
             ( model, Cmd.none )
 
-        AuthToFrontend authToFrontendMsg ->
+        TF_AuthMsg authToFrontendMsg ->
             Auth.updateFromBackend authToFrontendMsg model
 
-        AuthSuccess frontendUserInfo ->
+        TF_AuthSuccess frontendUserInfo ->
             ( { model
                 | maybeAuthedUserInfo = Just (Just frontendUserInfo)
                 , publicConsentChecked = frontendUserInfo.publicConsentChecked
@@ -415,7 +403,7 @@ updateFromBackend msg model =
             , Cmd.none
             )
 
-        TranslationResult inputText translationRecordResult ->
+        TF_TranslationResult inputText translationRecordResult ->
             let
                 ( newCachedTranslationRecords, newDoTranslateModel ) =
                     case translationRecordResult of
@@ -459,25 +447,24 @@ updateFromBackend msg model =
                 -- ignore; the result has come back but the user has moved away from the page
                 ( model, Cmd.none )
 
-        AdminDataMsg adminData ->
+        TF_AdminData adminData ->
             ( { model
                 | maybeAdminData = Just adminData
               }
             , Cmd.none
             )
 
-        GeneralDataMsg generalData ->
+        TF_GeneralData generalData ->
             ( { model | maybePublicCreditsInfo = Just generalData.publicCreditsInfo }
             , Cmd.none
             )
 
-        CreditsInfoUpdated newCreditsInfo ->
+        TF_CreditsInfo newCreditsInfo ->
             ( { model | maybePublicCreditsInfo = Just newCreditsInfo }
-                |> startCreditCounterAnimation (newCreditsInfo.current >= (model.maybePublicCreditsInfo |> Maybe.map .current |> Maybe.withDefault 0)) model.animationTime
             , Cmd.none
             )
 
-        RequestTranslationRecordsResult translationRecordsResult ->
+        TF_TranslationRecordsRequestResult translationRecordsResult ->
             case translationRecordsResult of
                 Err trFetchError ->
                     ( { model | fetchingRecords = False }
@@ -498,7 +485,7 @@ updateFromBackend msg model =
                     , Cmd.none
                     )
 
-        RequestRedirectReturnPageResult maybeReturnRoute ->
+        TF_RedirectReturnPage maybeReturnRoute ->
             case model.route of
                 Route.AuthCallback _ ->
                     model
@@ -510,7 +497,7 @@ updateFromBackend msg model =
                 _ ->
                     ( model, Cmd.none )
 
-        NoMoreTranslationsToFetch publicOrPersonal ->
+        TF_NoMoreTranslationsToFetch publicOrPersonal ->
             ( case publicOrPersonal of
                 Public ->
                     { model | noMorePublicTranslationsToFetch = True }
@@ -520,12 +507,12 @@ updateFromBackend msg model =
             , Cmd.none
             )
 
-        UpdateUserInfo userInfo ->
+        TF_UserInfo userInfo ->
             ( { model | maybeAuthedUserInfo = Just userInfo }
             , Cmd.none
             )
 
-        LoginCodeError err ->
+        TF_LoginCodeError err ->
             case model.signinModel.emailFormMode of
                 CodeSubmitted emailAddress ->
                     ( { model
@@ -537,7 +524,7 @@ updateFromBackend msg model =
                 _ ->
                     ( model, Cmd.none )
 
-        AckUserFeedback ->
+        TF_AckUserFeedback ->
             ( { model
                 | feedbackFormModel =
                     { textInput = ""
@@ -547,17 +534,6 @@ updateFromBackend msg model =
               }
             , Cmd.none
             )
-
-
-startCreditCounterAnimation : Bool -> Time.Posix -> FrontendModel -> FrontendModel
-startCreditCounterAnimation goingUp now model =
-    { model
-        | creditsCounterAnimationState =
-            Just <|
-                { goingUp = goingUp
-                , startTime = now
-                }
-    }
 
 
 gotoRouteAndAnimate : Route -> FrontendModel -> ( FrontendModel, Cmd FrontendMsg )
@@ -577,12 +553,12 @@ gotoRouteAndAnimate route model =
 
 focusEmailInputCmd : Cmd FrontendMsg
 focusEmailInputCmd =
-    Task.attempt (\_ -> NoOpFrontendMsg) (Browser.Dom.focus "email-input")
+    Task.attempt (\_ -> F_NoOp) (Browser.Dom.focus "email-input")
 
 
 focusTranslateInputCmd : Cmd FrontendMsg
 focusTranslateInputCmd =
-    Task.attempt (\_ -> NoOpFrontendMsg) (Browser.Dom.focus "translate-input")
+    Task.attempt (\_ -> F_NoOp) (Browser.Dom.focus "translate-input")
 
 
 plausibleEventOutCmd : String -> Cmd msg
@@ -610,7 +586,7 @@ subscriptions model =
                 Sub.none
         , Browser.Events.onAnimationFrame Animate
         , Browser.Events.onResize Types.Resize
-        , Time.every 1000 UpdateFrontendNow
+        , Time.every 1000 UpdateFrontendNow_BySecond
         ]
 
 
@@ -618,13 +594,13 @@ arriveAtRouteCmds : Route -> FrontendModel -> Cmd FrontendMsg
 arriveAtRouteCmds route model =
     case route of
         Route.AuthCallback _ ->
-            Lamdera.sendToBackend <| RequestAndClearRedirectReturnPage
+            Lamdera.sendToBackend <| R_AndClearRedirectReturnPage
 
         Route.Browse ->
-            Lamdera.sendToBackend <| RequestTranslations Public ( Nothing, Config.frontendFetchRecordCount )
+            Lamdera.sendToBackend <| R_TranslationRecords Public ( Nothing, Config.frontendFetchRecordCount )
 
         Route.History ->
-            Lamdera.sendToBackend <| RequestTranslations Personal ( Nothing, Config.frontendFetchRecordCount )
+            Lamdera.sendToBackend <| R_TranslationRecords Personal ( Nothing, Config.frontendFetchRecordCount )
 
         Route.View id ->
             case getTranslationRecord id model of
@@ -632,7 +608,7 @@ arriveAtRouteCmds route model =
                     Cmd.none
 
                 Nothing ->
-                    Lamdera.sendToBackend <| RequestTranslation id
+                    Lamdera.sendToBackend <| R_SingleTranslationRecord id
 
         _ ->
             Cmd.none

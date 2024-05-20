@@ -17,8 +17,8 @@ import Utils
 
 config : Auth.Common.Config FrontendMsg ToBackend BackendMsg ToFrontend FrontendModel BackendModel
 config =
-    { toBackend = AuthToBackend
-    , toFrontend = AuthToFrontend
+    { toBackend = TB_AuthMsg
+    , toFrontend = TF_AuthMsg
     , backendMsg = AuthBackendMsg
     , sendToFrontend = Lamdera.sendToFrontend
     , sendToBackend = Lamdera.sendToBackend
@@ -31,7 +31,7 @@ config =
 
 backendConfig : BackendModel -> Auth.Flow.BackendUpdateConfig FrontendMsg BackendMsg ToFrontend FrontendModel BackendModel
 backendConfig model =
-    { asToFrontend = AuthToFrontend
+    { asToFrontend = TF_AuthMsg
     , asBackendMsg = AuthBackendMsg
     , sendToFrontend = Lamdera.sendToFrontend
     , backendModel = model
@@ -88,7 +88,7 @@ handleAuthSuccess backendModel sessionId clientId email =
     ( { modelWithEmail
         | sessions = newSessions
       }
-    , Lamdera.sendToFrontend clientId <| AuthSuccess <| toFrontendUserInfo userId userInfo modelWithEmail.nowish
+    , Lamdera.sendToFrontend clientId <| TF_AuthSuccess <| toFrontendUserInfo userId userInfo modelWithEmail.time_bySecond
     )
 
 

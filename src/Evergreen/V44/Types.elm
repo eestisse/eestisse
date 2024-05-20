@@ -50,7 +50,7 @@ type alias InputtingCodeModel =
     }
 
 
-type EmailFormMode
+type EmailFormState
     = Inactive
     | InputtingEmail String
     | InputtingCode InputtingCodeModel
@@ -58,7 +58,7 @@ type EmailFormMode
 
 
 type alias SigninModel =
-    { emailFormMode : EmailFormMode
+    { emailFormMode : EmailFormState
     }
 
 
@@ -72,12 +72,6 @@ type alias PublicCreditsInfo =
     { current : Int
     , nextRefresh : Time.Posix
     , refreshAmount : Int
-    }
-
-
-type alias CreditsCounterAnimationState =
-    { goingUp : Bool
-    , startTime : Time.Posix
     }
 
 
@@ -120,6 +114,7 @@ type alias FeedbackFormModel =
 type alias FrontendModel =
     { key : Browser.Navigation.Key
     , route : Evergreen.V44.Route.Route
+    , time_bySecond : Time.Posix
     , authFlow : Evergreen.V44.Auth.Common.Flow
     , authRedirectBaseUrl : Url.Url
     , maybeAuthedUserInfo : Maybe (Maybe FrontendUserInfo)
@@ -127,11 +122,8 @@ type alias FrontendModel =
     , dProfile : Maybe Evergreen.V44.Responsive.DisplayProfile
     , maybeAdminData : Maybe AdminData
     , animationTime : Time.Posix
-    , time_updatePerSecond : Time.Posix
     , backgroundModel : Maybe Evergreen.V44.Background.Types.Model
     , maybePublicCreditsInfo : Maybe PublicCreditsInfo
-    , showCreditCounterTooltip : Bool
-    , creditsCounterAnimationState : Maybe CreditsCounterAnimationState
     , cachedTranslationRecords : Dict.Dict Int Evergreen.V44.Translation.Types.TranslationRecord
     , doTranslateModel : DoTranslateModel
     , publicConsentChecked : Bool
@@ -186,7 +178,7 @@ type alias PaidInvoice =
 
 
 type alias BackendModel =
-    { nowish : Time.Posix
+    { time_bySecond : Time.Posix
     , publicCreditsInfo : PublicCreditsInfo
     , emails_backup : Set.Set String
     , emailsWithConsents : List EmailAndConsents
@@ -206,69 +198,67 @@ type alias BackendModel =
 
 
 type FrontendMsg
-    = NoOpFrontendMsg
-    | GoogleSigninRequested
-    | EmailSigninRequested
-    | ChangeEmailForm EmailFormMode
-    | SendEmailToBackendForCode Evergreen.V44.EmailAddress.EmailAddress
-    | SubmitCodeClicked Evergreen.V44.EmailAddress.EmailAddress String
-    | Logout
+    = F_NoOp
     | UrlClicked Browser.UrlRequest
     | UrlChanged Url.Url
     | GotViewport Browser.Dom.Viewport
     | Resize Int Int
-    | TranslationInputChanged String
-    | PublicConsentChecked Bool
-    | SubmitText Bool String
-    | ShowExplanation Int
+    | StartGoogleSignin
+    | StartEmailSignin
+    | ChangeEmailForm EmailFormState
+    | SubmitEmailForSignin Evergreen.V44.EmailAddress.EmailAddress
+    | SubmitEmailSigninCode Evergreen.V44.EmailAddress.EmailAddress String
+    | Logout
+    | ChangeTranslationInput String
+    | ChangePublicConsentChecked Bool
+    | SubmitTextForTranslation Bool String
+    | ShowBreakdown Int
     | CycleLoadingAnimation
-    | EditTranslation String
+    | GotoTranslateForm String
     | GotoRouteAndAnimate Evergreen.V44.Route.Route
     | GotoTranslate_FocusAndClear
-    | FetchImportantNumber
     | Animate Time.Posix
     | FiddleRandomBackroundPath Time.Posix
-    | ShowCreditCounterTooltip Bool
-    | TriggerStripePayment Int
+    | StartStripePayment Int
     | UserIntent_ActivateMembership
-    | UpdateFrontendNow Time.Posix
+    | UpdateFrontendNow_BySecond Time.Posix
     | ToggleMobileMenu
-    | LoadMoreClicked Evergreen.V44.Translation.Types.PublicOrPersonal ( Maybe Int, Int )
-    | ConsentsFormChanged ConsentsFormModel
-    | ConsentsFormSubmitClicked ConsentsFormModel
-    | FeedbackFormChanged FeedbackFormModel
-    | TriggerSubmitFeedback Bool (Maybe String) String
+    | FetchMoreTranslations Evergreen.V44.Translation.Types.PublicOrPersonal ( Maybe Int, Int )
+    | ChangeConsentsForm ConsentsFormModel
+    | SubmitConsentsForm ConsentsFormModel
+    | ChangeFeedbackForm FeedbackFormModel
+    | SubmitFeedback Bool (Maybe String) String
     | MarkAdminMessagesRead Time.Posix
 
 
 type ToBackend
-    = NoOpToBackend
-    | AuthToBackend Evergreen.V44.Auth.Common.ToBackend
-    | SubmitTextForTranslation Bool String
-    | RequestAdminData
-    | RequestGeneralData
-    | DoLogout
-    | RequestTranslations Evergreen.V44.Translation.Types.PublicOrPersonal ( Maybe Int, Int )
-    | RequestTranslation Int
-    | SetPostAuthRedirect Evergreen.V44.Route.Route
-    | RequestAndClearRedirectReturnPage
-    | RequestEmailLoginCode Evergreen.V44.EmailAddress.EmailAddress
-    | SubmitCodeForEmail Evergreen.V44.EmailAddress.EmailAddress String
-    | SubmitConsentsForm ConsentsFormModel
-    | PublicTranslateCheck Bool
-    | UserFeedback Bool (Maybe String) String
-    | MarkAdminMessagesReadToBackend Time.Posix
+    = TB_NoOp
+    | TB_AuthMsg Evergreen.V44.Auth.Common.ToBackend
+    | TB_TextForTranslation Bool String
+    | R_AdminData
+    | R_GeneralData
+    | TB_Logout
+    | R_TranslationRecords Evergreen.V44.Translation.Types.PublicOrPersonal ( Maybe Int, Int )
+    | R_SingleTranslationRecord Int
+    | TB_SetPostAuthRedirect Evergreen.V44.Route.Route
+    | R_AndClearRedirectReturnPage
+    | R_EmailLoginCode Evergreen.V44.EmailAddress.EmailAddress
+    | TB_EmailSigninCode Evergreen.V44.EmailAddress.EmailAddress String
+    | TB_Consents ConsentsFormModel
+    | TB_SetPublicTranslateChecked Bool
+    | TB_UserFeedback Bool (Maybe String) String
+    | TB_SetAdminMessagesLastRead Time.Posix
 
 
 type BackendMsg
-    = NoOpBackendMsg
+    = B_NoOp
+    | AuthBackendMsg Evergreen.V44.Auth.Common.BackendMsg
+    | OnConnect Lamdera.SessionId Lamdera.ClientId
     | Daily
     | InitialTimeVal Time.Posix
-    | AuthBackendMsg Evergreen.V44.Auth.Common.BackendMsg
     | GptResponseReceived ( Lamdera.SessionId, Lamdera.ClientId ) Bool String (Result Http.Error String)
     | AddPublicCredits
-    | UpdateBackendNow Time.Posix
-    | OnConnect Lamdera.SessionId Lamdera.ClientId
+    | UpdateBackendNow_BySecond Time.Posix
     | SubscriptionDataReceived (Result Http.Error Evergreen.V44.Stripe.Types.SubscriptionData)
     | LoginCodeEmailSentResponse ( Evergreen.V44.EmailAddress.EmailAddress, String ) (Result Http.Error Evergreen.V44.Postmark.PostmarkSendResponse)
 
@@ -284,16 +274,16 @@ type TranslationRecordFetchError
 
 
 type ToFrontend
-    = NoOpToFrontend
-    | AuthToFrontend Evergreen.V44.Auth.Common.ToFrontend
-    | AuthSuccess FrontendUserInfo
-    | UpdateUserInfo (Maybe FrontendUserInfo)
-    | TranslationResult String (Result Evergreen.V44.Translation.Types.GptAssistError Evergreen.V44.Translation.Types.TranslationRecord)
-    | AdminDataMsg AdminData
-    | GeneralDataMsg GeneralData
-    | CreditsInfoUpdated PublicCreditsInfo
-    | RequestTranslationRecordsResult (Result TranslationRecordFetchError (List Evergreen.V44.Translation.Types.TranslationRecord))
-    | NoMoreTranslationsToFetch Evergreen.V44.Translation.Types.PublicOrPersonal
-    | RequestRedirectReturnPageResult (Maybe Evergreen.V44.Route.Route)
-    | LoginCodeError LoginCodeErr
-    | AckUserFeedback
+    = TF_NoOp
+    | TF_AuthMsg Evergreen.V44.Auth.Common.ToFrontend
+    | TF_AuthSuccess FrontendUserInfo
+    | TF_UserInfo (Maybe FrontendUserInfo)
+    | TF_TranslationResult String (Result Evergreen.V44.Translation.Types.GptAssistError Evergreen.V44.Translation.Types.TranslationRecord)
+    | TF_AdminData AdminData
+    | TF_GeneralData GeneralData
+    | TF_CreditsInfo PublicCreditsInfo
+    | TF_TranslationRecordsRequestResult (Result TranslationRecordFetchError (List Evergreen.V44.Translation.Types.TranslationRecord))
+    | TF_NoMoreTranslationsToFetch Evergreen.V44.Translation.Types.PublicOrPersonal
+    | TF_RedirectReturnPage (Maybe Evergreen.V44.Route.Route)
+    | TF_LoginCodeError LoginCodeErr
+    | TF_AckUserFeedback

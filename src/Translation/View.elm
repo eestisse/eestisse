@@ -144,7 +144,7 @@ translationInputTextElement inputText =
 
 abortButton : DisplayProfile -> String -> Element FrontendMsg
 abortButton dProfile inputText =
-    lightBlueButton dProfile [] [] "Abort and Edit" (Just <| EditTranslation inputText)
+    lightBlueButton dProfile [] [] "Abort and Edit" (Just <| GotoTranslateForm inputText)
 
 
 loadingEmojiAnimation : Int -> Element FrontendMsg
@@ -171,7 +171,7 @@ viewTranslateInputPage dProfile maybeAuthedUserInfo input publicConsentChecked =
     let
         submitMsgIfEnabled =
             if input /= "" then
-                Just <| SubmitText publicConsentChecked input
+                Just <| SubmitTextForTranslation publicConsentChecked input
 
             else
                 Nothing
@@ -199,7 +199,7 @@ viewTranslateInputPage dProfile maybeAuthedUserInfo input publicConsentChecked =
                     , Font.size translateTextSize
                     , CommonView.htmlId "translate-input"
                     ]
-                    { onChange = TranslationInputChanged
+                    { onChange = ChangeTranslationInput
                     , text = input
                     , placeholder =
                         Just <|
@@ -230,7 +230,7 @@ viewTranslateInputPage dProfile maybeAuthedUserInfo input publicConsentChecked =
                     [ Element.centerX
                     , Element.width Element.shrink
                     ]
-                    { onChange = PublicConsentChecked
+                    { onChange = ChangePublicConsentChecked
                     , icon = Input.defaultCheckbox
                     , checked = publicConsentChecked
                     , label =
@@ -359,7 +359,7 @@ selectPartButton partIsSelected id breakdownPart =
                     [ Element.Background.color <| Element.rgb 0.9 0.95 1 ]
                )
         )
-        { onPress = Just <| ShowExplanation id
+        { onPress = Just <| ShowBreakdown id
         , label = Element.text breakdownPart.estonian
         }
 
@@ -483,7 +483,7 @@ modifyTextButton dProfile inputText =
         []
         []
         "Edit"
-        (Just <| EditTranslation inputText)
+        (Just <| GotoTranslateForm inputText)
 
 
 newTranslationButton : DisplayProfile -> Element FrontendMsg
@@ -493,7 +493,7 @@ newTranslationButton dProfile =
         []
         []
         "New"
-        (Just <| EditTranslation "")
+        (Just <| GotoTranslateForm "")
 
 
 translateButton : DisplayProfile -> Maybe FrontendMsg -> Element FrontendMsg

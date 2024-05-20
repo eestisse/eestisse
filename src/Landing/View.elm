@@ -72,7 +72,7 @@ mainExplainer dProfile =
                     , Events.onFocus GotoTranslate_FocusAndClear
                     , Font.size <| responsiveVal dProfile 22 24
                     ]
-                    { onChange = always NoOpFrontendMsg
+                    { onChange = always F_NoOp
                     , text = ""
                     , placeholder =
                         Just <|

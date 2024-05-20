@@ -25,18 +25,16 @@ import Url exposing (Url)
 type alias FrontendModel =
     { key : Key
     , route : Route
+    , time_bySecond : Time.Posix
     , authFlow : Auth.Common.Flow
     , authRedirectBaseUrl : Url
-    , maybeAuthedUserInfo : Maybe (Maybe FrontendUserInfo)
+    , maybeAuthedUserInfo : Maybe (Maybe FrontendUserInfo) -- double maybe captures 3 states: not-yet-fetched, fetched and confirmed non-user, and confirmed user
     , signinModel : SigninModel
     , dProfile : Maybe DisplayProfile
     , maybeAdminData : Maybe AdminData
     , animationTime : Time.Posix
-    , time_updatePerSecond : Time.Posix
     , backgroundModel : Maybe Background.Model
     , maybePublicCreditsInfo : Maybe PublicCreditsInfo
-    , showCreditCounterTooltip : Bool
-    , creditsCounterAnimationState : Maybe CreditsCounterAnimationState
     , cachedTranslationRecords : Dict Int TranslationRecord
     , doTranslateModel : DoTranslateModel
     , publicConsentChecked : Bool
@@ -52,7 +50,7 @@ type alias FrontendModel =
 
 
 type alias BackendModel =
-    { nowish : Time.Posix
+    { time_bySecond : Time.Posix
     , publicCreditsInfo : PublicCreditsInfo
     , emails_backup : Set String
     , emailsWithConsents : List EmailAndConsents
@@ -72,87 +70,85 @@ type alias BackendModel =
 
 
 type FrontendMsg
-    = NoOpFrontendMsg
-    | GoogleSigninRequested
-    | EmailSigninRequested
-    | ChangeEmailForm EmailFormMode
-    | SendEmailToBackendForCode EmailAddress.EmailAddress
-    | SubmitCodeClicked EmailAddress.EmailAddress String
-    | Logout
+    = F_NoOp
     | UrlClicked UrlRequest
     | UrlChanged Url
     | GotViewport Browser.Dom.Viewport
     | Resize Int Int
-    | TranslationInputChanged String
-    | PublicConsentChecked Bool
-    | SubmitText Bool String
-    | ShowExplanation Int
+    | StartGoogleSignin
+    | StartEmailSignin
+    | ChangeEmailForm EmailFormState
+    | SubmitEmailForSignin EmailAddress.EmailAddress
+    | SubmitEmailSigninCode EmailAddress.EmailAddress String
+    | Logout
+    | ChangeTranslationInput String
+    | ChangePublicConsentChecked Bool
+    | SubmitTextForTranslation Bool String
+    | ShowBreakdown Int
     | CycleLoadingAnimation
-    | EditTranslation String
+    | GotoTranslateForm String
     | GotoRouteAndAnimate Route
     | GotoTranslate_FocusAndClear
-    | FetchImportantNumber
     | Animate Time.Posix
     | FiddleRandomBackroundPath Time.Posix
-    | ShowCreditCounterTooltip Bool
-    | TriggerStripePayment Int
+    | StartStripePayment Int
     | UserIntent_ActivateMembership
-    | UpdateFrontendNow Time.Posix
+    | UpdateFrontendNow_BySecond Time.Posix
     | ToggleMobileMenu
-    | LoadMoreClicked PublicOrPersonal ( Maybe Int, Int )
-    | ConsentsFormChanged ConsentsFormModel
-    | ConsentsFormSubmitClicked ConsentsFormModel
-    | FeedbackFormChanged FeedbackFormModel
-    | TriggerSubmitFeedback Bool (Maybe String) String
+    | FetchMoreTranslations PublicOrPersonal ( Maybe Int, Int )
+    | ChangeConsentsForm ConsentsFormModel
+    | SubmitConsentsForm ConsentsFormModel
+    | ChangeFeedbackForm FeedbackFormModel
+    | SubmitFeedback Bool (Maybe String) String
     | MarkAdminMessagesRead Time.Posix
 
 
 type BackendMsg
-    = NoOpBackendMsg
+    = B_NoOp
+    | AuthBackendMsg Auth.Common.BackendMsg
+    | OnConnect SessionId ClientId
     | Daily
     | InitialTimeVal Time.Posix
-    | AuthBackendMsg Auth.Common.BackendMsg
     | GptResponseReceived ( SessionId, ClientId ) Bool String (Result Http.Error String)
     | AddPublicCredits
-    | UpdateBackendNow Time.Posix
-    | OnConnect SessionId ClientId
+    | UpdateBackendNow_BySecond Time.Posix
     | SubscriptionDataReceived (Result Http.Error Stripe.SubscriptionData)
     | LoginCodeEmailSentResponse ( EmailAddress.EmailAddress, String ) (Result Http.Error PostmarkSendResponse)
 
 
 type ToBackend
-    = NoOpToBackend
-    | AuthToBackend Auth.Common.ToBackend
-    | SubmitTextForTranslation Bool String
-    | RequestAdminData
-    | RequestGeneralData
-    | DoLogout
-    | RequestTranslations PublicOrPersonal ( Maybe Int, Int )
-    | RequestTranslation Int
-    | SetPostAuthRedirect Route.Route
-    | RequestAndClearRedirectReturnPage
-    | RequestEmailLoginCode EmailAddress.EmailAddress
-    | SubmitCodeForEmail EmailAddress.EmailAddress String
-    | SubmitConsentsForm ConsentsFormModel
-    | PublicTranslateCheck Bool
-    | UserFeedback Bool (Maybe String) String
-    | MarkAdminMessagesReadToBackend Time.Posix
+    = TB_NoOp
+    | TB_AuthMsg Auth.Common.ToBackend
+    | TB_TextForTranslation Bool String
+    | R_AdminData
+    | R_GeneralData
+    | TB_Logout
+    | R_TranslationRecords PublicOrPersonal ( Maybe Int, Int )
+    | R_SingleTranslationRecord Int
+    | TB_SetPostAuthRedirect Route.Route
+    | R_AndClearRedirectReturnPage
+    | R_EmailLoginCode EmailAddress.EmailAddress
+    | TB_EmailSigninCode EmailAddress.EmailAddress String
+    | TB_Consents ConsentsFormModel
+    | TB_SetPublicTranslateChecked Bool
+    | TB_UserFeedback Bool (Maybe String) String
+    | TB_SetAdminMessagesLastRead Time.Posix
 
 
 type ToFrontend
-    = NoOpToFrontend
-    | AuthToFrontend Auth.Common.ToFrontend
-    | AuthSuccess FrontendUserInfo
-    | UpdateUserInfo (Maybe FrontendUserInfo)
-    | TranslationResult String (Result GptAssistError TranslationRecord)
-    | AdminDataMsg AdminData
-    | GeneralDataMsg GeneralData
-    | CreditsInfoUpdated PublicCreditsInfo
-    | RequestTranslationRecordsResult (Result TranslationRecordFetchError (List TranslationRecord))
-    | NoMoreTranslationsToFetch PublicOrPersonal
-    | RequestRedirectReturnPageResult (Maybe Route.Route)
-    | LoginCodeError LoginCodeErr
-    | AckUserFeedback
+    = TF_NoOp
+    | TF_AuthMsg Auth.Common.ToFrontend
+    | TF_AuthSuccess FrontendUserInfo
+    | TF_UserInfo (Maybe FrontendUserInfo)
+    | TF_TranslationResult String (Result GptAssistError TranslationRecord)
+    | TF_AdminData AdminData
+    | TF_GeneralData GeneralData
+    | TF_CreditsInfo PublicCreditsInfo
+    | TF_TranslationRecordsRequestResult (Result TranslationRecordFetchError (List TranslationRecord))
+    | TF_NoMoreTranslationsToFetch PublicOrPersonal
+    | TF_RedirectReturnPage (Maybe Route.Route)
+    | TF_LoginCodeError LoginCodeErr
+    | TF_AckUserFeedback
 
 
 type TranslationRecordFetchError
@@ -360,11 +356,11 @@ getTranslationRecord id model =
 
 
 type alias SigninModel =
-    { emailFormMode : EmailFormMode
+    { emailFormMode : EmailFormState
     }
 
 
-type EmailFormMode
+type EmailFormState
     = Inactive
     | InputtingEmail String
     | InputtingCode InputtingCodeModel

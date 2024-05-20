@@ -101,7 +101,7 @@ textInputEl dProfile feedbackFormModel =
         , Border.color <| Element.rgb 0.8 0.8 1
         , Element.Background.color Colors.white
         ]
-        { onChange = \t -> FeedbackFormChanged { feedbackFormModel | textInput = t }
+        { onChange = \t -> ChangeFeedbackForm { feedbackFormModel | textInput = t }
         , text = feedbackFormModel.textInput
         , placeholder = Nothing
         , label = Input.labelHidden "Enter text"
@@ -133,16 +133,16 @@ submitRowEl dProfile maybeUserInfo feedbackFormModel =
                                 if feedbackFormModel.emailInput /= "" then
                                     case EmailAddress.fromString feedbackFormModel.emailInput of
                                         Just emailAddress ->
-                                            Just <| TriggerSubmitFeedback False (Just <| EmailAddress.toString emailAddress) feedbackFormModel.textInput
+                                            Just <| SubmitFeedback False (Just <| EmailAddress.toString emailAddress) feedbackFormModel.textInput
 
                                         Nothing ->
                                             Nothing
 
                                 else
-                                    Just <| TriggerSubmitFeedback False Nothing feedbackFormModel.textInput
+                                    Just <| SubmitFeedback False Nothing feedbackFormModel.textInput
 
                             Just userInfo ->
-                                Just <| TriggerSubmitFeedback True (Just userInfo.email) feedbackFormModel.textInput
+                                Just <| SubmitFeedback True (Just userInfo.email) feedbackFormModel.textInput
 
                     else
                         Nothing
@@ -153,7 +153,7 @@ submitRowEl dProfile maybeUserInfo feedbackFormModel =
                 ]
                 [ case maybeUserInfo of
                     Nothing ->
-                        emailInput dProfile (Just "email (optional)") feedbackFormModel.emailInput maybeSubmitMsg (\t -> FeedbackFormChanged { feedbackFormModel | emailInput = t })
+                        emailInput dProfile (Just "email (optional)") feedbackFormModel.emailInput maybeSubmitMsg (\t -> ChangeFeedbackForm { feedbackFormModel | emailInput = t })
 
                     Just userInfo ->
                         Element.none

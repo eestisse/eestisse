@@ -124,7 +124,7 @@ migrate_Types_BackendModel old =
                     )
                 |> Array.fromList
     in
-    { nowish = old.nowish
+    { time_bySecond = old.nowish
     , publicCreditsInfo =
         { current = 10
         , nextRefresh =
@@ -161,11 +161,9 @@ migrate_Types_FrontendModel old =
     , dProfile = old.dProfile |> Maybe.map migrate_Responsive_DisplayProfile
     , maybeAdminData = old.maybeAdminData |> Maybe.map migrate_Types_AdminData
     , animationTime = old.animationTime
-    , time_updatePerSecond = Time.millisToPosix 0
+    , time_bySecond = Time.millisToPosix 0
     , backgroundModel = old.backgroundModel |> Maybe.map migrate_Background_Types_Model
     , maybePublicCreditsInfo = Nothing
-    , showCreditCounterTooltip = old.showCreditCounterTooltip
-    , creditsCounterAnimationState = old.creditsCounterAnimationState
     , cachedTranslationRecords = Dict.empty
     , doTranslateModel = { input = "", state = Evergreen.V44.Types.Inputting }
     , publicConsentChecked = old.publicConsentChecked
@@ -511,29 +509,29 @@ migrate_Types_BackendMsg : Evergreen.V43.Types.BackendMsg -> Evergreen.V44.Types
 migrate_Types_BackendMsg old =
     case old of
         Evergreen.V43.Types.NoOpBackendMsg ->
-            Evergreen.V44.Types.NoOpBackendMsg
+            Evergreen.V44.Types.B_NoOp
 
         Evergreen.V43.Types.AuthBackendMsg p0 ->
             Evergreen.V44.Types.AuthBackendMsg (p0 |> migrate_Auth_Common_BackendMsg)
 
         Evergreen.V43.Types.GptResponseReceived p0 p1 p2 p3 ->
-            Evergreen.V44.Types.NoOpBackendMsg
+            Evergreen.V44.Types.B_NoOp
 
         Evergreen.V43.Types.AddPublicCredits ->
             Evergreen.V44.Types.AddPublicCredits
 
         Evergreen.V43.Types.UpdateNow p0 ->
-            Evergreen.V44.Types.NoOpBackendMsg
+            Evergreen.V44.Types.B_NoOp
 
 
 migrate_Types_FrontendMsg : Evergreen.V43.Types.FrontendMsg -> Evergreen.V44.Types.FrontendMsg
 migrate_Types_FrontendMsg old =
     case old of
         Evergreen.V43.Types.NoOpFrontendMsg ->
-            Evergreen.V44.Types.NoOpFrontendMsg
+            Evergreen.V44.Types.F_NoOp
 
         Evergreen.V43.Types.AuthSigninRequested p0 ->
-            Evergreen.V44.Types.NoOpFrontendMsg
+            Evergreen.V44.Types.F_NoOp
 
         Evergreen.V43.Types.UrlClicked p0 ->
             Evergreen.V44.Types.UrlClicked p0
@@ -548,37 +546,37 @@ migrate_Types_FrontendMsg old =
             Evergreen.V44.Types.Resize p0 p1
 
         Evergreen.V43.Types.TranslationInputModelChanged p0 ->
-            Evergreen.V44.Types.NoOpFrontendMsg
+            Evergreen.V44.Types.F_NoOp
 
         Evergreen.V43.Types.SubmitText p0 p1 ->
-            Evergreen.V44.Types.SubmitText p0 p1
+            Evergreen.V44.Types.SubmitTextForTranslation p0 p1
 
         Evergreen.V43.Types.ShowExplanation p0 ->
-            Evergreen.V44.Types.NoOpFrontendMsg
+            Evergreen.V44.Types.F_NoOp
 
         Evergreen.V43.Types.CycleLoadingAnimation ->
             Evergreen.V44.Types.CycleLoadingAnimation
 
         Evergreen.V43.Types.EditTranslation p0 ->
-            Evergreen.V44.Types.EditTranslation p0
+            Evergreen.V44.Types.GotoTranslateForm p0
 
         Evergreen.V43.Types.GotoRoute p0 ->
-            Evergreen.V44.Types.NoOpFrontendMsg
+            Evergreen.V44.Types.F_NoOp
 
         Evergreen.V43.Types.GotoTranslate_FocusAndClear ->
             Evergreen.V44.Types.GotoTranslate_FocusAndClear
 
         Evergreen.V43.Types.StartSignup ->
-            Evergreen.V44.Types.NoOpFrontendMsg
+            Evergreen.V44.Types.F_NoOp
 
         Evergreen.V43.Types.SubmitSignupClicked p0 ->
-            Evergreen.V44.Types.NoOpFrontendMsg
+            Evergreen.V44.Types.F_NoOp
 
         Evergreen.V43.Types.SignupFormChanged p0 ->
-            Evergreen.V44.Types.NoOpFrontendMsg
+            Evergreen.V44.Types.F_NoOp
 
         Evergreen.V43.Types.FetchImportantNumber ->
-            Evergreen.V44.Types.FetchImportantNumber
+            Evergreen.V44.Types.F_NoOp
 
         Evergreen.V43.Types.Animate p0 ->
             Evergreen.V44.Types.Animate p0
@@ -587,10 +585,10 @@ migrate_Types_FrontendMsg old =
             Evergreen.V44.Types.FiddleRandomBackroundPath p0
 
         Evergreen.V43.Types.ShowCreditCounterTooltip p0 ->
-            Evergreen.V44.Types.ShowCreditCounterTooltip p0
+            Evergreen.V44.Types.F_NoOp
 
         Evergreen.V43.Types.SetPublicConsentChecked p0 ->
-            Evergreen.V44.Types.NoOpFrontendMsg
+            Evergreen.V44.Types.F_NoOp
 
 
 migrate_Types_FrontendUserInfo : Evergreen.V43.Auth.Common.UserInfo -> Evergreen.V44.Types.FrontendUserInfo
@@ -624,47 +622,47 @@ migrate_Types_ToBackend : Evergreen.V43.Types.ToBackend -> Evergreen.V44.Types.T
 migrate_Types_ToBackend old =
     case old of
         Evergreen.V43.Types.NoOpToBackend ->
-            Evergreen.V44.Types.NoOpToBackend
+            Evergreen.V44.Types.TB_NoOp
 
         Evergreen.V43.Types.AuthToBackend p0 ->
-            Evergreen.V44.Types.AuthToBackend (p0 |> migrate_Auth_Common_ToBackend)
+            Evergreen.V44.Types.TB_AuthMsg (p0 |> migrate_Auth_Common_ToBackend)
 
         Evergreen.V43.Types.SubmitTextForTranslation p0 p1 ->
-            Evergreen.V44.Types.SubmitTextForTranslation p0 p1
+            Evergreen.V44.Types.TB_TextForTranslation p0 p1
 
         Evergreen.V43.Types.SubmitSignup p0 ->
-            Evergreen.V44.Types.NoOpToBackend
+            Evergreen.V44.Types.TB_NoOp
 
         Evergreen.V43.Types.RequestImportantNumber ->
-            Evergreen.V44.Types.NoOpToBackend
+            Evergreen.V44.Types.TB_NoOp
 
         Evergreen.V43.Types.RequestGeneralData ->
-            Evergreen.V44.Types.RequestGeneralData
+            Evergreen.V44.Types.R_GeneralData
 
 
 migrate_Types_ToFrontend : Evergreen.V43.Types.ToFrontend -> Evergreen.V44.Types.ToFrontend
 migrate_Types_ToFrontend old =
     case old of
         Evergreen.V43.Types.NoOpToFrontend ->
-            Evergreen.V44.Types.NoOpToFrontend
+            Evergreen.V44.Types.TF_NoOp
 
         Evergreen.V43.Types.AuthToFrontend p0 ->
-            Evergreen.V44.Types.AuthToFrontend (p0 |> migrate_Auth_Common_ToFrontend)
+            Evergreen.V44.Types.TF_AuthMsg (p0 |> migrate_Auth_Common_ToFrontend)
 
         Evergreen.V43.Types.AuthSuccess p0 ->
-            Evergreen.V44.Types.AuthSuccess (p0 |> migrate_Types_FrontendUserInfo)
+            Evergreen.V44.Types.TF_AuthSuccess (p0 |> migrate_Types_FrontendUserInfo)
 
         Evergreen.V43.Types.TranslationResult p0 p1 ->
-            Evergreen.V44.Types.NoOpToFrontend
+            Evergreen.V44.Types.TF_NoOp
 
         Evergreen.V43.Types.EmailSubmitAck ->
-            Evergreen.V44.Types.NoOpToFrontend
+            Evergreen.V44.Types.TF_NoOp
 
         Evergreen.V43.Types.AdminDataMsg p0 ->
-            Evergreen.V44.Types.AdminDataMsg (p0 |> migrate_Types_AdminData)
+            Evergreen.V44.Types.TF_AdminData (p0 |> migrate_Types_AdminData)
 
         Evergreen.V43.Types.GeneralDataMsg p0 ->
-            Evergreen.V44.Types.GeneralDataMsg (p0 |> migrate_Types_GeneralData)
+            Evergreen.V44.Types.TF_GeneralData (p0 |> migrate_Types_GeneralData)
 
         Evergreen.V43.Types.CreditsUpdated p0 ->
-            Evergreen.V44.Types.NoOpToFrontend
+            Evergreen.V44.Types.TF_NoOp

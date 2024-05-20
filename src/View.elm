@@ -168,7 +168,7 @@ viewPage dProfile model =
             Landing.View.page dProfile model.maybeAuthedUserInfo
 
         Route.Translate ->
-            Translation.View.viewDoTranslatePage dProfile model.maybePublicCreditsInfo model.time_updatePerSecond model.maybeAuthedUserInfo model.doTranslateModel model.publicConsentChecked model.loadingAnimationCounter
+            Translation.View.viewDoTranslatePage dProfile model.maybePublicCreditsInfo model.time_bySecond model.maybeAuthedUserInfo model.doTranslateModel model.publicConsentChecked model.loadingAnimationCounter
 
         Route.Admin ->
             Admin.View.page dProfile model.maybeAdminData
