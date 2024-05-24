@@ -236,9 +236,8 @@ type alias StripeInfo =
 
 
 type alias AdminData =
-    { emailsAndConsents : List EmailAndConsents
+    { users : Dict Int UserInfo
     , adminMessages : List ( Time.Posix, String )
-    , numPaidUsers : Int
     }
 
 

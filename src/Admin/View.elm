@@ -1,7 +1,9 @@
 module Admin.View exposing (..)
 
+import Backend exposing (countPaidUsers)
 import Colors
 import CommonView exposing (..)
+import Dict
 import Element exposing (Element)
 import Element.Background
 import Element.Border as Border
@@ -14,14 +16,14 @@ import Time.Format.Config.Config_en_us exposing (config)
 import Types exposing (..)
 
 
-page : DisplayProfile -> Maybe AdminData -> Element FrontendMsg
-page dProfile maybeNumbers =
+page : DisplayProfile -> Time.Posix -> Maybe AdminData -> Element FrontendMsg
+page dProfile now maybeAdminData =
     CommonView.primaryBox
         [ Element.centerX
         , Element.centerY
         ]
     <|
-        case maybeNumbers of
+        case maybeAdminData of
             Nothing ->
                 Element.el [ Font.size 30 ] <| Element.text "The SUSPENSE....."
 
@@ -30,26 +32,41 @@ page dProfile maybeNumbers =
                     [ Element.width Element.fill
                     , Element.spacing 40
                     ]
-                    [ Element.row
-                        [ Element.spacing 5
+                    [ Element.column
+                        [ Element.width Element.fill
+                        , Element.spacing 5
                         ]
-                        [ Element.text "Number of paying users:"
-                        , Element.text <| String.fromInt adminData.numPaidUsers
+                        [ Element.row
+                            [ Element.spacing 5
+                            ]
+                            [ Element.text "Number of users:"
+                            , Element.text <| String.fromInt <| List.length <| Dict.toList adminData.users
+                            ]
+                        , Element.row
+                            [ Element.spacing 5
+                            ]
+                            [ Element.text "Number of paying users:"
+                            , Element.text <| String.fromInt <| countPaidUsers adminData.users
+                            ]
                         ]
                     , blueButton dProfile [] [] "Test admin error" <| Just TestAdminError
-                    , adminData.emailsAndConsents
+                    , adminData.users
+                        |> Dict.toList
                         |> List.map
-                            (\{ email, consentsGiven } ->
+                            (\( id, userInfo ) ->
                                 Element.row
-                                    [ Element.spacing 10
-                                    , Border.width 1
-                                    , Border.color Colors.blue
-                                    ]
-                                    [ Element.text email
-                                    , Element.column
-                                        [ Element.spacing 5
-                                        ]
-                                        (List.map Element.text consentsGiven)
+                                    ([ Element.spacing 10
+                                     , Border.width 1
+                                     , Border.color Colors.blue
+                                     ]
+                                        ++ (if maybeBackendUserInfoMembershipActive (Just userInfo) now then
+                                                [ Font.bold ]
+
+                                            else
+                                                []
+                                           )
+                                    )
+                                    [ Element.text userInfo.email
                                     ]
                             )
                         |> Element.column

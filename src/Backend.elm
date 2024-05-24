@@ -334,16 +334,14 @@ updateFromFrontend sessionId clientId msg model =
                 ( model
                 , Lamdera.sendToFrontend clientId <|
                     TF_AdminData <|
-                        { emailsAndConsents =
-                            model.emailsWithConsents
+                        { users =
+                            model.users
                         , adminMessages =
                             model.adminMessages
                                 |> List.filter
                                     (\( t, _ ) ->
                                         Time.Extra.compare t model.timeOfLastAdminMessageRead == GT
                                     )
-                        , numPaidUsers =
-                            countPaidUsers model.users
                         }
                 )
 
