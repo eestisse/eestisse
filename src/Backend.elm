@@ -336,15 +336,6 @@ updateFromFrontend sessionId clientId msg model =
                     TF_AdminData <|
                         { emailsAndConsents =
                             model.emailsWithConsents
-                                |> List.map
-                                    (\emailWithConsents ->
-                                        emailWithConsents.consentsGiven
-                                            |> List.map (\consent -> ( emailWithConsents.email, consent ))
-                                    )
-                                |> List.concat
-                                |> List.Extra.unique
-                                |> List.map Tuple.second
-                                |> List.Extra.frequencies
                         , adminMessages =
                             model.adminMessages
                                 |> List.filter

@@ -19,7 +19,6 @@ page dProfile maybeNumbers =
     CommonView.primaryBox
         [ Element.centerX
         , Element.centerY
-        , CommonView.madimiFont
         ]
     <|
         case maybeNumbers of
@@ -30,7 +29,6 @@ page dProfile maybeNumbers =
                 Element.column
                     [ Element.width Element.fill
                     , Element.spacing 40
-                    , Font.size 40
                     ]
                     [ Element.row
                         [ Element.spacing 5
@@ -41,22 +39,17 @@ page dProfile maybeNumbers =
                     , blueButton dProfile [] [] "Test admin error" <| Just TestAdminError
                     , adminData.emailsAndConsents
                         |> List.map
-                            (\( label, number ) ->
+                            (\{ email, consentsGiven } ->
                                 Element.row
-                                    [ Element.width Element.fill
-                                    , Element.spacing 40
-                                    , Element.padding 3
+                                    [ Element.spacing 10
+                                    , Border.width 1
+                                    , Border.color Colors.blue
                                     ]
-                                    [ Element.el
-                                        [ Element.alignRight
-                                        , Font.color <| Colors.blue
+                                    [ Element.text email
+                                    , Element.column
+                                        [ Element.spacing 5
                                         ]
-                                      <|
-                                        Element.text <|
-                                            (String.fromInt number ++ " ")
-                                    , Element.paragraph
-                                        [ Font.size 20 ]
-                                        [ Element.text label ]
+                                        (List.map Element.text consentsGiven)
                                     ]
                             )
                         |> Element.column
