@@ -253,11 +253,7 @@ update msg model =
                             ( { model
                                 | users = newUsers
                               }
-                            , if Config.numEarlybirdOffersTotal - numPayingUsers >= Config.earlybirdOffersLeftAlertThreshold then
-                                sendAdminEmailCmd "shit's getting good!" ("Look out! Only " ++ String.fromInt (Config.numEarlybirdOffersTotal - numPayingUsers) ++ " earlybird specials left!")
-
-                              else
-                                Cmd.none
+                            , sendAdminEmailCmd "subscription sold! " (String.fromInt (Config.numEarlybirdOffersTotal - numPayingUsers) ++ " earlybird specials left.")
                             )
 
                         Nothing ->
@@ -301,7 +297,21 @@ updateFromFrontend sessionId clientId msg model =
             Auth.Flow.updateFromFrontend (Auth.backendConfig model) clientId sessionId authToBackend model
 
         TB_TextForTranslation publicConsentChecked input ->
-            if maybeBackendUserInfoMembershipActive maybeUserInfo model.time_bySecond then
+            let
+                isMember =
+                    maybeBackendUserInfoMembershipActive maybeUserInfo model.time_bySecond
+
+                charLimit =
+                    if isMember then
+                        Config.memberTranslateCharLimit
+
+                    else
+                        Config.guestTranslateCharLimit
+            in
+            if String.length input > charLimit then
+                ( model, Lamdera.sendToFrontend clientId <| TF_TranslationResult input (Err <| TooLong charLimit) )
+
+            else if isMember then
                 ( model
                 , requestGptTranslationCmd ( sessionId, clientId ) publicConsentChecked input
                 )

@@ -131,3 +131,11 @@ numEarlybirdOffersTotal =
 
 earlybirdOffersLeftAlertThreshold =
     5
+
+
+guestTranslateCharLimit =
+    140
+
+
+memberTranslateCharLimit =
+    1000

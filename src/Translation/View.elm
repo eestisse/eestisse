@@ -2,6 +2,7 @@ module Translation.View exposing (..)
 
 import Colors
 import CommonView exposing (..)
+import Config
 import Element exposing (..)
 import Element.Background
 import Element.Border as Border
@@ -96,6 +97,9 @@ gptAssistErrorToString gptAssistError =
         OutOfCredits ->
             "Out of credits! D:"
 
+        TooLong limit ->
+            "The input was too long. It must be shorter than " ++ String.fromInt limit ++ " characters."
+
         ApiProtocolError RateLimited ->
             "OpenAI has rate-limted the app. Sorry about that - please try again later."
 
@@ -175,6 +179,56 @@ viewTranslateInputPage dProfile maybeAuthedUserInfo input publicConsentChecked =
 
             else
                 Nothing
+
+        membershipActive =
+            maybeFrontendUserInfoMembershipActive maybeAuthedUserInfo
+
+        charLimit =
+            if membershipActive then
+                Config.memberTranslateCharLimit
+
+            else
+                Config.guestTranslateCharLimit
+
+        maybeSubmitBlockerEl =
+            if not publicConsentChecked && not membershipActive then
+                Just <|
+                    Element.column
+                        [ Element.spacing 5
+                        , Font.color <| Element.rgb 1 0 0
+                        , Element.centerX
+                        ]
+                        [ Element.row
+                            [ Element.centerX ]
+                            [ Element.text "You must have an "
+                            , actionLink "active membership" UserIntent_ActivateMembership
+                            ]
+                        , Element.el [ Element.centerX ] <| Element.text "to process translations privately."
+                        ]
+
+            else if String.length input > charLimit then
+                Just <|
+                    Element.column
+                        [ Element.spacing 5
+                        , Font.color <| Element.rgb 1 0 0
+                        , Element.centerX
+                        ]
+                        [ Element.el [ Element.centerX ] <| Element.text <| "That text is " ++ String.fromInt (String.length input - charLimit) ++ " characters too long."
+                        , Element.el [ Element.centerX ] <|
+                            Element.text <|
+                                "Translations are limited to "
+                                    ++ String.fromInt charLimit
+                                    ++ " characters"
+                                    ++ (if membershipActive then
+                                            "."
+
+                                        else
+                                            " for guests."
+                                       )
+                        ]
+
+            else
+                Nothing
     in
     CommonView.primaryBoxCustomColors
         Colors.calmTeal
@@ -246,22 +300,12 @@ viewTranslateInputPage dProfile maybeAuthedUserInfo input publicConsentChecked =
                     , Element.height <| Element.px 50
                     ]
                   <|
-                    if publicConsentChecked || maybeFrontendUserInfoMembershipActive maybeAuthedUserInfo then
-                        Element.el [ Element.centerX ] <| translateButton dProfile submitMsgIfEnabled
+                    case maybeSubmitBlockerEl of
+                        Nothing ->
+                            Element.el [ Element.centerX ] <| translateButton dProfile submitMsgIfEnabled
 
-                    else
-                        Element.column
-                            [ Element.spacing 5
-                            , Font.color <| Element.rgb 1 0 0
-                            , Element.centerX
-                            ]
-                            [ Element.row
-                                [ Element.centerX ]
-                                [ Element.text "You must have an "
-                                , actionLink "active membership" UserIntent_ActivateMembership
-                                ]
-                            , Element.el [ Element.centerX ] <| Element.text "to process translations privately."
-                            ]
+                        Just submitBlockerEl ->
+                            submitBlockerEl
                 ]
             ]
 
