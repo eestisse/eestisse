@@ -44,8 +44,7 @@ init url key =
         route =
             Route.parseUrl url
 
-        model : FrontendModel
-        model =
+        ( model, routeCmd ) =
             { key = key
             , route = route
             , authFlow = Auth.Common.Idle
@@ -73,9 +72,7 @@ init url key =
             , maybeConsentsFormModel = Nothing
             , feedbackFormModel = blankFeedbackFormModel
             }
-
-        routeCmd =
-            arriveAtRouteCmds route model
+                |> afterArrivingAtRoute route
     in
     (case route of
         Route.AuthCallback methodId ->
@@ -145,9 +142,8 @@ update msg model =
                 route =
                     Route.parseUrl url
             in
-            ( { model | route = route }
-            , arriveAtRouteCmds route model
-            )
+            { model | route = route }
+                |> afterArrivingAtRoute route
 
         GotViewport viewport ->
             ( { model
@@ -589,34 +585,45 @@ subscriptions model =
 
             _ ->
                 Sub.none
-        , Browser.Events.onAnimationFrame Animate
+
+        -- , Browser.Events.onAnimationFrame Animate
         , Browser.Events.onResize Types.Resize
         , Time.every 1000 UpdateFrontendNow_BySecond
         ]
 
 
-arriveAtRouteCmds : Route -> FrontendModel -> Cmd FrontendMsg
-arriveAtRouteCmds route model =
+afterArrivingAtRoute : Route -> FrontendModel -> ( FrontendModel, Cmd FrontendMsg )
+afterArrivingAtRoute route model =
     case route of
         Route.AuthCallback _ ->
-            Lamdera.sendToBackend <| R_AndClearRedirectReturnPage
+            ( model, Lamdera.sendToBackend <| R_AndClearRedirectReturnPage )
 
         Route.Browse ->
-            Lamdera.sendToBackend <| R_TranslationRecords Public ( Nothing, Config.frontendFetchRecordCount )
+            ( model, Lamdera.sendToBackend <| R_TranslationRecords Public ( Nothing, Config.frontendFetchRecordCount ) )
 
         Route.History ->
-            Lamdera.sendToBackend <| R_TranslationRecords Personal ( Nothing, Config.frontendFetchRecordCount )
+            ( model, Lamdera.sendToBackend <| R_TranslationRecords Personal ( Nothing, Config.frontendFetchRecordCount ) )
 
         Route.View id ->
             case getTranslationRecord id model of
                 Just _ ->
-                    Cmd.none
+                    ( { model
+                        | viewTranslationModel =
+                            { maybeSelectedBreakdownPartId = Nothing }
+                      }
+                    , Cmd.none
+                    )
 
                 Nothing ->
-                    Lamdera.sendToBackend <| R_SingleTranslationRecord id
+                    ( { model
+                        | viewTranslationModel =
+                            { maybeSelectedBreakdownPartId = Nothing }
+                      }
+                    , Lamdera.sendToBackend <| R_SingleTranslationRecord id
+                    )
 
         _ ->
-            Cmd.none
+            ( model, Cmd.none )
 
 
 port plausible_event_out : String -> Cmd msg
