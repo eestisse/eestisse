@@ -12,6 +12,7 @@ import EmailCode
 import Env
 import GPTRequests
 import Http
+import Json.Encode
 import Lamdera exposing (ClientId, SessionId)
 import List.Extra
 import Postmark exposing (PostmarkEmailBody, PostmarkSend)
@@ -607,16 +608,16 @@ updateFromFrontend sessionId clientId msg model =
             notifyAdminOfError ("Test error: " ++ s) model
 
 
-handleStripeWebhook : Stripe.StripeEvent -> BackendModel -> ( Result Http.Error String, BackendModel, Cmd BackendMsg )
+handleStripeWebhook : Stripe.StripeEvent -> BackendModel -> ( Result Http.Error Json.Encode.Value, BackendModel, Cmd BackendMsg )
 handleStripeWebhook webhook model =
     let
         okResponse =
             case Env.mode of
                 Env.Development ->
-                    Ok "prod"
+                    Ok <| Json.Encode.string "prod"
 
                 Env.Production ->
-                    Ok "dev"
+                    Ok <| Json.Encode.string "dev"
     in
     case webhook of
         Stripe.CheckoutSessionCompleted stripeSessionData ->

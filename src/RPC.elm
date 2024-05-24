@@ -23,7 +23,7 @@ lamdera_handleEndpoints :
 lamdera_handleEndpoints _ req model =
     case req.endpoint of
         "stripe" ->
-            LamderaRPC.handleEndpointString stripeWebhookHandler req model
+            LamderaRPC.handleEndpointJson stripeWebhookHandler req model
 
         _ ->
             ( LamderaRPC.resultWith LamderaRPC.StatusNotFound [] <| LamderaRPC.BodyString <| "Unknown endpoint " ++ req.endpoint, model, Cmd.none )
@@ -33,15 +33,11 @@ stripeWebhookHandler :
     SessionId
     -> BackendModel
     -> LamderaRPC.Headers
-    -> String
-    -> ( Result Http.Error String, BackendModel, Cmd BackendMsg )
-stripeWebhookHandler _ model headers bodyString =
-    case ( Json.Decode.decodeString Stripe.stripeEventDecoder bodyString, checkStripeHeaderSignature bodyString headers Env.stripeWebhookSecret model.time_bySecond ) of
-        ( _, False ) ->
-            (model |> Backend.notifyAdminOfError "invalid stripe signature")
-                |> (\( m, c ) -> ( Err (Http.BadBody "invalid stripe signature"), m, c ))
-
-        ( Err error, _ ) ->
+    -> Lamdera.Json.Value
+    -> ( Result Http.Error Lamdera.Json.Value, BackendModel, Cmd BackendMsg )
+stripeWebhookHandler _ model headers bodyJson =
+    case Json.Decode.decodeValue Stripe.stripeEventDecoder bodyJson of
+        Err error ->
             let
                 errorText =
                     "Failed to decode stripe webhook: "
@@ -53,8 +49,35 @@ stripeWebhookHandler _ model headers bodyString =
                         ( Err (Http.BadBody errorText), m, c )
                    )
 
-        ( Ok webhook, True ) ->
-            Backend.handleStripeWebhook webhook model
+        Ok event ->
+            Backend.handleStripeWebhook event model
+
+
+
+-- oldStripeWebhookHandler :
+--     SessionId
+--     -> BackendModel
+--     -> LamderaRPC.Headers
+--     -> String
+--     -> ( Result Http.Error String, BackendModel, Cmd BackendMsg )
+-- oldStripeWebhookHandler _ model headers bodyString =
+--     case ( Json.Decode.decodeString Stripe.stripeEventDecoder bodyString, checkStripeHeaderSignature bodyString headers Env.stripeWebhookSecret model.time_bySecond ) of
+--         ( _, False ) ->
+--             (model |> Backend.notifyAdminOfError "invalid stripe signature")
+--                 |> (\( m, c ) -> ( Err (Http.BadBody "invalid stripe signature"), m, c ))
+--         ( Err error, _ ) ->
+--             let
+--                 errorText =
+--                     "Failed to decode stripe webhook: "
+--                         ++ Json.Decode.errorToString error
+--             in
+--             model
+--                 |> Backend.notifyAdminOfError errorText
+--                 |> (\( m, c ) ->
+--                         ( Err (Http.BadBody errorText), m, c )
+--                    )
+--         ( Ok webhook, True ) ->
+--             Backend.handleStripeWebhook webhook model
 
 
 checkStripeHeaderSignature : String -> LamderaRPC.Headers -> String -> Time.Posix -> Bool
