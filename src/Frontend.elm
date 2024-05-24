@@ -585,8 +585,7 @@ subscriptions model =
 
             _ ->
                 Sub.none
-
-        -- , Browser.Events.onAnimationFrame Animate
+        , Browser.Events.onAnimationFrame Animate
         , Browser.Events.onResize Types.Resize
         , Time.every 1000 UpdateFrontendNow_BySecond
         ]
