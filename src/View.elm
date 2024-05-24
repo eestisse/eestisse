@@ -345,7 +345,7 @@ subtitleElement dProfile =
         , madimiFont
         ]
         [ Element.row [ Element.centerX ]
-            [ emphasizedText "An Estonian tutor in your pocket broooo"
+            [ emphasizedText "An Estonian tutor in your pocket"
             ]
         ]
 

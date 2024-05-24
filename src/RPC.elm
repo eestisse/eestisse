@@ -36,24 +36,24 @@ stripeWebhookHandler :
     -> Lamdera.Json.Value
     -> ( Result Http.Error Lamdera.Json.Value, BackendModel, Cmd BackendMsg )
 stripeWebhookHandler _ model headers bodyJson =
-    ( Err <| Http.BadBody "wow stupid error", model, Cmd.none )
+    case Json.Decode.decodeValue Stripe.stripeEventDecoder bodyJson of
+        Err error ->
+            let
+                errorText =
+                    "Failed to decode stripe webhook: "
+                        ++ Json.Decode.errorToString error
+            in
+            model
+                |> Backend.notifyAdminOfError errorText
+                |> (\( m, c ) ->
+                        ( Err (Http.BadBody errorText), m, c )
+                   )
+
+        Ok event ->
+            Backend.handleStripeWebhook event model
 
 
 
--- case Json.Decode.decodeValue Stripe.stripeEventDecoder bodyJson of
---     Err error ->
---         let
---             errorText =
---                 "Failed to decode stripe webhook: "
---                     ++ Json.Decode.errorToString error
---         in
---         model
---             |> Backend.notifyAdminOfError errorText
---             |> (\( m, c ) ->
---                     ( Err (Http.BadBody errorText), m, c )
---                )
---     Ok event ->
---         Backend.handleStripeWebhook event model
 -- oldStripeWebhookHandler :
 --     SessionId
 --     -> BackendModel
