@@ -272,43 +272,6 @@ signInOrAccountButton dProfile maybeMaybeUserInfo =
                 }
 
 
-creditCounterTooltip : DisplayProfile -> Int -> Element FrontendMsg
-creditCounterTooltip dProfile credits =
-    Element.column
-        [ Element.alignRight
-        , Element.width <| Element.px <| responsiveVal dProfile 280 400
-        ]
-        [ Element.el [ Element.height <| Element.px 10 ] Element.none
-        , Element.column
-            [ Element.width Element.fill
-            , Element.padding 10
-            , Font.size <| responsiveVal dProfile 20 24
-            , Border.width 1
-            , Border.rounded 10
-            , Border.color <| Element.rgba 0 0 0 0.2
-            , Element.Background.color <| Element.rgba 1 1 1 0.8
-            , Font.color Colors.black
-            , robotoFont
-            , Element.spacing <| responsiveVal dProfile 15 25
-            ]
-            [ Element.paragraph
-                [ Element.width Element.fill
-                ]
-                [ Element.text "There are "
-                , Element.el [ madimiFont, Font.color Colors.darkBlue ] <|
-                    Element.text <|
-                        String.fromInt credits
-                , Element.el [ Font.color Colors.darkBlue, Font.bold ] <| Element.text " credits"
-                , Element.text " left for public use. Credits are added slowly over time and cap out at 100."
-                ]
-            , Element.paragraph
-                [ Element.width Element.fill
-                ]
-                [ Element.text "Paid user accounts coming soon, with drastically increased usage caps." ]
-            ]
-        ]
-
-
 emphasizedText : String -> Element FrontendMsg
 emphasizedText =
     Element.el [ Font.color <| Colors.darkGreen ] << Element.text
