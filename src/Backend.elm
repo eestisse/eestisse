@@ -60,7 +60,6 @@ init =
       , adminMessages = []
       , lastAdminAlertEmailSent = Time.millisToPosix 0
       , timeOfLastAdminMessageRead = Time.millisToPosix 0
-      , dummyVal = ""
       }
     , Time.now
         |> Task.perform InitialTimeVal
