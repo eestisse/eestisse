@@ -81,7 +81,7 @@ menuOptions maybeUserInfo =
             [ MenuOption "Account" Route.Account
             , MenuOption "Translate" Route.Translate
             ]
-                ++ (if maybeFrontendUserSignupComplete maybeUserInfo then
+                ++ (if maybeFrontendUserInfoMembershipActive maybeUserInfo then
                         [ MenuOption "Your Translations" Route.History ]
 
                     else

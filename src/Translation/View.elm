@@ -38,7 +38,7 @@ viewDoTranslatePage dProfile maybePublicCreditsInfo now maybeMaybeUserInfo doTra
     in
     case doTranslateModel.state of
         Inputting ->
-            if maybeFrontendUserSignupComplete maybeUserInfo then
+            if maybeFrontendUserInfoMembershipActive maybeUserInfo then
                 viewTranslateInputPage dProfile maybeUserInfo doTranslateModel.input publicConsentChecked
 
             else
@@ -246,7 +246,7 @@ viewTranslateInputPage dProfile maybeAuthedUserInfo input publicConsentChecked =
                     , Element.height <| Element.px 50
                     ]
                   <|
-                    if publicConsentChecked || maybeFrontendUserSignupComplete maybeAuthedUserInfo then
+                    if publicConsentChecked || maybeFrontendUserInfoMembershipActive maybeAuthedUserInfo then
                         Element.el [ Element.centerX ] <| translateButton dProfile submitMsgIfEnabled
 
                     else

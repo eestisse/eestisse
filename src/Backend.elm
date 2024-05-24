@@ -60,7 +60,7 @@ init =
       , adminMessages = []
       , lastAdminAlertEmailSent = Time.millisToPosix 0
       , timeOfLastAdminMessageRead = Time.millisToPosix 0
-      , dummyVal = 0
+      , dummyVal = ""
       }
     , Time.now
         |> Task.perform InitialTimeVal
@@ -155,7 +155,7 @@ update msg model =
                 translationRecordResult =
                     GPTRequests.processGptResponse fetchResult
                         |> Result.map
-                            (TranslationRecord (Array.length model.translationRecords) (sessionIdToMaybeUserId sessionId model) publicConsentChecked model.time_bySecond input)
+                            (TranslationRecord (Array.length model.translationRecords) (Maybe.map Tuple.first <| sessionIdToMaybeUserIdAndInfo sessionId model) publicConsentChecked model.time_bySecond input)
 
                 newTranslationRecords =
                     case translationRecordResult of
@@ -286,8 +286,13 @@ update msg model =
 updateFromFrontend : SessionId -> ClientId -> ToBackend -> BackendModel -> ( BackendModel, Cmd BackendMsg )
 updateFromFrontend sessionId clientId msg model =
     let
-        maybeUserId =
-            sessionIdToMaybeUserId sessionId model
+        ( maybeUserId, maybeUserInfo ) =
+            case sessionIdToMaybeUserIdAndInfo sessionId model of
+                Just ( userId, userInfo ) ->
+                    ( Just userId, Just userInfo )
+
+                Nothing ->
+                    ( Nothing, Nothing )
     in
     case msg of
         TB_NoOp ->
@@ -297,7 +302,12 @@ updateFromFrontend sessionId clientId msg model =
             Auth.Flow.updateFromFrontend (Auth.backendConfig model) clientId sessionId authToBackend model
 
         TB_TextForTranslation publicConsentChecked input ->
-            if model.publicCreditsInfo.current > 0 then
+            if maybeBackendUserInfoMembershipActive maybeUserInfo model.time_bySecond then
+                ( model
+                , requestGptTranslationCmd ( sessionId, clientId ) publicConsentChecked input
+                )
+
+            else if model.publicCreditsInfo.current > 0 then
                 model
                     |> deductOneCreditAndBroadcast
                     |> Tuple.mapSecond
@@ -797,11 +807,15 @@ sendAdminEmailCmd subject bodyString =
         }
 
 
-sessionIdToMaybeUserId : SessionId -> BackendModel -> Maybe Int
-sessionIdToMaybeUserId sessionId model =
+sessionIdToMaybeUserIdAndInfo : SessionId -> BackendModel -> Maybe ( Int, UserInfo )
+sessionIdToMaybeUserIdAndInfo sessionId model =
     model.sessions
         |> Dict.get sessionId
         |> Maybe.andThen .maybeAuthedUserId
+        |> Maybe.andThen
+            (\id ->
+                Dict.get id model.users |> Maybe.map (Tuple.pair id)
+            )
 
 
 clearRedirectReturnPageForSession : SessionId -> BackendModel -> BackendModel

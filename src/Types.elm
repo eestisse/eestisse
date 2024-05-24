@@ -66,7 +66,7 @@ type alias BackendModel =
     , adminMessages : List ( Time.Posix, String )
     , lastAdminAlertEmailSent : Time.Posix
     , timeOfLastAdminMessageRead : Time.Posix
-    , dummyVal : Int
+    , dummyVal : String
     }
 
 
@@ -334,8 +334,8 @@ toFrontendUserInfo id userInfo now =
     }
 
 
-maybeFrontendUserSignupComplete : Maybe FrontendUserInfo -> Bool
-maybeFrontendUserSignupComplete maybeFrontendUserInfo =
+maybeFrontendUserInfoMembershipActive : Maybe FrontendUserInfo -> Bool
+maybeFrontendUserInfoMembershipActive maybeFrontendUserInfo =
     case maybeFrontendUserInfo of
         Nothing ->
             False
@@ -352,6 +352,18 @@ maybeFrontendUserSignupComplete maybeFrontendUserInfo =
                         _ ->
                             False
                    )
+
+
+maybeBackendUserInfoMembershipActive : Maybe UserInfo -> Time.Posix -> Bool
+maybeBackendUserInfoMembershipActive maybeUserInfo now =
+    maybeUserInfo
+        |> Maybe.andThen .stripeInfo
+        |> Maybe.andThen .paidUntil
+        |> Maybe.map
+            (\paidUntil ->
+                Time.Extra.compare now paidUntil == LT
+            )
+        |> Maybe.withDefault False
 
 
 getTranslationRecord : Int -> FrontendModel -> Maybe TranslationRecord
