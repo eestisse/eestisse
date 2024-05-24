@@ -66,6 +66,7 @@ type alias BackendModel =
     , adminMessages : List ( Time.Posix, String )
     , lastAdminAlertEmailSent : Time.Posix
     , timeOfLastAdminMessageRead : Time.Posix
+    , dummyVal : Int
     }
 
 
