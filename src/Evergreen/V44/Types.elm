@@ -65,6 +65,7 @@ type alias SigninModel =
 type alias AdminData =
     { emailsAndConsents : List ( String, Int )
     , adminMessages : List ( Time.Posix, String )
+    , numPaidUsers : Int
     }
 
 
@@ -229,6 +230,7 @@ type FrontendMsg
     | ChangeFeedbackForm FeedbackFormModel
     | SubmitFeedback Bool (Maybe String) String
     | MarkAdminMessagesRead Time.Posix
+    | TestAdminError
 
 
 type ToBackend
@@ -248,6 +250,7 @@ type ToBackend
     | TB_SetPublicTranslateChecked Bool
     | TB_UserFeedback Bool (Maybe String) String
     | TB_SetAdminMessagesLastRead Time.Posix
+    | TB_TestAdminError String
 
 
 type BackendMsg

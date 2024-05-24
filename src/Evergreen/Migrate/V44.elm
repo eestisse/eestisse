@@ -502,6 +502,7 @@ migrate_Types_AdminData : Evergreen.V43.Types.AdminData -> Evergreen.V44.Types.A
 migrate_Types_AdminData old =
     { emailsAndConsents = old.emailsAndConsents
     , adminMessages = []
+    , numPaidUsers = 0
     }
 
 

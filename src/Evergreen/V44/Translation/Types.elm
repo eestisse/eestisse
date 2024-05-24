@@ -44,6 +44,7 @@ type ProtocolError
 
 type GptAssistError
     = OutOfCredits
+    | TooLong Int
     | ApiProtocolError ProtocolError
     | GptDecodeError String
     | GptExpressedError String
