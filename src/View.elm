@@ -186,7 +186,21 @@ viewPage dProfile model =
             Browse.View.page dProfile model.cachedTranslationRecords (getFetchButtonVisibility Public model)
 
         Route.History ->
-            History.View.page dProfile model.cachedTranslationRecords (getFetchButtonVisibility Personal model)
+            case model.maybeAuthedUserInfo of
+                Nothing ->
+                    Element.el [ Element.centerX ] <| Element.text "Loading user info..."
+
+                Just Nothing ->
+                    Element.column
+                        [ Element.centerX
+                        , Element.spacing 5
+                        ]
+                        [ Element.el [ Element.centerX ] <| Element.text "You are not signed in."
+                        , blueButton dProfile [ Element.centerX ] [] "Sign in" (Just <| GotoRouteAndAnimate Route.Account)
+                        ]
+
+                Just (Just userInfo) ->
+                    History.View.page dProfile userInfo.id model.cachedTranslationRecords (getFetchButtonVisibility Personal model)
 
         Route.View id ->
             case getTranslationRecord id model of

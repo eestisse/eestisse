@@ -9,14 +9,14 @@ import Types exposing (..)
 import ViewTranslationList exposing (..)
 
 
-page : DisplayProfile -> Dict Int TranslationRecord -> FetchButtonVisibility -> Element FrontendMsg
-page dProfile cachedTranslationRecords fetchButtonVisibility =
+page : DisplayProfile -> Int -> Dict Int TranslationRecord -> FetchButtonVisibility -> Element FrontendMsg
+page dProfile userId cachedTranslationRecords fetchButtonVisibility =
     let
         personalTranslationRecords =
             cachedTranslationRecords
                 |> Dict.filter
                     (\_ record ->
-                        not record.public
+                        record.fromUserId == Just userId
                     )
     in
     primaryBox
