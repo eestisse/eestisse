@@ -82,7 +82,7 @@ menuOptions maybeUserInfo =
             , MenuOption "Translate" Route.Translate
             ]
                 ++ (if maybeFrontendUserInfoMembershipActive maybeUserInfo then
-                        [ MenuOption "Your Translations" Route.History ]
+                        [ MenuOption "My Translations" Route.History ]
 
                     else
                         []
